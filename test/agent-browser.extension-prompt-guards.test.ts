@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify prompt-derived browser artifact guards for the host-browser extension.
+ * Purpose: Verify prompt-derived browser artifact guards for the cdp-browser extension.
  * Responsibilities: Assert required prompt artifact close guards without semantic action blocking.
  * Scope: Integration-style Node test-runner coverage with fake agent-browser binaries.
  */
@@ -20,7 +20,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension does not turn prompt stop-boundary text into click blocks", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-no-semantic-prompt-block-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-no-semantic-prompt-block-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -58,7 +58,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension blocks close until required prompt screenshot artifacts are saved", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-required-artifact-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-required-artifact-"));
 	const logPath = join(tempDir, "invocations.log");
 	const firstScreenshotPath = join(tempDir, "release-smoke-first.png");
 	const secondScreenshotPath = join(tempDir, "release-smoke-second.png");
@@ -122,7 +122,7 @@ if (args.includes("screenshot")) {
 });
 
 test("agentBrowserExtension allows close for reference and negated screenshot paths", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-reference-artifact-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-reference-artifact-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -172,7 +172,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));
 });
 
 test("agentBrowserExtension resolves relative prompt screenshot paths before allowing close", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-relative-artifact-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-relative-artifact-"));
 	const logPath = join(tempDir, "invocations.log");
 	const relativeScreenshotPath = "./release-smoke.png";
 	const absoluteScreenshotPath = join(tempDir, "release-smoke.png");

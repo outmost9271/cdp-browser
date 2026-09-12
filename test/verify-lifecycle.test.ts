@@ -119,7 +119,7 @@ test("parseCliArgs rejects invalid lifecycle options", () => {
 });
 
 test("fake lifecycle agent-browser reports the canonical upstream version without runtime state", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "piab-lifecycle-fake-version-"));
+	const directory = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-fake-version-"));
 	const scriptPath = join(directory, "agent-browser");
 	try {
 		await writeFile(scriptPath, lifecycleModule.fakeAgentBrowserScript(), "utf8");
@@ -134,17 +134,17 @@ test("fake lifecycle agent-browser reports the canonical upstream version withou
 
 test("createLifecycleSessionId returns an exact-session-safe id", () => {
 	const id = createLifecycleSessionId(4242);
-	assert.equal(id, "piab-lifecycle-4242");
+	assert.equal(id, "cdpb-lifecycle-4242");
 	assert.match(id, /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/);
 });
 
 test("buildPiLaunchArgs approves project trust and pins lifecycle launches to the exact session id", () => {
-	assert.deepEqual(buildPiLaunchArgs({ model: "zai/glm-5.2", sessionId: "piab-lifecycle-4242" }), [
+	assert.deepEqual(buildPiLaunchArgs({ model: "zai/glm-5.2", sessionId: "cdpb-lifecycle-4242" }), [
 		"--approve",
 		"--model",
 		"zai/glm-5.2",
 		"--session-id",
-		"piab-lifecycle-4242",
+		"cdpb-lifecycle-4242",
 	]);
 });
 
@@ -156,7 +156,7 @@ test("paneLooksReady accepts exact-session relaunches with non-zero context usag
 });
 
 test("tmuxActiveTarget uses the active window instead of a hard-coded pane index", () => {
-	assert.equal(tmuxActiveTarget("piab-lifecycle-123"), "piab-lifecycle-123:");
+	assert.equal(tmuxActiveTarget("cdpb-lifecycle-123"), "cdpb-lifecycle-123:");
 });
 
 test("buildSettingsPayload isolates the configured package source", () => {
@@ -172,17 +172,17 @@ test("buildSettingsPayload isolates the configured package source", () => {
 	assert.equal(settings.enableInstallTelemetry, false);
 });
 
-test("parseJsonl and extraction helpers read agent_browser results and sentinel entries", () => {
+test("parseJsonl and extraction helpers read cdp_browser results and sentinel entries", () => {
 	const entries = parseJsonl([
-		JSON.stringify({ type: "session", id: "piab-lifecycle-4242" }),
-		JSON.stringify({ type: "custom", customType: "piab-lifecycle-sentinel", data: { token: "v1" } }),
-		JSON.stringify({ type: "message", message: { role: "toolResult", toolName: "agent_browser", details: { sessionName: "s1", fullOutputPath: "/tmp/a.txt" } } }),
+		JSON.stringify({ type: "session", id: "cdpb-lifecycle-4242" }),
+		JSON.stringify({ type: "custom", customType: "cdpb-lifecycle-sentinel", data: { token: "v1" } }),
+		JSON.stringify({ type: "message", message: { role: "toolResult", toolName: "cdp_browser", details: { sessionName: "s1", fullOutputPath: "/tmp/a.txt" } } }),
 		JSON.stringify({ type: "message", message: { role: "toolResult", toolName: "bash", details: { fullOutputPath: "/tmp/ignored.txt" } } }),
-		JSON.stringify({ type: "custom", customType: "piab-lifecycle-sentinel", data: { token: "v2" } }),
+		JSON.stringify({ type: "custom", customType: "cdpb-lifecycle-sentinel", data: { token: "v2" } }),
 		"",
 	].join("\n"));
 
-	assert.equal(sessionHeaderId(entries), "piab-lifecycle-4242");
+	assert.equal(sessionHeaderId(entries), "cdpb-lifecycle-4242");
 	assert.deepEqual(sentinelTokens(entries), ["v1", "v2"]);
 	const results = agentBrowserResults(entries);
 	assert.equal(results.length, 1);
@@ -195,7 +195,7 @@ const failedResumeSnapshot: LifecycleResult = {
 	isError: true,
 	content: [{ type: "text", text: "agent-browser could not re-select and verify the intended tab before running the command.\nNext actions:\nInspect tabs for React at https://react.dev/ before continuing after tab drift.\nResult category: failure; failureCategory: tab-drift; Pi tool isError: true." }],
 	details: {
-		sessionName: "piab-src-02ac2afca195-63810b22",
+		sessionName: "cdpb-src-02ac2afca195-63810b22",
 		resultCategory: "failure",
 		failureCategory: "tab-drift",
 	},
@@ -234,19 +234,19 @@ test("lifecycle page checks require successful expected-command observed data, n
 });
 
 function lifecycleResultLine(result: LifecycleResult): string {
-	return `${JSON.stringify({ type: "message", message: { role: "toolResult", toolName: "agent_browser", ...result } })}\n`;
+	return `${JSON.stringify({ type: "message", message: { role: "toolResult", toolName: "cdp_browser", ...result } })}\n`;
 }
 
 for (const laterSuccess of [false, true]) {
 	test(`lifecycle wait rejects the first completed mismatch instead of ${laterSuccess ? "choosing a later success" : "timing out"}`, async () => {
-		const directory = await mkdtemp(join(tmpdir(), "piab-lifecycle-results-"));
+		const directory = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-results-"));
 		const sessionFile = join(directory, "session.jsonl");
 		try {
 			await writeFile(sessionFile, lifecycleResultLine(successfulSnapshot) + lifecycleResultLine(failedResumeSnapshot) + (laterSuccess ? lifecycleResultLine(successfulSnapshot) : ""));
 			await assert.rejects(waitForAgentBrowserResult({
 				describe: "same-page snapshot", sessionFile, timeoutMs: 20, sinceCount: 1,
 				predicate: (result) => result.toolCallId === successfulSnapshot.toolCallId,
-			}), /Unexpected agent_browser result.*call_1423577b6db24f3b9b3c6637.*category failure\/tab-drift/);
+			}), /Unexpected cdp_browser result.*call_1423577b6db24f3b9b3c6637.*category failure\/tab-drift/);
 		} finally {
 			await rm(directory, { force: true, recursive: true });
 		}
@@ -254,7 +254,7 @@ for (const laterSuccess of [false, true]) {
 }
 
 test("lifecycle wait validates the completed row outside polling's exception handler", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "piab-lifecycle-results-"));
+	const directory = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-results-"));
 	const sessionFile = join(directory, "session.jsonl");
 	try {
 		await writeFile(sessionFile, lifecycleResultLine(failedResumeSnapshot));
@@ -268,7 +268,7 @@ test("lifecycle wait validates the completed row outside polling's exception han
 });
 
 test("lifecycle wait discovers the initial transcript for observed open validation", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "piab-lifecycle-results-"));
+	const directory = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-results-"));
 	const sessionFile = join(directory, "session.jsonl");
 	try {
 		await writeFile(sessionFile, lifecycleResultLine({ isError: false, details: { command: "open", resultCategory: "success", data: { url: "https://react.dev/" } } }));
@@ -283,7 +283,7 @@ test("lifecycle wait discovers the initial transcript for observed open validati
 });
 
 test("lifecycle wait accepts a newly appended expected QA failure using the original stage predicate", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "piab-lifecycle-results-"));
+	const directory = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-results-"));
 	const sessionFile = join(directory, "session.jsonl");
 	try {
 		await writeFile(sessionFile, "");
@@ -314,16 +314,16 @@ test("parseJsonl reports malformed session transcript lines", () => {
 });
 
 test("injectLifecycleSentinelSource inserts and replaces deterministic command token", () => {
-	const source = 'import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";\n\nexport default function agentBrowserExtension(pi: ExtensionAPI) {\n\tpi.registerTool({ name: "agent_browser" });\n}\n';
+	const source = 'import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";\n\nexport default function agentBrowserExtension(pi: ExtensionAPI) {\n\tpi.registerTool({ name: "cdp_browser" });\n}\n';
 	const v1 = injectLifecycleSentinelSource(source, "v1");
-	assert.match(v1, /registerCommand\("piab-lifecycle-sentinel-v1"/);
+	assert.match(v1, /registerCommand\("cdpb-lifecycle-sentinel-v1"/);
 	assert.match(v1, /token: "v1"/);
 
 	const v2 = injectLifecycleSentinelSource(v1, "v2");
 	assert.doesNotMatch(v2, /token: "v1"/);
-	assert.match(v2, /registerCommand\("piab-lifecycle-sentinel-v2"/);
+	assert.match(v2, /registerCommand\("cdpb-lifecycle-sentinel-v2"/);
 	assert.match(v2, /token: "v2"/);
-	assert.equal((v2.match(/PIAB_LIFECYCLE_SENTINEL_START/g) ?? []).length, 1);
+	assert.equal((v2.match(/PI_CDP_BROWSER_LIFECYCLE_SENTINEL_START/g) ?? []).length, 1);
 });
 
 test("injectLifecycleSentinelSource requires the extension factory marker", () => {

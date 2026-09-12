@@ -81,6 +81,7 @@ import type { FileArtifactMetadata, NetworkRouteRecord, SessionArtifactManifest 
 import { formatSessionArtifactRetentionSummary, getSessionArtifactManifestEntryKey, isPendingRecordingCommand, isSessionArtifactManifest, mergeSessionArtifactManifest, retirePendingRecordingManifestEntries } from "./lib/results/artifact-manifest.js";
 import { appendUniqueAgentBrowserNextActions, applyNamespaceToNextActions, applySessionToNextActions, buildNextToolAction, type AgentBrowserNextAction } from "./lib/results/next-actions.js";
 import { canRegisterWebSearchTool, loadAgentBrowserConfigSync } from "./lib/config.js";
+import { tryResolveAgentBrowserBinary } from "./lib/agent-browser-binary.js";
 import {
 	appendRecordingReservationTransition,
 	applyRecordingArtifactsToReservations,
@@ -190,7 +191,7 @@ function getArtifactPreflightValidationError(options: {
 			const stepValidationError = validateToolArgs(commandStep, { batchStep: true });
 			if (stepValidationError) return `Unsupported batch step ${index + 1}: ${stepValidationError}`;
 			if (sawBatchClose && commandStep[0] === "record" && (commandStep[1] === "start" || commandStep[1] === "restart")) {
-				return `Unsupported batch step ${index + 1}: record ${commandStep[1]} cannot follow close, quit, or exit in one upstream batch because upstream can report success without starting a recording. Split the close and recording into separate agent_browser calls.`;
+				return `Unsupported batch step ${index + 1}: record ${commandStep[1]} cannot follow close, quit, or exit in one upstream batch because upstream can report success without starting a recording. Split the close and recording into separate cdp_browser calls.`;
 			}
 			if (isCloseCommand(commandStep[0])) sawBatchClose = true;
 		}
@@ -274,7 +275,7 @@ function restoreArtifactManifestFromBranch(branch: unknown[]): SessionArtifactMa
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (isSessionArtifactManifest(details?.artifactManifest) && (!restoredManifest || details.artifactManifest.updatedAtMs >= restoredManifest.updatedAtMs)) {
 			restoredManifest = details.artifactManifest;
@@ -300,7 +301,7 @@ function restoreManagedSessionCompatibilityWorkaroundFromBranch(
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (!details) continue;
 		if (getSessionContextKey(typeof details.sessionName === "string" ? details.sessionName : undefined, typeof details.namespace === "string" ? details.namespace : undefined) !== targetKey) continue;
@@ -332,7 +333,7 @@ function restoreManagedSessionHeadedAutosaveDisabledFromBranch(
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (!details) continue;
 		if (getSessionContextKey(typeof details.sessionName === "string" ? details.sessionName : undefined, typeof details.namespace === "string" ? details.namespace : undefined) !== targetKey) continue;
@@ -357,7 +358,7 @@ function restoreManagedSessionHeadedAutosaveIntervalFromBranch(
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (!details) continue;
 		if (getSessionContextKey(typeof details.sessionName === "string" ? details.sessionName : undefined, typeof details.namespace === "string" ? details.namespace : undefined) !== targetKey) continue;
@@ -399,7 +400,7 @@ function restoreAttachedSessionKeysFromBranch(branch: unknown[]): Set<string> {
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (!details) continue;
 		const managedSessionOutcome = isRecord(details.managedSessionOutcome) ? details.managedSessionOutcome : undefined;
@@ -677,7 +678,7 @@ function collectBranchManagedResourceEvents(branch: unknown[]): BranchManagedRes
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		if (!details) continue;
 		eventRank += 1;
@@ -902,7 +903,7 @@ function findPackageRoot(startDir: string): string {
 		const packageJsonPath = join(currentDir, "package.json");
 		if (existsSync(packageJsonPath)) {
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
-			if (packageJson.name === "host-browser") return currentDir;
+			if (packageJson.name === "cdp-browser") return currentDir;
 		}
 		const parentDir = dirname(currentDir);
 		if (parentDir === currentDir) return startDir;
@@ -1114,15 +1115,16 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 
 	const validateUpstreamVersion = async (cwd: string, signal?: AbortSignal): Promise<AgentBrowserToolResult | undefined> => {
 		const processEnvironment = getAgentBrowserProcessEnvironment();
-		const pathKey = `${cwd}\0${processEnvironment.PATH ?? processEnvironment.Path ?? ""}`;
+		const agentBrowserCliPath = tryResolveAgentBrowserBinary();
+		const pathKey = `${cwd}\0${agentBrowserCliPath ?? processEnvironment.PATH ?? processEnvironment.Path ?? ""}`;
 		if (validatedUpstreamPathKeys.has(pathKey)) return undefined;
-		const probe = await runAgentBrowserProcess({ args: ["--version"], cwd, signal, timeoutMs: 5_000 });
+		const probe = await runAgentBrowserProcess({ args: ["--version"], cliPath: agentBrowserCliPath, cwd, signal, timeoutMs: 5_000 });
 		if ((probe.spawnError as NodeJS.ErrnoException | undefined)?.code === "ENOENT" || probe.exitCode === 127 || probe.aborted) return undefined;
 		let error: string | undefined;
 		let observedVersion: string | undefined;
 		if (probe.spawnError || probe.exitCode !== 0) {
 			const detail = redactSensitiveText(probe.spawnError?.message ?? (probe.stderr.trim() || `exit ${probe.exitCode}`));
-			error = `agent-browser --version could not be validated (${detail}). Run host-browser-doctor before browser-backed calls.`;
+			error = `agent-browser --version could not be validated (${detail}). Run cdp-browser-doctor before browser-backed calls.`;
 		} else {
 			observedVersion = parseAgentBrowserVersionOutput(probe.stdout);
 			error = getAgentBrowserVersionValidationError(probe.stdout);
@@ -1460,7 +1462,7 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 				: undefined,
 		].filter((line): line is string => typeof line === "string" && line.length > 0);
 		const runtimeConfigPrompt = browserGuidance.length > 0
-			? `\n\nProject agent_browser config guidance:\n${browserGuidance.map((line) => `- ${line}`).join("\n")}`
+			? `\n\nProject cdp_browser config guidance:\n${browserGuidance.map((line) => `- ${line}`).join("\n")}`
 			: "";
 		return {
 			systemPrompt: `${event.systemPrompt}\n\n${PROJECT_RULE_PROMPT}${runtimeConfigPrompt}`,
@@ -1478,7 +1480,7 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 		) {
 			return {
 				block: true,
-				reason: "Use the native agent_browser tool instead of bash for agent-browser in this environment.",
+				reason: "Use the native cdp_browser tool instead of bash for agent-browser in this environment.",
 			};
 		}
 	});
@@ -1486,7 +1488,7 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 	pi.on("tool_result", async (event) => buildAgentBrowserToolResultPatch(event));
 
 	const agentBrowserTool = {
-		name: "agent_browser",
+		name: "cdp_browser",
 		label: "Agent Browser",
 		description:
 			"Browse and interact with websites using agent-browser. Use this for reading live pages, opening known URLs, taking snapshots or screenshots, clicking links, filling forms, extracting page content, and authenticated/profile-based browser work. Input choice: `script` for one-shot JavaScript orchestration; default `args` for open → snapshot -i → click/fill @refs; `semanticAction` for stable role/text/label targets; `job` or `qa` for multi-step checks; `electron` only for desktop apps; experimental `sourceLookup` / `networkSourceLookup` for candidates only.",

@@ -1,6 +1,6 @@
 import type { TSchema, TSchemaOptions, TUnsafe } from "typebox";
 
-const OPTIONAL_SCHEMA = Symbol("host-browser-optional-schema");
+const OPTIONAL_SCHEMA = Symbol("cdp-browser-optional-schema");
 
 type SchemaObject = TSchema & { [OPTIONAL_SCHEMA]?: true };
 type SchemaProperties = Record<string, TSchema>;

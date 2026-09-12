@@ -649,7 +649,7 @@ const inventorySections = Object.freeze([
       root("plugin show <name>"),
       root("plugin run <name> <type>"),
       ["auth help", "--credential-provider <p>"],
-      ["mcp help", "agent_browser_open"],
+      ["mcp help", "cdp_browser_open"],
       ["mcp help", "--tools"],
       ["plugin help", "Add a plugin from npm or GitHub"],
       ["plugin help", "credential.read"],

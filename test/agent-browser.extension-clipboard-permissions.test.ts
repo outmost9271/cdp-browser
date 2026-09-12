@@ -21,7 +21,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension redacts denied clipboard write payloads from all result surfaces", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-clipboard-denied-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-clipboard-denied-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify click-dispatch probe diagnostics and lifecycle cleanup for the host-browser extension.
+ * Purpose: Verify click-dispatch probe diagnostics and lifecycle cleanup for the cdp-browser extension.
  * Responsibilities: Assert click-dispatch probes report success-only diagnostics and clean up after failed clicks.
  * Scope: Integration-style Node test-runner coverage with fake agent-browser binaries.
  */
@@ -20,7 +20,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension cleans up click dispatch probes after failed clicks", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-failure-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-failure-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -70,7 +70,7 @@ if (args.includes("eval")) {
 });
 
 test("agentBrowserExtension cleans up click dispatch probes during successful dispatch checks", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-success-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-success-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -123,7 +123,7 @@ if (args.includes("eval")) {
 });
 
 test("agentBrowserExtension probes ref clicks with current snapshot accessibility metadata", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -180,7 +180,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension leaves duplicate-name ref clicks upstream-owned", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-duplicate-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-duplicate-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -235,7 +235,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension does not run click-dispatch probes for unresolved find locators", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-find-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-find-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -270,7 +270,7 @@ if (args.includes("eval")) {
 });
 
 test("agentBrowserExtension reports click dispatch diagnostic when upstream reports success without dispatching DOM events", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-click-dispatch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-click-dispatch-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -339,7 +339,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension observes live URL after href-less CSS clicks", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-css-click-url-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-css-click-url-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

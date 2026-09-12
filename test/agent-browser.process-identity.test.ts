@@ -11,14 +11,14 @@ import { normalizeProcessStartIdentity, readProcessStartIdentity } from "../exte
 
 const systemPs = ["/bin/ps", "/usr/bin/ps"].find(existsSync);
 // Explicit modes verify the layout when run in a disposable Linux environment.
-const psLocation = process.env.PI_AGENT_BROWSER_TEST_PS ?? (systemPs ? "system" : "path");
+const psLocation = process.env.PI_CDP_BROWSER_TEST_PS ?? (systemPs ? "system" : "path");
 
 test(`real POSIX ${psLocation} ps preserves process identity and lock integrity`, { skip: !["darwin", "linux"].includes(process.platform) }, async () => {
 	assert.ok(["system", "path", "missing"].includes(psLocation));
 	assert.equal(Boolean(systemPs), psLocation === "system", "test environment must have the requested real ps layout");
 	const originalPath = process.env.PATH;
 	if (psLocation !== "path") process.env.PATH = "";
-	const sessionName = `piab-ps-${psLocation}-${process.pid}`;
+	const sessionName = `cdpb-ps-${psLocation}-${process.pid}`;
 	let lock: Awaited<ReturnType<typeof acquireManagedSessionPolicyLock>>;
 	let recovered: typeof lock;
 	try {

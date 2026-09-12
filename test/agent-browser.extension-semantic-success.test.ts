@@ -18,7 +18,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension enriches semanticAction click success with page state probe and prose parity", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-success-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-success-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

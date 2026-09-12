@@ -1,13 +1,13 @@
-// Platform smoke configuration for host-browser.
+// Platform smoke configuration for cdp-browser.
 // Crabbox owns the target lease/sync loop; this file is the project source of truth for release-blocking platform coverage.
 
 import { CAPABILITY_BASELINE } from "./scripts/agent-browser-capability-baseline.mjs";
 
 const PLATFORM_SMOKE_AGENT_BROWSER_VERSION = CAPABILITY_BASELINE.targetVersion;
-const PLATFORM_SMOKE_UBUNTU_IMAGE = `host-browser-platform:node24-agent-browser${PLATFORM_SMOKE_AGENT_BROWSER_VERSION}`;
+const PLATFORM_SMOKE_UBUNTU_IMAGE = `cdp-browser-platform:node24-agent-browser${PLATFORM_SMOKE_AGENT_BROWSER_VERSION}`;
 
 export default {
-	packageName: "host-browser",
+	packageName: "cdp-browser",
 	artifactRoot: ".artifacts/platform-smoke",
 	requiredTargets: ["macos", "ubuntu", "windows-native"],
 	requiredSuites: ["platform-build", "browser-dogfood-smoke"],

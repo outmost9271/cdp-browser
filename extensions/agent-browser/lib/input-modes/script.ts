@@ -28,7 +28,7 @@ function findPackageRoot(startDir: string): string {
 	for (;;) {
 		if (existsSync(join(currentDir, "package.json"))) return currentDir;
 		const parentDir = dirname(currentDir);
-		if (parentDir === currentDir) throw new Error("Unable to resolve the host-browser package root.");
+		if (parentDir === currentDir) throw new Error("Unable to resolve the cdp-browser package root.");
 		currentDir = parentDir;
 	}
 }
@@ -45,7 +45,7 @@ function resolveScriptWorkerRuntime(): string {
 	// A single-executable-application host sets process.execPath to its own binary, which is not a
 	// Node runtime, so the sandbox worker could never start. Prefer an explicit override, keep the
 	// current runtime when it already is Node, and fall back to well-known Node locations otherwise.
-	const override = process.env.PIAB_SCRIPT_NODE;
+	const override = process.env.PI_CDP_BROWSER_SCRIPT_NODE;
 	if (override && isExecutableFile(override)) return override;
 	if (!/^node(js)?(\.exe)?$/i.test(basename(process.execPath))) {
 		for (const candidate of ["/pi/node/tool/fnm/aliases/default/bin/node", "/usr/local/bin/node", "/usr/bin/node"]) {
@@ -57,11 +57,11 @@ function resolveScriptWorkerRuntime(): string {
 
 function resolveScriptWorkerPath(): string {
 	const workerPath = join(findPackageRoot(dirname(fileURLToPath(import.meta.url))), "dist", "extensions", "agent-browser", "script-worker.js");
-	if (!existsSync(workerPath)) throw new Error("Compiled script worker is missing; run npm run build or reinstall host-browser.");
+	if (!existsSync(workerPath)) throw new Error("Compiled script worker is missing; run npm run build or reinstall cdp-browser.");
 	return workerPath;
 }
 
-const SCRIPT_SESSION_NAME_PATTERN = /^piab-script-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const SCRIPT_SESSION_NAME_PATTERN = /^cdpb-script-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SCRIPT_ALLOWED_LAUNCH_FLAG = "--allowed-domains";
 const SCRIPT_FORBIDDEN_COMMANDS = new Set(["attach", "auth", "batch", "connect", "script", "session", "state"]);
 const SCRIPT_FORBIDDEN_FLAGS = new Set<string>([
@@ -143,7 +143,7 @@ export function compileAgentBrowserScript(input: unknown): { compiled?: Compiled
 }
 
 export function createAgentBrowserScriptSessionName(): string {
-	return `piab-script-${randomUUID()}`;
+	return `cdpb-script-${randomUUID()}`;
 }
 
 export function createAgentBrowserScriptCloseArgs(sessionName: string): string[] {
@@ -213,7 +213,7 @@ function normalizeBrowserEnvelope(value: AgentBrowserScriptBrowserEnvelope): Age
 		|| typeof value.text !== "string"
 		|| typeof value.summary !== "string"
 		|| (value.resultCategory !== "success" && value.resultCategory !== "failure")) {
-		return buildRejectedCallEnvelope("The ordinary agent_browser executor returned an invalid script envelope.", false);
+		return buildRejectedCallEnvelope("The ordinary cdp_browser executor returned an invalid script envelope.", false);
 	}
 	return {
 		data: value.data ?? null,
@@ -477,7 +477,7 @@ export async function runAgentBrowserScript(options: RunAgentBrowserScriptOption
 					try {
 						envelope = normalizeBrowserEnvelope(await options.dispatch(validated.params, activeCallController.signal));
 					} catch {
-						envelope = buildRejectedCallEnvelope("The ordinary agent_browser executor failed while dispatching this call.", false);
+						envelope = buildRejectedCallEnvelope("The ordinary cdp_browser executor failed while dispatching this call.", false);
 					} finally {
 						activeCallController = undefined;
 					}

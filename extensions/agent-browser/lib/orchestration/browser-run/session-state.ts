@@ -7,6 +7,7 @@ import type { PersistentSessionArtifactStore } from "../../temp.js";
 import type { ElectronLaunchStatus } from "../../electron/cleanup.js";
 import type { ElectronCdpTarget, ElectronLaunchRecord } from "../../electron/launch.js";
 import { runAgentBrowserProcess } from "../../process.js";
+import { tryResolveAgentBrowserBinary } from "../../agent-browser-binary.js";
 import { buildAgentBrowserNextActions } from "../../results/action-recommendations.js";
 import { parseAgentBrowserEnvelope } from "../../results/envelope.js";
 import { type AgentBrowserNextAction } from "../../results/contracts.js";
@@ -327,11 +328,11 @@ export function mergeNavigationSummaryIntoData(data: unknown, navigationSummary:
 }
 
 export function buildAboutBlankRecoveryHint(): string {
-	return "agent_browser detected that the active tab became about:blank while this session still had a prior intended tab. Run tab list for this session and re-select the intended tab, or retry with sessionMode:fresh if the tab is gone.".replace("sessionMode:fresh", "sessionMode=fresh");
+	return "cdp_browser detected that the active tab became about:blank while this session still had a prior intended tab. Run tab list for this session and re-select the intended tab, or retry with sessionMode:fresh if the tab is gone.".replace("sessionMode:fresh", "sessionMode=fresh");
 }
 
 export function buildAboutBlankWarning(mismatch: AboutBlankSessionMismatch): string {
-	return `Warning: agent_browser detected that this session returned about:blank while the prior intended tab was ${mismatch.targetUrl}. ${mismatch.recoveryApplied ? "The wrapper re-selected the intended tab for the session." : "No matching tab could be re-selected; run tab list for the same session or retry with sessionMode=fresh."}`;
+	return `Warning: cdp_browser detected that this session returned about:blank while the prior intended tab was ${mismatch.targetUrl}. ${mismatch.recoveryApplied ? "The wrapper re-selected the intended tab for the session." : "No matching tab could be re-selected; run tab list for the same session or retry with sessionMode=fresh."}`;
 }
 
 function extractBatchResultCommand(item: Record<string, unknown>): string[] {
@@ -567,6 +568,7 @@ export async function runSessionCommandData(options: {
 
 	const processResult = await runAgentBrowserProcess({
 		args: ["--json", ...(namespace !== undefined || pinNamespace ? ["--namespace", namespace ?? ""] : []), "--session", sessionName, ...args],
+		cliPath: tryResolveAgentBrowserBinary(),
 		cwd,
 		env,
 		signal,
@@ -723,7 +725,7 @@ function buildElectronReattachNextAction(record: ElectronLaunchRecord, liveTarge
 		params: { args: ["connect", endpoint], sessionMode: "fresh" },
 		reason: "Attach a fresh managed session to the same wrapper-tracked Electron debug endpoint when the current session no longer matches the live renderer.",
 		safety: "Creates a new managed browser session; it does not mutate the Electron app. Keep the launchId for later status and cleanup.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 
@@ -848,7 +850,7 @@ export function buildElectronRefFreshnessNextActions(sessionName: string | undef
 		params: { args: sessionName ? ["--session", sessionName, "snapshot", "-i"] : ["snapshot", "-i"] },
 		reason: "Electron UIs often rerender without changing URL; refresh refs before using old @e handles again.",
 		safety: "Read-only snapshot; avoids stale same-URL refs after quick-pick, modal, theme, or editor rerenders.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	}];
 }
 

@@ -228,7 +228,7 @@ function buildScriptCloseNextAction(sessionName: string): AgentBrowserNextAction
 		params: { args: createAgentBrowserScriptCloseArgs(sessionName) },
 		reason: "Retry closing the isolated wrapper-owned script session after automatic cleanup failed.",
 		safety: "Use these exact args; do not add profile, state, restore, namespace, or connection flags.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 

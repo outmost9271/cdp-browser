@@ -11,7 +11,7 @@ import {
 	type WebSearchProvider,
 } from "./config.js";
 
-export const AGENT_BROWSER_WEB_SEARCH_TOOL_NAME = "agent_browser_web_search";
+export const AGENT_BROWSER_WEB_SEARCH_TOOL_NAME = "cdp_browser_web_search";
 export const BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
 export const EXA_SEARCH_ENDPOINT = "https://api.exa.ai/search";
 export const DEFAULT_SEARCH_RESULT_COUNT = 5;
@@ -545,7 +545,7 @@ function formatSearchHttpError(provider: WebSearchProvider, status: number, stat
 	const errorPreview = cleanSearchText(redactSearchSecret(body, apiKey), 300);
 	if (status === 429) {
 		const preview = errorPreview ? ` Upstream details: ${redactSearchSecret(errorPreview, apiKey)}` : "";
-		return `${providerLabel} search rate limit exceeded (HTTP 429). Do not issue parallel or repeated agent_browser_web_search calls; use one high-signal query, inspect those results, then wait before retrying or ask the user to adjust their ${providerLabel} API plan/limits.${preview}`;
+		return `${providerLabel} search rate limit exceeded (HTTP 429). Do not issue parallel or repeated cdp_browser_web_search calls; use one high-signal query, inspect those results, then wait before retrying or ask the user to adjust their ${providerLabel} API plan/limits.${preview}`;
 	}
 	return `${providerLabel} search failed with HTTP ${status}: ${errorPreview ? redactSearchSecret(errorPreview, apiKey) : statusText}`;
 }
@@ -722,8 +722,8 @@ export function dedupeSearchResults(results: NormalizedSearchResult[]): Normaliz
 }
 
 function buildMissingCredentialError(provider: WebSearchProviderParam): string {
-	if (provider === "brave") return "agent_browser_web_search provider brave was requested but no BRAVE_API_KEY/config credential resolved.";
-	if (provider === "exa") return "agent_browser_web_search provider exa was requested but no EXA_API_KEY/config credential resolved.";
+	if (provider === "brave") return "cdp_browser_web_search provider brave was requested but no BRAVE_API_KEY/config credential resolved.";
+	if (provider === "exa") return "cdp_browser_web_search provider exa was requested but no EXA_API_KEY/config credential resolved.";
 	return "No Exa or Brave web search credential resolved. Configure webSearch.exaApiKey or webSearch.braveApiKey, or load EXA_API_KEY/BRAVE_API_KEY in the runtime environment.";
 }
 
@@ -756,19 +756,19 @@ export function createAgentBrowserWebSearchTool(
 		promptSnippet: "Search the live web with Exa or Brave for current or external information.",
 		promptGuidelines: [
 			WEB_SEARCH_PROMPT_GUIDELINE,
-			"agent_browser_web_search chooses Exa or Brave from configured keys; when both are available, Exa is preferred by default unless webSearch.preferredProvider says otherwise. Use provider only when the user/config calls for a specific provider.",
-			"Use Exa deep only when deep-lite may miss angles, and deep-reasoning only for exhaustive or still-thin research. Do not run parallel agent_browser_web_search calls; make one high-signal query, inspect its results, then at most one follow-up.",
-			"If agent_browser_web_search returns HTTP 429, stop searching and tell the user the API plan/rate limit needs time or a plan change.",
-			"After using agent_browser_web_search, cite result URLs in the final answer when web evidence informed the answer.",
+			"cdp_browser_web_search chooses Exa or Brave from configured keys; when both are available, Exa is preferred by default unless webSearch.preferredProvider says otherwise. Use provider only when the user/config calls for a specific provider.",
+			"Use Exa deep only when deep-lite may miss angles, and deep-reasoning only for exhaustive or still-thin research. Do not run parallel cdp_browser_web_search calls; make one high-signal query, inspect its results, then at most one follow-up.",
+			"If cdp_browser_web_search returns HTTP 429, stop searching and tell the user the API plan/rate limit needs time or a plan change.",
+			"After using cdp_browser_web_search, cite result URLs in the final answer when web evidence informed the answer.",
 		],
 		parameters: AgentBrowserWebSearchParams,
 		async execute(_toolCallId: string, params: AgentBrowserWebSearchParamsInput, signal?: AbortSignal, _onUpdate?: unknown, ctx?: { cwd: string; isProjectTrusted?: () => boolean }) {
 			const runtimeConfigState = ctx ? options.loadConfigState?.(ctx) ?? configState : configState;
 			if (runtimeConfigState.errors.length > 0) {
-				throw new Error(`agent_browser_web_search config is invalid: ${runtimeConfigState.errors.join("; ")}`);
+				throw new Error(`cdp_browser_web_search config is invalid: ${runtimeConfigState.errors.join("; ")}`);
 			}
 			if (!runtimeConfigState.webSearchEnabled) {
-				throw new Error("agent_browser_web_search is disabled by host-browser config.");
+				throw new Error("cdp_browser_web_search is disabled by cdp-browser config.");
 			}
 			const requestedProvider = params.provider ?? "auto";
 			const resolved = await resolvePreferredWebSearchCredential(runtimeConfigState, { provider: requestedProvider, signal });

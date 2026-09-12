@@ -15,6 +15,7 @@ import { isManagedSessionRestoreKey } from "../../managed-session-storage.js";
 import { isRecord } from "../../parsing.js";
 import { getAgentBrowserProcessEnvironment } from "../../process-environment.js";
 import { runAgentBrowserProcess, withAttachedBrowserSessionContext } from "../../process.js";
+import { tryResolveAgentBrowserBinary } from "../../agent-browser-binary.js";
 import { getAgentBrowserErrorText, parseAgentBrowserEnvelope } from "../../results/envelope.js";
 import { redactInvocationArgs } from "../../runtime.js";
 import { runSessionCommandData } from "./session-state.js";
@@ -48,6 +49,7 @@ export async function inspectManagedSessionDaemon(options: {
 }): Promise<ManagedSessionDaemonInspection> {
 	const processResult = await runAgentBrowserProcess({
 		args: ["--json", "--namespace", options.namespace ?? "", "--session", options.sessionName, "session", "info"],
+		cliPath: tryResolveAgentBrowserBinary(),
 		cwd: options.cwd,
 		env: getHeadedManagedAutosaveEnv(options.headedManagedAutosaveInterval),
 		preserveAttachedBrowserSession: options.preserveAttachedBrowserSession,
@@ -200,6 +202,7 @@ export async function closeManagedSession(options: {
 			&& isManagedSessionRestoreKey(daemonRestoreKey) ? daemonRestoreKey : null;
 		const processResult = await runAgentBrowserProcess({
 			args: closeArgs,
+			cliPath: tryResolveAgentBrowserBinary(),
 			cwd: options.cwd,
 			env: { AGENT_BROWSER_JSON: "1", ...getHeadedManagedAutosaveEnv(options.headedManagedAutosaveInterval) },
 			managedSessionRestoreState: options.restoreState,

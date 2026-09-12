@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { CAPABILITY_BASELINE } from "../agent-browser-capability-baseline.mjs";
 import { buildTargetBaseArgs } from "./crabbox-runner.mjs";
 
-const DEFAULT_UBUNTU_IMAGE = `host-browser-platform:node24-agent-browser${CAPABILITY_BASELINE.targetVersion}`;
+const DEFAULT_UBUNTU_IMAGE = `cdp-browser-platform:node24-agent-browser${CAPABILITY_BASELINE.targetVersion}`;
 
 function env(name) {
 	return process.env[name] ?? "";
@@ -179,7 +179,7 @@ function parseLeaseId(text) {
 }
 
 export function disposableWindowsAgentBrowserProbe(cbox, config, expectedVersion) {
-	const slug = "piab-doctor-agent-browser";
+	const slug = "cdpb-doctor-agent-browser";
 	const baseArgs = buildTargetBaseArgs("windows-native", config);
 	const warm = crabbox(cbox, ["warmup", ...baseArgs, "--slug", slug, "--keep", "--reclaim"], 300_000);
 	const leaseId = parseLeaseId(`${warm.stdout}\n${warm.stderr}`) ?? slug;
@@ -232,7 +232,7 @@ function checkAgentBrowserVersion(expectedVersion, failures, command = "agent-br
 
 export async function runDoctor(config) {
 	const failures = { count: 0 };
-	const packageName = config?.packageName ?? "host-browser";
+	const packageName = config?.packageName ?? "cdp-browser";
 	const artifactRoot = config?.artifactRoot ?? ".artifacts/platform-smoke";
 	const nodeMajor = config?.nodeValidationMajor ?? 22;
 	const agentBrowserVersion = config?.agentBrowserVersion;

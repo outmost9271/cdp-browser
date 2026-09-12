@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify pure runtime planning and policy helpers for the host-browser extension.
+ * Purpose: Verify pure runtime planning and policy helpers for the cdp-browser extension.
  * Responsibilities: Assert session naming/state, execution-plan argument injection, and redaction helpers.
  * Scope: Unit-style Node test-runner coverage for stable helper behavior; extension entrypoint lifecycle tests live in focused integration suites.
  * Usage: Run with `npx tsx --test test/agent-browser.runtime.test.ts` or via `npm run verify`.
@@ -41,13 +41,13 @@ import { createToolBranchEntry } from "./helpers/agent-browser-harness.js";
 
 test("buildExecutionPlan rejects ambiguous session identity flags without rejecting command text", () => {
 	const options = {
-		freshSessionName: "piab-fresh",
+		freshSessionName: "cdpb-fresh",
 		managedSessionActive: true,
-		managedSessionName: "piab-managed",
+		managedSessionName: "cdpb-managed",
 		sessionMode: "auto" as const,
 	};
 	const duplicate = buildExecutionPlan(
-		["--session", "piab-managed", "--session", "caller-owned", "open", "https://example.com"],
+		["--session", "cdpb-managed", "--session", "caller-owned", "open", "https://example.com"],
 		options,
 	);
 	assert.match(duplicate.validationError ?? "", /Multiple --session flags/);
@@ -57,16 +57,16 @@ test("buildExecutionPlan rejects ambiguous session identity flags without reject
 	);
 	assert.match(duplicateNamespace.validationError ?? "", /Multiple --namespace flags/);
 	const afterSentinel = buildExecutionPlan(
-		["--session", "piab-managed", "fill", "#field", "--", "--session", "caller-owned"],
+		["--session", "cdpb-managed", "fill", "#field", "--", "--session", "caller-owned"],
 		options,
 	);
 	assert.match(afterSentinel.validationError ?? "", /Multiple --session flags/);
 	const launchArgValue = buildExecutionPlan(
-		["--session", "piab-managed", "--args", "--session=browser-flag-value", "open", "https://example.com"],
+		["--session", "cdpb-managed", "--args", "--session=browser-flag-value", "open", "https://example.com"],
 		{ ...options, managedSessionActive: false },
 	);
 	assert.doesNotMatch(launchArgValue.validationError ?? "", /Multiple --session flags/);
-	assert.equal(launchArgValue.sessionName, "piab-managed");
+	assert.equal(launchArgValue.sessionName, "cdpb-managed");
 	const commandFlagSmuggle = buildExecutionPlan(
 		["wait", "--text", "Dashboard", "--timeout", "--session", "caller-owned", "5000"],
 		options,
@@ -81,16 +81,16 @@ test("buildExecutionPlan rejects ambiguous session identity flags without reject
 
 test("createImplicitSessionName is stable for a persisted pi session", () => {
 	const sessionId = "12345678-1234-5678-9abc-def012345678";
-	const cwd = "/Users/example/Projects/host-browser";
+	const cwd = "/Users/example/Projects/cdp-browser";
 	const one = createImplicitSessionName(sessionId, cwd, "ignored-a", "linux");
 	const two = createImplicitSessionName(sessionId, cwd, "ignored-b", "linux");
 
 	assert.equal(one, two);
-	assert.match(one, /^piab-host-browser-[a-f0-9]{12}-[a-f0-9]{8}$/);
+	assert.match(one, /^cdpb-cdp-browser-[a-f0-9]{12}-[a-f0-9]{8}$/);
 });
 
 test("createImplicitSessionName hashes the full Pi session id", () => {
-	const cwd = "/Users/example/Projects/host-browser";
+	const cwd = "/Users/example/Projects/cdp-browser";
 	const one = createImplicitSessionName("019fe81c-92dd-7000-8000-000000000001", cwd, "ignored", "linux");
 	const two = createImplicitSessionName("019fe81c-92dd-7000-8000-000000000002", cwd, "ignored", "linux");
 
@@ -103,8 +103,8 @@ test("createImplicitSessionName includes cwd isolation for same-named checkouts"
 	const two = createImplicitSessionName(sessionId, "/tmp/bar/app", "ignored-b", "linux");
 
 	assert.notEqual(one, two);
-	assert.match(one, /^piab-app-[a-f0-9]{12}-[a-f0-9]{8}$/);
-	assert.match(two, /^piab-app-[a-f0-9]{12}-[a-f0-9]{8}$/);
+	assert.match(one, /^cdpb-app-[a-f0-9]{12}-[a-f0-9]{8}$/);
+	assert.match(two, /^cdpb-app-[a-f0-9]{12}-[a-f0-9]{8}$/);
 });
 
 test("Android managed session names retain full identity entropy within namespaced socket limits", () => {
@@ -112,7 +112,7 @@ test("Android managed session names retain full identity entropy within namespac
 	const fresh = createFreshSessionName(base, "seed", 1);
 	const socketDir = getAgentBrowserSocketDir("android", 10_589, "com.termux");
 
-	assert.match(base, /^piab-[a-f0-9]{20}$/);
+	assert.match(base, /^cdpb-[a-f0-9]{20}$/);
 	assert.equal(
 		getAgentBrowserSocketPathValidationError({ args: ["--namespace", "termux", "--session", fresh, "open", "about:blank"], platform: "android", socketDir: String(socketDir) }),
 		undefined,
@@ -120,10 +120,10 @@ test("Android managed session names retain full identity entropy within namespac
 });
 
 test("getAgentBrowserSocketDir uses a short user-specific unix socket directory and skips windows", () => {
-	assert.equal(getAgentBrowserSocketDir("darwin", 501), "/private/tmp/piab-501");
-	assert.equal(getAgentBrowserSocketDir("linux", 1000), "/tmp/piab-1000");
-	assert.equal(getAgentBrowserSocketDir("android", 10_589, "com.termux"), "/data/data/com.termux/piab");
-	assert.equal(getAgentBrowserSocketDir("android", 10_589, "../invalid"), "/tmp/piab-10589");
+	assert.equal(getAgentBrowserSocketDir("darwin", 501), "/private/tmp/cdpb-501");
+	assert.equal(getAgentBrowserSocketDir("linux", 1000), "/tmp/cdpb-1000");
+	assert.equal(getAgentBrowserSocketDir("android", 10_589, "com.termux"), "/data/data/com.termux/cdpb");
+	assert.equal(getAgentBrowserSocketDir("android", 10_589, "../invalid"), "/tmp/cdpb-10589");
 	assert.equal(getAgentBrowserSocketDir("win32", undefined), undefined);
 });
 
@@ -165,79 +165,79 @@ test("implicit session timeout helpers prefer explicit overrides and safe defaul
 	assert.equal(
 		getImplicitSessionIdleTimeoutMs({
 			AGENT_BROWSER_IDLE_TIMEOUT_MS: "2100",
-			PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1200",
+			PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1200",
 		}),
 		1200,
 	);
 	assert.equal(getImplicitSessionIdleTimeoutMs({ AGENT_BROWSER_IDLE_TIMEOUT_MS: "2100" }), 2100);
-	assert.equal(getImplicitSessionIdleTimeoutMs({ PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "invalid" }), 900000);
-	assert.equal(getImplicitSessionCloseTimeoutMs({ PI_AGENT_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS: "250" }), 250);
-	assert.equal(getImplicitSessionCloseTimeoutMs({ PI_AGENT_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS: "invalid" }), 5_000);
+	assert.equal(getImplicitSessionIdleTimeoutMs({ PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "invalid" }), 900000);
+	assert.equal(getImplicitSessionCloseTimeoutMs({ PI_CDP_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS: "250" }), 250);
+	assert.equal(getImplicitSessionCloseTimeoutMs({ PI_CDP_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS: "invalid" }), 5_000);
 });
 
 test("resolveManagedSessionState only adopts successful managed sessions and identifies replaced sessions", () => {
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "open",
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			priorActive: false,
-			priorSessionName: "piab-demo-123",
+			priorSessionName: "cdpb-demo-123",
 			succeeded: false,
 		}),
-		{ active: false, sessionName: "piab-demo-123" },
+		{ active: false, sessionName: "cdpb-demo-123" },
 	);
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "open",
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			priorActive: false,
-			priorSessionName: "piab-demo-123",
+			priorSessionName: "cdpb-demo-123",
 			succeeded: true,
 		}),
-		{ active: true, sessionName: "piab-demo-123", replacedSessionName: undefined },
+		{ active: true, sessionName: "cdpb-demo-123", replacedSessionName: undefined },
 	);
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "open",
-			managedSessionName: "piab-demo-123-fresh",
+			managedSessionName: "cdpb-demo-123-fresh",
 			priorActive: true,
-			priorSessionName: "piab-demo-123",
+			priorSessionName: "cdpb-demo-123",
 			succeeded: true,
 		}),
-		{ active: true, sessionName: "piab-demo-123-fresh", replacedSessionName: "piab-demo-123" },
+		{ active: true, sessionName: "cdpb-demo-123-fresh", replacedSessionName: "cdpb-demo-123" },
 	);
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "close",
-			managedSessionName: "piab-demo-123-fresh",
+			managedSessionName: "cdpb-demo-123-fresh",
 			priorActive: true,
-			priorSessionName: "piab-demo-123-fresh",
+			priorSessionName: "cdpb-demo-123-fresh",
 			succeeded: true,
 		}),
-		{ active: false, sessionName: "piab-demo-123-fresh" },
+		{ active: false, sessionName: "cdpb-demo-123-fresh" },
 	);
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "close",
-			managedSessionName: "piab-demo-123-fresh",
+			managedSessionName: "cdpb-demo-123-fresh",
 			managedSessionNamespace: undefined,
 			priorActive: true,
 			priorNamespace: "review",
-			priorSessionName: "piab-demo-123-fresh",
+			priorSessionName: "cdpb-demo-123-fresh",
 			succeeded: true,
 		}),
-		{ active: true, namespace: "review", sessionName: "piab-demo-123-fresh" },
+		{ active: true, namespace: "review", sessionName: "cdpb-demo-123-fresh" },
 	);
 	assert.deepEqual(
 		resolveManagedSessionState({
 			command: "open",
-			managedSessionName: "piab-demo-123-fresh",
+			managedSessionName: "cdpb-demo-123-fresh",
 			managedSessionNamespace: "review",
 			priorActive: true,
-			priorSessionName: "piab-demo-123",
+			priorSessionName: "cdpb-demo-123",
 			succeeded: true,
 		}),
-		{ active: true, namespace: "review", sessionName: "piab-demo-123-fresh", replacedSessionName: "piab-demo-123" },
+		{ active: true, namespace: "review", sessionName: "cdpb-demo-123-fresh", replacedSessionName: "cdpb-demo-123" },
 	);
 });
 
@@ -249,7 +249,7 @@ test("restoreManagedSessionStateFromBranch ignores inspection entries and recons
 					args: ["--version"],
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -259,7 +259,7 @@ test("restoreManagedSessionStateFromBranch ignores inspection entries and recons
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -269,7 +269,7 @@ test("restoreManagedSessionStateFromBranch ignores inspection entries and recons
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -279,12 +279,12 @@ test("restoreManagedSessionStateFromBranch ignores inspection entries and recons
 					command: "snapshot",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.deepEqual(restored, {
@@ -292,7 +292,7 @@ test("restoreManagedSessionStateFromBranch ignores inspection entries and recons
 		freshSessionOrdinal: 1,
 		managedSessionRestoreDisabledIdentities: [],
 		replacedSessionName: undefined,
-		sessionName: "piab-demo-123-fresh-aaa",
+		sessionName: "cdpb-demo-123-fresh-aaa",
 	});
 });
 
@@ -306,7 +306,7 @@ test("restoreManagedSessionStateFromBranch preserves managed session namespace",
 					exitCode: 0,
 					namespace: "review",
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -317,17 +317,17 @@ test("restoreManagedSessionStateFromBranch preserves managed session namespace",
 					exitCode: 0,
 					namespace: "review",
 					sessionMode: "auto",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
 	assert.equal(restored.namespace, "review");
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-aaa");
 
 	const afterDefaultNamespaceClose = restoreManagedSessionStateFromBranch(
 		[
@@ -338,22 +338,22 @@ test("restoreManagedSessionStateFromBranch preserves managed session namespace",
 					exitCode: 0,
 					namespace: "review",
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
 			createToolBranchEntry({
 				details: {
-					args: ["--session", "piab-demo-123-fresh-aaa", "close"],
+					args: ["--session", "cdpb-demo-123-fresh-aaa", "close"],
 					command: "close",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 	assert.equal(afterDefaultNamespaceClose.active, true);
 	assert.equal(afterDefaultNamespaceClose.namespace, "review");
@@ -368,7 +368,7 @@ test("restoreManagedSessionStateFromBranch honors managedSessionOutcome replacem
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -379,26 +379,26 @@ test("restoreManagedSessionStateFromBranch honors managedSessionOutcome replacem
 					managedSessionOutcome: {
 						activeAfter: true,
 						activeBefore: true,
-						attemptedSessionName: "piab-demo-123-fresh-aaa",
-						currentSessionName: "piab-demo-123-fresh-aaa",
-						previousSessionName: "piab-demo-123",
-						replacedSessionName: "piab-demo-123",
+						attemptedSessionName: "cdpb-demo-123-fresh-aaa",
+						currentSessionName: "cdpb-demo-123-fresh-aaa",
+						previousSessionName: "cdpb-demo-123",
+						replacedSessionName: "cdpb-demo-123",
 						sessionMode: "fresh",
 						status: "replaced",
 						succeeded: false,
 					},
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 				isError: true,
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-aaa");
 	assert.equal(restored.freshSessionOrdinal, 1);
 });
 
@@ -411,7 +411,7 @@ test("restoreManagedSessionStateFromBranch honors a nested close outcome after a
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -422,24 +422,24 @@ test("restoreManagedSessionStateFromBranch honors a nested close outcome after a
 					managedSessionOutcome: {
 						activeAfter: false,
 						activeBefore: true,
-						attemptedSessionName: "piab-demo-123",
-						previousSessionName: "piab-demo-123",
+						attemptedSessionName: "cdpb-demo-123",
+						previousSessionName: "cdpb-demo-123",
 						sessionMode: "auto",
 						status: "closed",
 						succeeded: true,
 					},
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 				isError: true,
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.closedSessionName, "piab-demo-123");
+	assert.equal(restored.closedSessionName, "cdpb-demo-123");
 });
 
 test("restoreManagedSessionStateFromBranch keeps unknown post-close launches active", () => {
@@ -451,7 +451,7 @@ test("restoreManagedSessionStateFromBranch keeps unknown post-close launches act
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -464,12 +464,12 @@ test("restoreManagedSessionStateFromBranch keeps unknown post-close launches act
 					],
 					command: "batch",
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
@@ -485,7 +485,7 @@ test("restoreManagedSessionStateFromBranch preserves a terminal batch close thro
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -498,16 +498,16 @@ test("restoreManagedSessionStateFromBranch preserves a terminal batch close thro
 					],
 					command: "batch",
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.closedSessionName, "piab-demo-123");
+	assert.equal(restored.closedSessionName, "cdpb-demo-123");
 });
 
 test("restoreManagedSessionStateFromBranch keeps a lifecycle-proven post-close record stop active", () => {
@@ -519,7 +519,7 @@ test("restoreManagedSessionStateFromBranch keeps a lifecycle-proven post-close r
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -532,16 +532,16 @@ test("restoreManagedSessionStateFromBranch keeps a lifecycle-proven post-close r
 					],
 					command: "batch",
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123");
+	assert.equal(restored.sessionName, "cdpb-demo-123");
 	assert.equal(restored.closedSessionName, undefined);
 });
 
@@ -559,22 +559,22 @@ test("restoreManagedSessionStateFromBranch keeps a first-call failed post-close 
 					managedSessionOutcome: {
 						activeAfter: false,
 						activeBefore: false,
-						attemptedSessionName: "piab-demo-123",
+						attemptedSessionName: "cdpb-demo-123",
 						status: "abandoned",
 						succeeded: false,
 					},
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 				isError: true,
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123");
+	assert.equal(restored.sessionName, "cdpb-demo-123");
 	assert.equal(restored.closedSessionName, undefined);
 });
 
@@ -587,7 +587,7 @@ test("restoreManagedSessionStateFromBranch applies close --all to the active nam
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -603,11 +603,11 @@ test("restoreManagedSessionStateFromBranch applies close --all to the active nam
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.closedSessionName, "piab-demo-123");
+	assert.equal(restored.closedSessionName, "cdpb-demo-123");
 });
 
 test("restoreManagedSessionStateFromBranch ignores stale base completions after fresh rotation", () => {
@@ -619,7 +619,7 @@ test("restoreManagedSessionStateFromBranch ignores stale base completions after 
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -629,7 +629,7 @@ test("restoreManagedSessionStateFromBranch ignores stale base completions after 
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -639,16 +639,16 @@ test("restoreManagedSessionStateFromBranch ignores stale base completions after 
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-aaa");
 	assert.equal(restored.freshSessionOrdinal, 1);
 });
 
@@ -661,7 +661,7 @@ test("restoreManagedSessionStateFromBranch ignores stale earlier fresh completio
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -671,7 +671,7 @@ test("restoreManagedSessionStateFromBranch ignores stale earlier fresh completio
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-bbb",
+					sessionName: "cdpb-demo-123-fresh-bbb",
 					usedImplicitSession: false,
 				},
 			}),
@@ -681,16 +681,16 @@ test("restoreManagedSessionStateFromBranch ignores stale earlier fresh completio
 					command: "snapshot",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-bbb");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-bbb");
 	assert.equal(restored.freshSessionOrdinal, 2);
 });
 
@@ -703,7 +703,7 @@ test("restoreManagedSessionStateFromBranch ignores stale close entries for super
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -713,7 +713,7 @@ test("restoreManagedSessionStateFromBranch ignores stale close entries for super
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -723,16 +723,16 @@ test("restoreManagedSessionStateFromBranch ignores stale close entries for super
 					command: "close",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, true);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-aaa");
 	assert.equal(restored.freshSessionOrdinal, 1);
 });
 
@@ -746,7 +746,7 @@ test("restoreManagedSessionStateFromBranch treats upstream close aliases as mana
 						command: "open",
 						exitCode: 0,
 						sessionMode: "auto",
-						sessionName: "piab-demo-123",
+						sessionName: "cdpb-demo-123",
 						usedImplicitSession: true,
 					},
 				}),
@@ -756,17 +756,17 @@ test("restoreManagedSessionStateFromBranch treats upstream close aliases as mana
 						command,
 						exitCode: 0,
 						sessionMode: "auto",
-						sessionName: "piab-demo-123",
+						sessionName: "cdpb-demo-123",
 						usedImplicitSession: true,
 					},
 				}),
 			],
-			"piab-demo-123",
+			"cdpb-demo-123",
 		);
 
 		assert.equal(restored.active, false, command);
-		assert.equal(restored.sessionName, "piab-demo-123", command);
-		assert.equal(restored.closedSessionName, "piab-demo-123", command);
+		assert.equal(restored.sessionName, "cdpb-demo-123", command);
+		assert.equal(restored.closedSessionName, "cdpb-demo-123", command);
 	}
 });
 
@@ -779,42 +779,42 @@ test("restoreManagedSessionStateFromBranch honors explicit close rows for restor
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 			createToolBranchEntry({
 				details: {
-					args: ["--session", "piab-demo-123", "close"],
+					args: ["--session", "cdpb-demo-123", "close"],
 					command: "close",
 					exitCode: 0,
 					managedSessionOutcome: {
 						activeAfter: false,
 						activeBefore: true,
-						attemptedSessionName: "piab-demo-123",
-						currentSessionName: "piab-demo-123-fresh-next",
-						previousSessionName: "piab-demo-123",
+						attemptedSessionName: "cdpb-demo-123",
+						currentSessionName: "cdpb-demo-123-fresh-next",
+						previousSessionName: "cdpb-demo-123",
 						sessionMode: "auto",
 						status: "closed",
 						succeeded: true,
-						summary: "Managed session piab-demo-123 was closed.",
+						summary: "Managed session cdpb-demo-123 was closed.",
 					},
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: false,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.sessionName, "piab-demo-123");
-	assert.equal(restored.closedSessionName, "piab-demo-123");
+	assert.equal(restored.sessionName, "cdpb-demo-123");
+	assert.equal(restored.closedSessionName, "cdpb-demo-123");
 });
 
 test("restoreManagedSessionStateFromBranch reserves auto-used generated fresh names after explicit closes", () => {
-	const baseSessionName = "piab-demo-123";
+	const baseSessionName = "cdpb-demo-123";
 	const firstFreshSessionName = createFreshSessionName(baseSessionName, "seed", 1);
 	const secondFreshSessionName = createFreshSessionName(baseSessionName, "seed", 2);
 	const restored = restoreManagedSessionStateFromBranch(
@@ -902,17 +902,17 @@ test("restoreManagedSessionStateFromBranch honors namespaced Electron cleanup ma
 					managedSessionOutcome: {
 						activeAfter: true,
 						activeBefore: false,
-						attemptedSessionName: "piab-demo-123-fresh-electron",
-						currentSessionName: "piab-demo-123-fresh-electron",
-						previousSessionName: "piab-demo-123",
+						attemptedSessionName: "cdpb-demo-123-fresh-electron",
+						currentSessionName: "cdpb-demo-123-fresh-electron",
+						previousSessionName: "cdpb-demo-123",
 						sessionMode: "fresh",
 						status: "created",
 						succeeded: true,
-						summary: "Managed session piab-demo-123-fresh-electron is now current.",
+						summary: "Managed session cdpb-demo-123-fresh-electron is now current.",
 					},
 					namespace: "team",
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-electron",
+					sessionName: "cdpb-demo-123-fresh-electron",
 					usedImplicitSession: false,
 				},
 			}),
@@ -929,7 +929,7 @@ test("restoreManagedSessionStateFromBranch honors namespaced Electron cleanup ma
 								record: { cleanupState: "partial", launchId: "electron-demo", namespace: "record-fallback", port: 9222, version: 1 },
 								remainingResources: ["process"],
 								steps: [
-									{ namespace: "team", resource: "managed-session", sessionName: "piab-demo-123-fresh-electron", state: "removed" },
+									{ namespace: "team", resource: "managed-session", sessionName: "cdpb-demo-123-fresh-electron", state: "removed" },
 									{ resource: "process", state: "failed" },
 								],
 								summary: "Electron cleanup was partial.",
@@ -941,12 +941,12 @@ test("restoreManagedSessionStateFromBranch honors namespaced Electron cleanup ma
 				isError: true,
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-electron");
-	assert.equal(restored.closedSessionName, "piab-demo-123-fresh-electron");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-electron");
+	assert.equal(restored.closedSessionName, "cdpb-demo-123-fresh-electron");
 	assert.equal(restored.freshSessionOrdinal, 1);
 });
 
@@ -959,7 +959,7 @@ test("restoreManagedSessionStateFromBranch does not resurrect superseded session
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
@@ -969,7 +969,7 @@ test("restoreManagedSessionStateFromBranch does not resurrect superseded session
 					command: "open",
 					exitCode: 0,
 					sessionMode: "fresh",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: false,
 				},
 			}),
@@ -979,7 +979,7 @@ test("restoreManagedSessionStateFromBranch does not resurrect superseded session
 					command: "close",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123-fresh-aaa",
+					sessionName: "cdpb-demo-123-fresh-aaa",
 					usedImplicitSession: true,
 				},
 			}),
@@ -989,16 +989,16 @@ test("restoreManagedSessionStateFromBranch does not resurrect superseded session
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-demo-123",
+					sessionName: "cdpb-demo-123",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.equal(restored.active, false);
-	assert.equal(restored.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(restored.sessionName, "cdpb-demo-123-fresh-aaa");
 	assert.equal(restored.freshSessionOrdinal, 1);
 });
 
@@ -1011,67 +1011,67 @@ test("restoreManagedSessionStateFromBranch keeps cwd isolation by ignoring sessi
 					command: "open",
 					exitCode: 0,
 					sessionMode: "auto",
-					sessionName: "piab-other-checkout-123456781234-abcd1234",
+					sessionName: "cdpb-other-checkout-123456781234-abcd1234",
 					usedImplicitSession: true,
 				},
 			}),
 		],
-		"piab-demo-123",
+		"cdpb-demo-123",
 	);
 
 	assert.deepEqual(restored, {
 		active: false,
 		freshSessionOrdinal: 0,
 		managedSessionRestoreDisabledIdentities: [],
-		sessionName: "piab-demo-123",
+		sessionName: "cdpb-demo-123",
 	});
 });
 
 test("buildExecutionPlan injects --json and the implicit session when needed", () => {
 	const plan = buildExecutionPlan(["open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
-	assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "piab-demo-123", "open", "https://example.com"]);
-	assert.equal(plan.managedSessionName, "piab-demo-123");
-	assert.equal(plan.sessionName, "piab-demo-123");
+	assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "cdpb-demo-123", "open", "https://example.com"]);
+	assert.equal(plan.managedSessionName, "cdpb-demo-123");
+	assert.equal(plan.sessionName, "cdpb-demo-123");
 	assert.equal(plan.usedImplicitSession, true);
 	assert.equal(plan.validationError, undefined);
 
 	const namespaced = buildExecutionPlan(["--namespace", "Review Team!", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
-	assert.deepEqual(namespaced.effectiveArgs, ["--json", "--namespace", "review-team", "--session", "piab-demo-123", "open", "https://example.com"]);
+	assert.deepEqual(namespaced.effectiveArgs, ["--json", "--namespace", "review-team", "--session", "cdpb-demo-123", "open", "https://example.com"]);
 	assert.equal(namespaced.namespace, "review-team");
 });
 
 test("buildExecutionPlan treats upstream close aliases as managed-session closes", () => {
 	for (const command of ["close", "quit", "exit"] as const) {
 		const plan = buildExecutionPlan([command], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
-		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "piab-demo-123", command], command);
-		assert.equal(plan.managedSessionName, "piab-demo-123", command);
-		assert.equal(plan.sessionName, "piab-demo-123", command);
+		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "cdpb-demo-123", command], command);
+		assert.equal(plan.managedSessionName, "cdpb-demo-123", command);
+		assert.equal(plan.sessionName, "cdpb-demo-123", command);
 		assert.equal(plan.usedImplicitSession, true, command);
 	}
 });
 
 test("buildExecutionPlan respects explicit upstream sessions", () => {
 	const plan = buildExecutionPlan(["--session", "custom", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1081,9 +1081,9 @@ test("buildExecutionPlan respects explicit upstream sessions", () => {
 	assert.equal(plan.usedImplicitSession, false);
 
 	const namespaced = buildExecutionPlan(["--session", "custom", "--namespace", "review", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.deepEqual(namespaced.effectiveArgs, ["--json", "--namespace", "review", "--session", "custom", "snapshot", "-i"]);
@@ -1091,9 +1091,9 @@ test("buildExecutionPlan respects explicit upstream sessions", () => {
 	assert.equal(namespaced.namespace, "review");
 
 	const defaultNamespace = buildExecutionPlan(["--namespace", "", "--session", "custom", "close"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		managedSessionNamespace: "prod",
 		sessionMode: "auto",
 	});
@@ -1101,13 +1101,13 @@ test("buildExecutionPlan respects explicit upstream sessions", () => {
 	assert.equal(defaultNamespace.namespace, "");
 
 	const sameNamespace = buildExecutionPlan(["--namespace", "Review", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		managedSessionNamespace: "review",
 		sessionMode: "auto",
 	});
-	assert.deepEqual(sameNamespace.effectiveArgs, ["--json", "--namespace", "review", "--session", "piab-demo-123", "snapshot", "-i"]);
+	assert.deepEqual(sameNamespace.effectiveArgs, ["--json", "--namespace", "review", "--session", "cdpb-demo-123", "snapshot", "-i"]);
 	assert.equal(sameNamespace.validationError, undefined);
 });
 
@@ -1116,60 +1116,60 @@ test("buildExecutionPlan resolves caller-owned session namespaces from argv befo
 	try {
 		process.env.AGENT_BROWSER_NAMESPACE = "Review Space";
 		const inherited = buildExecutionPlan(["--session", "custom", "snapshot", "-i"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(inherited.namespace, "review-space");
 		assert.deepEqual(inherited.effectiveArgs, ["--json", "--session", "custom", "snapshot", "-i"]);
 		const explicitDefault = buildExecutionPlan(["--namespace", "", "--session", "custom", "snapshot", "-i"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(explicitDefault.namespace, "");
-		const wrapperManaged = buildExecutionPlan(["--session", "piab-demo-123", "close"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		const wrapperManaged = buildExecutionPlan(["--session", "cdpb-demo-123", "close"], {
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(wrapperManaged.namespace, undefined);
-		assert.deepEqual(wrapperManaged.effectiveArgs, ["--json", "--session", "piab-demo-123", "close"]);
-		const namespacedManaged = buildExecutionPlan(["--session", "piab-demo-123", "snapshot", "-i"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		assert.deepEqual(wrapperManaged.effectiveArgs, ["--json", "--session", "cdpb-demo-123", "close"]);
+		const namespacedManaged = buildExecutionPlan(["--session", "cdpb-demo-123", "snapshot", "-i"], {
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			managedSessionNamespace: "Review Space",
 			sessionMode: "auto",
 		});
 		assert.equal(namespacedManaged.namespace, "review-space");
-		assert.deepEqual(namespacedManaged.effectiveArgs, ["--json", "--session", "piab-demo-123", "snapshot", "-i"]);
+		assert.deepEqual(namespacedManaged.effectiveArgs, ["--json", "--session", "cdpb-demo-123", "snapshot", "-i"]);
 		assert.equal(namespacedManaged.validationError, undefined);
-		const callerPrefixed = buildExecutionPlan(["--session", "piab-caller-owned", "snapshot", "-i"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		const callerPrefixed = buildExecutionPlan(["--session", "cdpb-caller-owned", "snapshot", "-i"], {
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(callerPrefixed.namespace, "review-space");
-		const wrapperExplicitDefault = buildExecutionPlan(["--namespace", "", "--session", "piab-demo-123", "close"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		const wrapperExplicitDefault = buildExecutionPlan(["--namespace", "", "--session", "cdpb-demo-123", "close"], {
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
-		assert.deepEqual(wrapperExplicitDefault.effectiveArgs, ["--json", "--namespace", "", "--session", "piab-demo-123", "close"]);
+		assert.deepEqual(wrapperExplicitDefault.effectiveArgs, ["--json", "--namespace", "", "--session", "cdpb-demo-123", "close"]);
 		assert.equal(wrapperExplicitDefault.namespace, "");
 
 		for (const override of [undefined, "", "other"]) {
 			const args = [...(override !== undefined ? ["--namespace", override] : []), "close", "--all"];
 			const freshClose = buildExecutionPlan(args, {
-				freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+				freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 				managedSessionActive: true,
-				managedSessionName: "piab-demo-123",
+				managedSessionName: "cdpb-demo-123",
 				managedSessionNamespace: "owned-space",
 				sessionMode: "fresh",
 			});
@@ -1181,14 +1181,14 @@ test("buildExecutionPlan resolves caller-owned session namespaces from argv befo
 			assert.equal(freshClose.validationError, undefined);
 		}
 		for (const sessionMode of ["auto", "fresh"] as const) {
-			const freshSessionName = createFreshSessionName("piab-demo-123", "seed", 1);
+			const freshSessionName = createFreshSessionName("cdpb-demo-123", "seed", 1);
 			const opened = buildExecutionPlan(["open", "https://example.com"], {
 				freshSessionName,
 				managedSessionActive: false,
-				managedSessionName: "piab-demo-123",
+				managedSessionName: "cdpb-demo-123",
 				sessionMode,
 			});
-			const selectedSession = sessionMode === "fresh" ? freshSessionName : "piab-demo-123";
+			const selectedSession = sessionMode === "fresh" ? freshSessionName : "cdpb-demo-123";
 			assert.equal(opened.namespace, undefined);
 			assert.deepEqual(opened.effectiveArgs, ["--json", "--session", selectedSession, "open", "https://example.com"]);
 			assert.equal(opened.sessionName, selectedSession);
@@ -1199,7 +1199,7 @@ test("buildExecutionPlan resolves caller-owned session namespaces from argv befo
 			const listed = buildExecutionPlan(["session", "list"], {
 				freshSessionName,
 				managedSessionActive: true,
-				managedSessionName: "piab-demo-123",
+				managedSessionName: "cdpb-demo-123",
 				managedSessionNamespace: "owned-space",
 				sessionMode,
 			});
@@ -1218,26 +1218,26 @@ test("buildExecutionPlan resolves caller-owned session namespaces from argv befo
 
 test("buildExecutionPlan preserves stored namespace for implicit managed sessions", () => {
 	const plan = buildExecutionPlan(["snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123-fresh-aaa",
+		managedSessionName: "cdpb-demo-123-fresh-aaa",
 		managedSessionNamespace: "Review",
 		sessionMode: "auto",
 	});
 
-	assert.deepEqual(plan.effectiveArgs, ["--json", "--namespace", "review", "--session", "piab-demo-123-fresh-aaa", "snapshot", "-i"]);
+	assert.deepEqual(plan.effectiveArgs, ["--json", "--namespace", "review", "--session", "cdpb-demo-123-fresh-aaa", "snapshot", "-i"]);
 	assert.equal(plan.namespace, "review");
-	assert.equal(plan.managedSessionName, "piab-demo-123-fresh-aaa");
-	assert.equal(plan.sessionName, "piab-demo-123-fresh-aaa");
+	assert.equal(plan.managedSessionName, "cdpb-demo-123-fresh-aaa");
+	assert.equal(plan.sessionName, "cdpb-demo-123-fresh-aaa");
 	assert.equal(plan.usedImplicitSession, true);
 });
 
 test("buildExecutionPlan keeps inspection commands stateless", () => {
 	for (const args of [["--version"], ["--help"], ["snapshot", "--help"]] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1289,7 +1289,7 @@ test("buildExecutionPlan keeps sessionless commands free of implicit managed ses
 		["state", "show", "auth.json"],
 		["state", "clear", "--all"],
 		["state", "clear", "-a"],
-		["state", "clear", "piab-demo-123"],
+		["state", "clear", "cdpb-demo-123"],
 		["state", "clean", "--older-than", "7"],
 		["state", "rename", "old", "new"],
 		["plugin"],
@@ -1300,9 +1300,9 @@ test("buildExecutionPlan keeps sessionless commands free of implicit managed ses
 	] as const) {
 		const callerArgs = [...args];
 		const plan = buildExecutionPlan(callerArgs, {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1328,15 +1328,15 @@ test("validateToolArgs rejects one-shot mcp server calls but preserves --help/-h
 test("buildExecutionPlan still injects managed sessions for browser-backed state and auth commands", () => {
 	for (const args of [["state", "save", "./auth.json"], ["state", "load", "./auth.json"], ["auth", "login", "demo"]] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
-		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "piab-demo-123", ...args]);
+		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "cdpb-demo-123", ...args]);
 		assert.equal(plan.usedImplicitSession, true);
-		assert.equal(plan.managedSessionName, "piab-demo-123");
+		assert.equal(plan.managedSessionName, "cdpb-demo-123");
 	}
 });
 
@@ -1357,22 +1357,22 @@ test("buildExecutionPlan limits sessionless allowlists to documented subcommands
 		["plugin", "future"],
 	] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
-		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "piab-demo-123", ...args], args.join(" "));
+		assert.deepEqual(plan.effectiveArgs, ["--json", "--session", "cdpb-demo-123", ...args], args.join(" "));
 		assert.equal(plan.usedImplicitSession, true, args.join(" "));
 	}
 });
 
 test("buildExecutionPlan rejects unsupported global equals assignments except restore", () => {
 	const options = {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto" as const,
 	};
 	for (const flag of [...GLOBAL_VALUE_FLAGS, ...GLOBAL_BOOLEAN_FLAGS_WITH_OPTIONAL_VALUES]) {
@@ -1403,9 +1403,9 @@ test("validateToolArgs applies global equals exceptions only at top level", () =
 test("buildExecutionPlan rejects missing values for global value-taking flags before launching upstream", () => {
 	for (const args of [["--session"], ["--namespace"], ["--args", ""], ["--allowed-domains"], ["--ca-cert"], ["--profile"], ["--executable-path"], ["--session-name"], ["--restore-save"], ["--restore-check-url"], ["--restore-check-text"], ["--restore-check-fn"], ["--cdp"], ["--state"], ["--init-script"], ["--enable"], ["--download-path"], ["--model"], ["--idle-timeout"], ["open", "https://example.com", "--profile"]] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1431,9 +1431,9 @@ test("buildExecutionPlan leaves command-scoped flags and literal text to upstrea
 		["keyboard", "type", "--text"],
 	] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1456,9 +1456,9 @@ test("validateToolArgs rejects press/key commands with selector-like extra args"
 
 test("buildExecutionPlan rejects value-taking flags followed by another flag", () => {
 	const plan = buildExecutionPlan(["--session", "--profile", "Default", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1482,9 +1482,9 @@ for (const flag of ["--download", "-d"]) {
 
 test("buildExecutionPlan allows optional wait download path to be omitted", () => {
 	const plan = buildExecutionPlan(["wait", "--download", "--timeout", "25000"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1493,9 +1493,9 @@ test("buildExecutionPlan allows optional wait download path to be omitted", () =
 	assert.deepEqual(plan.effectiveArgs.slice(-4), ["wait", "--download", "--timeout", "25000"]);
 
 	const shortPlan = buildExecutionPlan(["wait", "-d", "report.csv"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(shortPlan.validationError, undefined);
@@ -1531,9 +1531,9 @@ test("buildExecutionPlan only relocates namespace occurrences recognized by upst
 		"--namespace", "team",
 		"open", "https://example.com",
 	], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1549,9 +1549,9 @@ test("buildExecutionPlan only relocates namespace occurrences recognized by upst
 
 test("buildExecutionPlan allows dash-starting --args values", () => {
 	const plan = buildExecutionPlan(["--args", "--disable-gpu,--lang=en-US", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1605,9 +1605,9 @@ test("buildExecutionPlan blocks startup-scoped flags from silently reusing an ac
 		{ args: ["--headed", "false", "open", "https://example.com"], flag: "--headed" },
 	] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1622,9 +1622,9 @@ test("buildExecutionPlan blocks startup-scoped flags from silently reusing an ac
 
 test("buildExecutionPlan treats wait --state as command-scoped after the command", () => {
 	const plan = buildExecutionPlan(["wait", "@button", "--state", "hidden"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1638,9 +1638,9 @@ test("buildExecutionPlan treats wait --state as command-scoped after the command
 test("buildExecutionPlan only treats the last exact lowercase auto-connect false as disabled", () => {
 	assert.equal(isBooleanFlagEnabled(["--args", "--auto-connect", "open", "https://example.com"], "--auto-connect"), false);
 	const plan = buildExecutionPlan(["--auto-connect", "false", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 
@@ -1650,25 +1650,25 @@ test("buildExecutionPlan only treats the last exact lowercase auto-connect false
 	assert.deepEqual(plan.commandInfo, { command: "open", subcommand: "https://example.com" });
 
 	const uppercaseFalse = buildExecutionPlan(["--auto-connect", "FALSE", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.match(uppercaseFalse.validationError ?? "", /launch-scoped flags.*--auto-connect/i);
 
 	const lastEnabled = buildExecutionPlan(["--auto-connect", "false", "--auto-connect", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.match(lastEnabled.validationError ?? "", /launch-scoped flags.*--auto-connect/i);
 
 	const lastDisabled = buildExecutionPlan(["--auto-connect", "--auto-connect", "false", "open", "https://example.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(lastDisabled.validationError, undefined);
@@ -1677,9 +1677,9 @@ test("buildExecutionPlan only treats the last exact lowercase auto-connect false
 
 test("buildExecutionPlan treats pin-tab as a sticky global boolean, not launch-scoped", () => {
 	const options = {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto" as const,
 	};
 	for (const args of [
@@ -1704,9 +1704,9 @@ test("buildExecutionPlan treats provider and iOS device flags as launch-scoped",
 		["-p", "ios", "--device", "iPhone 15 Pro", "open", "https://example.com"],
 	] as const) {
 		const plan = buildExecutionPlan([...args], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: true,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 
@@ -1717,11 +1717,11 @@ test("buildExecutionPlan treats provider and iOS device flags as launch-scoped",
 
 test("buildExecutionPlan assigns a new managed session for fresh session mode", () => {
 	const args = ["--namespace", "review", "--profile", "Default", "open", "https://example.com/profile"];
-	const freshSessionName = createFreshSessionName("piab-demo-123", "seed", 1);
+	const freshSessionName = createFreshSessionName("cdpb-demo-123", "seed", 1);
 	const plan = buildExecutionPlan(args, {
 		freshSessionName,
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "fresh",
 	});
 
@@ -1740,9 +1740,9 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 		["https://dash.cloudflare.com", "cloudflare-headless-user-agent"],
 	] as const) {
 		const plan = buildExecutionPlan(["--profile", "Default", "open", targetUrl], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(plan.compatibilityWorkaround?.id, expectedId);
@@ -1753,36 +1753,36 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 	}
 
 	const cloudflarePlan = buildExecutionPlan(["open", "https://dash.cloudflare.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	const cloudflareFollowup = buildExecutionPlan(["snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
 		managedSessionCompatibilityWorkaround: cloudflarePlan.compatibilityWorkaround,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(cloudflareFollowup.compatibilityWorkaround?.id, "cloudflare-headless-user-agent");
 	assert.equal(cloudflareFollowup.effectiveArgs.filter((token) => token === "--user-agent").length, 0);
 
-	const explicitCloudflareFollowup = buildExecutionPlan(["--session", "piab-demo-123", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+	const explicitCloudflareFollowup = buildExecutionPlan(["--session", "cdpb-demo-123", "snapshot", "-i"], {
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
 		managedSessionCompatibilityWorkaround: cloudflarePlan.compatibilityWorkaround,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(explicitCloudflareFollowup.compatibilityWorkaround?.id, "cloudflare-headless-user-agent");
 	assert.equal(explicitCloudflareFollowup.effectiveArgs.filter((token) => token === "--user-agent").length, 0);
 
-	const explicitUserAgentFollowup = buildExecutionPlan(["--session", "piab-demo-123", "--user-agent", "Custom/1", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+	const explicitUserAgentFollowup = buildExecutionPlan(["--session", "cdpb-demo-123", "--user-agent", "Custom/1", "snapshot", "-i"], {
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
 		managedSessionCompatibilityWorkaround: cloudflarePlan.compatibilityWorkaround,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(explicitUserAgentFollowup.compatibilityWorkaround, undefined);
@@ -1793,39 +1793,39 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 	});
 	assert.equal(explicitUserAgentFollowup.effectiveArgs.filter((token) => token === "--user-agent").length, 1);
 	const explicitUserAgentRetry = buildExecutionPlan(explicitUserAgentFollowup.recoveryHint?.exampleArgs ?? [], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 2),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 2),
 		managedSessionActive: true,
 		managedSessionCompatibilityWorkaround: cloudflarePlan.compatibilityWorkaround,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "fresh",
 	});
 	assert.equal(explicitUserAgentRetry.validationError, undefined);
-	assert.equal(explicitUserAgentRetry.managedSessionName, createFreshSessionName("piab-demo-123", "seed", 2));
+	assert.equal(explicitUserAgentRetry.managedSessionName, createFreshSessionName("cdpb-demo-123", "seed", 2));
 
 	const compatibilityUpgrade = buildExecutionPlan(["open", "https://dash.cloudflare.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.match(compatibilityUpgrade.validationError ?? "", /fresh.*compatibility user agent|compatibility user agent.*fresh/i);
 	assert.equal(compatibilityUpgrade.compatibilityWorkaround, undefined);
 	assert.equal(compatibilityUpgrade.effectiveArgs.includes("--user-agent"), false);
 
-	const wrongNamespaceFollowup = buildExecutionPlan(["--namespace", "other", "--session", "piab-demo-123", "snapshot", "-i"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+	const wrongNamespaceFollowup = buildExecutionPlan(["--namespace", "other", "--session", "cdpb-demo-123", "snapshot", "-i"], {
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: true,
 		managedSessionCompatibilityWorkaround: cloudflarePlan.compatibilityWorkaround,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		managedSessionNamespace: "team",
 		sessionMode: "auto",
 	});
 	assert.equal(wrongNamespaceFollowup.compatibilityWorkaround, undefined);
 
 	const rawArgsPlan = buildExecutionPlan(["--args", "--disable-gpu", "open", "https://dash.cloudflare.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(rawArgsPlan.compatibilityWorkaround, undefined);
@@ -1841,9 +1841,9 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 			"https://chatgpt.com",
 		],
 		{
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		},
 	);
@@ -1851,25 +1851,25 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 	assert.equal(callerProvidedUserAgentPlan.effectiveArgs.filter((token) => token === "--user-agent").length, 1);
 
 	const headedPlan = buildExecutionPlan(["--profile", "Default", "--headed", "open", "https://chatgpt.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(headedPlan.compatibilityWorkaround, undefined);
 
 	const disabledAutoConnectPlan = buildExecutionPlan(["--auto-connect", "false", "open", "https://chatgpt.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(disabledAutoConnectPlan.compatibilityWorkaround?.id, "chatgpt-headless-user-agent");
 
 	const enabledAutoConnectPlan = buildExecutionPlan(["--auto-connect", "open", "https://chatgpt.com"], {
-		freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+		freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 		managedSessionActive: false,
-		managedSessionName: "piab-demo-123",
+		managedSessionName: "cdpb-demo-123",
 		sessionMode: "auto",
 	});
 	assert.equal(enabledAutoConnectPlan.compatibilityWorkaround, undefined);
@@ -1897,9 +1897,9 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 	try {
 		process.env.AGENT_BROWSER_ENGINE = "lightpanda";
 		const lightpandaPlan = buildExecutionPlan(["open", "https://dash.cloudflare.com"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(lightpandaPlan.compatibilityWorkaround, undefined);
@@ -1908,9 +1908,9 @@ test("buildExecutionPlan injects and retains site-specific headless compatibilit
 		delete process.env.AGENT_BROWSER_ENGINE;
 		process.env.AGENT_BROWSER_HEADED = "1";
 		const explicitHeadlessPlan = buildExecutionPlan(["--headed", "false", "open", "https://dash.cloudflare.com"], {
-			freshSessionName: createFreshSessionName("piab-demo-123", "seed", 1),
+			freshSessionName: createFreshSessionName("cdpb-demo-123", "seed", 1),
 			managedSessionActive: false,
-			managedSessionName: "piab-demo-123",
+			managedSessionName: "cdpb-demo-123",
 			sessionMode: "auto",
 		});
 		assert.equal(explicitHeadlessPlan.compatibilityWorkaround?.id, "cloudflare-headless-user-agent");

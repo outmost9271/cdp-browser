@@ -1,6 +1,6 @@
 # Platform smoke testing
 
-`host-browser` uses a Crabbox-backed local platform smoke gate to prove the package on macOS, Ubuntu Linux, and native Windows before release.
+`cdp-browser` uses a Crabbox-backed local platform smoke gate to prove the package on macOS, Ubuntu Linux, and native Windows before release.
 
 This is a release-blocking gate. Missing Crabbox setup, Docker, macOS SSH, the native Windows template, upstream `agent-browser`, or browser runtime dependencies is a blocked release setup, not a skipped pass.
 
@@ -53,18 +53,18 @@ Standard configuration knobs:
 ```sh
 PLATFORM_SMOKE_MAC_HOST=localhost
 PLATFORM_SMOKE_MAC_USER="$USER"
-PLATFORM_SMOKE_MAC_WORK_ROOT="/Users/$USER/crabbox/host-browser"
+PLATFORM_SMOKE_MAC_WORK_ROOT="/Users/$USER/crabbox/cdp-browser"
 # Optional only when localhost SSH does not use port 22.
 PLATFORM_SMOKE_MAC_PORT=22
 
 # Default local image built by npm run smoke:platform:ubuntu-image.
 # The tag suffix is derived from scripts/agent-browser-capability-baseline.mjs.
-PLATFORM_SMOKE_UBUNTU_IMAGE="host-browser-platform:node24-agent-browser<baseline-version>"
+PLATFORM_SMOKE_UBUNTU_IMAGE="cdp-browser-platform:node24-agent-browser<baseline-version>"
 
 PLATFORM_SMOKE_WINDOWS_VM="pi-extension-windows-template"
 PLATFORM_SMOKE_WINDOWS_SNAPSHOT="crabbox-ready-ab-0.33.0"
 PLATFORM_SMOKE_WINDOWS_USER="<windows-ssh-user>"
-PLATFORM_SMOKE_WINDOWS_WORK_ROOT="C:\\crabbox\\host-browser"
+PLATFORM_SMOKE_WINDOWS_WORK_ROOT="C:\\crabbox\\cdp-browser"
 
 # Optional: names of secret env vars to redact/forward if future live suites need them.
 PLATFORM_SMOKE_AUTH_ENV=""
@@ -98,7 +98,7 @@ Each required target runs `platform-build` and `browser-dogfood-smoke` on one Cr
 4. Run `npm pack`.
 5. Create a clean target-local Pi project.
 6. Install the packed tarball with `npm install --no-save`.
-7. Run `pi install -l --approve ./node_modules/host-browser` from the clean project so Pi 0.84.0+ trusts the generated project-local settings for that command.
+7. Run `pi install -l --approve ./node_modules/cdp-browser` from the clean project so Pi 0.84.0+ trusts the generated project-local settings for that command.
 8. Run `pi list --approve` and assert the package is registered under project packages from the packed install.
 9. Assert the release proof did not use `pi -e .` or `pi --extension .`.
 

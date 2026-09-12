@@ -2,7 +2,7 @@
 
 Related docs:
 - [`../README.md`](../README.md)
-- [`../AGENTS.md`](https://github.com/fitchmultz/pi-agent-browser-native/blob/main/AGENTS.md) — maintainer verification (`npm run verify`, lifecycle), Pi `tmux` smoke expectations, and upstream rebaselining
+- [`../AGENTS.md`](https://github.com/fitchmultz/cdp-browser/blob/main/AGENTS.md) — maintainer verification (`npm run verify`, lifecycle), Pi `tmux` smoke expectations, and upstream rebaselining
 - [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md) — full `electron` and `qa.attached` field contracts
 - [`COMMAND_REFERENCE.md`](COMMAND_REFERENCE.md) — workflow snippets in the broader native command surface
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — wrapper design and the closed `RQ-0068` recipe-layer decision
@@ -10,7 +10,7 @@ Related docs:
 
 ## Purpose
 
-This guide is the entry point for using `host-browser` against desktop **Electron** applications. The wrapper exposes a top-level `electron` shorthand that owns the awkward discover → launch → attach → probe → cleanup sequence so agents do not hand-build `--remote-debugging-port` argv, poll `DevToolsActivePort`, and `kill` profile directories. After attach, the rest of the native `agent_browser` surface (`snapshot`, `find`, `click`, `fill`, `get`, `eval --stdin`, `batch`, `qa.attached`, and similar) works the same way it does against a web page.
+This guide is the entry point for using `cdp-browser` against desktop **Electron** applications. The wrapper exposes a top-level `electron` shorthand that owns the awkward discover → launch → attach → probe → cleanup sequence so agents do not hand-build `--remote-debugging-port` argv, poll `DevToolsActivePort`, and `kill` profile directories. After attach, the rest of the native `cdp_browser` surface (`snapshot`, `find`, `click`, `fill`, `get`, `eval --stdin`, `batch`, `qa.attached`, and similar) works the same way it does against a web page.
 
 This document is structured for users, not implementers. Field-level rules live in [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#electron); this guide focuses on **when** and **how** to use them, and on the safety and ownership boundary the wrapper enforces.
 
@@ -209,9 +209,9 @@ On Pi `quit`, active wrapper-owned Electron launches are best-effort cleaned. On
 | Action | What `timeoutMs` covers when set | Typical default when omitted |
 | --- | --- | --- |
 | `launch` | Host-side wait for `DevToolsActivePort` and CDP readiness | **15 s**, hard-capped at **120 s** (`normalizeTimeoutMs` in `extensions/agent-browser/lib/electron/launch.ts`) |
-| `status` | Each optional managed-session `get url` / `get title` subprocess, including `get cdp-url` when verifying a restored connection | Normal wrapper subprocess budget (**35 s**, or `PI_AGENT_BROWSER_PROCESS_TIMEOUT_MS`); localhost CDP probes use **1000 ms** each (`ELECTRON_CDP_FETCH_TIMEOUT_MS` in `extensions/agent-browser/lib/electron/cdp.ts`) |
-| `cleanup` | Applied separately to managed-session `close` and the initial tracked-process exit wait; not a deadline for debug-port checks or profile removal | `PI_AGENT_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS` when set, else **5000 ms** (`getImplicitSessionCloseTimeoutMs` in `extensions/agent-browser/lib/runtime.ts`, passed through `cleanupTrackedElectronHostLaunches` in `extensions/agent-browser/lib/orchestration/electron-host/index.ts`) |
-| `probe` | **Each** upstream read: optional `get cdp-url` verification, then `get url`, `get title`, focused `eval --stdin`, `tab list`, and `snapshot -i` | Same wrapper subprocess default (**35 s**, or `PI_AGENT_BROWSER_PROCESS_TIMEOUT_MS`, from `getAgentBrowserProcessTimeoutMs` in `extensions/agent-browser/lib/process.ts`) |
+| `status` | Each optional managed-session `get url` / `get title` subprocess, including `get cdp-url` when verifying a restored connection | Normal wrapper subprocess budget (**35 s**, or `PI_CDP_BROWSER_PROCESS_TIMEOUT_MS`); localhost CDP probes use **1000 ms** each (`ELECTRON_CDP_FETCH_TIMEOUT_MS` in `extensions/agent-browser/lib/electron/cdp.ts`) |
+| `cleanup` | Applied separately to managed-session `close` and the initial tracked-process exit wait; not a deadline for debug-port checks or profile removal | `PI_CDP_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS` when set, else **5000 ms** (`getImplicitSessionCloseTimeoutMs` in `extensions/agent-browser/lib/runtime.ts`, passed through `cleanupTrackedElectronHostLaunches` in `extensions/agent-browser/lib/orchestration/electron-host/index.ts`) |
+| `probe` | **Each** upstream read: optional `get cdp-url` verification, then `get url`, `get title`, focused `eval --stdin`, `tab list`, and `snapshot -i` | Same wrapper subprocess default (**35 s**, or `PI_CDP_BROWSER_PROCESS_TIMEOUT_MS`, from `getAgentBrowserProcessTimeoutMs` in `extensions/agent-browser/lib/process.ts`) |
 
 ## `qa.attached` — current-session smoke check
 

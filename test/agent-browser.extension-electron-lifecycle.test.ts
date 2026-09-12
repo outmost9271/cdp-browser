@@ -50,7 +50,7 @@ async function waitForLoggedCommand(logPath: string, command: string, timeoutMs 
 }
 
 test("agentBrowserExtension accepts action-specific electron schema and routes list without upstream spawn", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-schema-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-schema-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -110,11 +110,11 @@ process.stdout.write(JSON.stringify({ success: true, data: "should not run" }));
 			assert.equal(Check(harness.tool.parameters, { electron: { action: "launch", appName: "Code", launchId: "launch-1" } }), false);
 
 			const listResult = await executeRegisteredTool(harness.tool, harness.ctx, {
-				electron: { action: "list", maxResults: 1, query: "__piab_no_matching_electron_app__" },
+				electron: { action: "list", maxResults: 1, query: "__cdpb_no_matching_electron_app__" },
 			});
 			assert.equal(listResult.isError, false);
 			assert.match(listResult.content[0]?.text ?? "", /Electron apps \(0 found\):/);
-			assert.deepEqual(listResult.details?.compiledElectron, { action: "list", maxResults: 1, query: "__piab_no_matching_electron_app__" });
+			assert.deepEqual(listResult.details?.compiledElectron, { action: "list", maxResults: 1, query: "__cdpb_no_matching_electron_app__" });
 			assert.equal((listResult.details?.electron as { action?: string; status?: string } | undefined)?.action, "list");
 			assert.equal((listResult.details?.electron as { action?: string; status?: string } | undefined)?.status, "succeeded");
 			assert.equal(listResult.details?.resultCategory, "success");
@@ -226,7 +226,7 @@ test("Electron list timeout guidance never recommends an unsupported nested time
 });
 
 test("Electron status separates cleanup history from live resources and preserves replay selection", { concurrency: false }, async (t) => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-status-history-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-status-history-"));
 	const basePath = process.env.PATH ?? "";
 	try {
 		const app = await writeFakeLaunchableElectronApp({ applicationsDir: tempDir, bundleId: "com.example.StatusHistory", launchLogPath: join(tempDir, "launch.log"), name: "Status History" });
@@ -295,7 +295,7 @@ test("Electron status separates cleanup history from live resources and preserve
 });
 
 test("agentBrowserExtension cleans Electron after post-launch managed policy rejection", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-policy-reject-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-policy-reject-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -312,7 +312,7 @@ if (args.includes("session") && args.includes("info")) {
 } else {
   process.stdout.write(JSON.stringify({ success: true, data: { title: "unexpected", url: "about:blank" } }));
 }`);
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const result = await executeRegisteredTool(harness.tool, harness.ctx, {
@@ -334,7 +334,7 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension allows local Electron snapshot handoff", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-protected-handoff-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-protected-handoff-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -370,7 +370,7 @@ test("agentBrowserExtension allows local Electron snapshot handoff", { concurren
 
 
 test("agentBrowserExtension cleans an Electron launch canceled during snapshot handoff", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-canceled-handoff-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-canceled-handoff-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -416,7 +416,7 @@ else {
 
 
 test("agentBrowserExtension launches Electron with isolated profile, snapshot handoff, status, and cleanup", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-launch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-launch-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -438,7 +438,7 @@ test("agentBrowserExtension launches Electron with isolated profile, snapshot ha
 			assert.match(launchResult.content[0]?.text ?? "", /Profile note: electron\.launch starts an isolated temporary profile/);
 			assert.match(launchResult.content[0]?.text ?? "", /does not reuse the app's normal signed-in profile/);
 			assert.match(launchResult.content[0]?.text ?? "", /do not stop here: if host tools are allowed/);
-			assert.match(launchResult.content[0]?.text ?? "", /then run agent_browser connect <port>/);
+			assert.match(launchResult.content[0]?.text ?? "", /then run cdp_browser connect <port>/);
 			assert.match(launchResult.content[0]?.text ?? "", /Snapshot handoff: 1 interactive ref/);
 			assert.match(launchResult.content[0]?.text ?? "", /Cleanup: use details\.nextActions cleanup-electron-launch or call electron\.cleanup with launchId/);
 			const launchDetails = launchResult.details as {
@@ -452,7 +452,7 @@ test("agentBrowserExtension launches Electron with isolated profile, snapshot ha
 			assert.deepEqual(launchDetails.electron.identifiers, { appName: "Demo Electron", launchId: launchDetails.electron.launch.launchId, sessionName: launchDetails.electron.launch.sessionName });
 			assert.equal(launchDetails.electron.profileIsolation?.reusesExistingSignedInProfile, false);
 			assert.equal(launchDetails.electron.profileIsolation?.attachesToAlreadyRunningApp, false);
-			assert.match(launchDetails.electron.profileIsolation?.hostDebugLaunchExample ?? "", /agent_browser connect 9222/);
+			assert.match(launchDetails.electron.profileIsolation?.hostDebugLaunchExample ?? "", /cdp_browser connect 9222/);
 			assert.equal(launchDetails.effectiveArgs.at(-2), "connect");
 			assert.match(launchDetails.effectiveArgs.at(-1) ?? "", /\/devtools\/page\/page-1$/);
 			assert.deepEqual(launchDetails.refSnapshot.refIds, ["e1"]);
@@ -532,13 +532,13 @@ test("agentBrowserExtension launches Electron with isolated profile, snapshot ha
 			assert.equal(probeInvocations.every((entry) => entry.args[entry.args.indexOf("--namespace") + 1] === ""), true);
 			assert.equal(probeInvocations.every((entry) => (entry as { restore?: string | null }).restore === null), true);
 
-			harness.setBranch([{ type: "message", message: { details: { ...launchResult.details, namespace: "team" }, isError: false, toolName: "agent_browser" } }]);
+			harness.setBranch([{ type: "message", message: { details: { ...launchResult.details, namespace: "team" }, isError: false, toolName: "cdp_browser" } }]);
 			await runExtensionEvent(harness.handlers, "session_tree", { newLeafId: "namespaced", oldLeafId: null }, harness.ctx);
 			const namespacedProbe = await executeRegisteredTool(harness.tool, harness.ctx, { electron: { action: "probe" } });
 			assert.equal(namespacedProbe.isError, false, JSON.stringify(namespacedProbe));
 			assert.equal(namespacedProbe.details?.namespace, "team");
 			assert.deepEqual((namespacedProbe.details?.refSnapshot as { refIds?: string[] } | undefined)?.refIds, ["e1"]);
-			const restoredPageState = SessionPageState.fromBranch([{ type: "message", message: { details: namespacedProbe.details, isError: false, toolName: "agent_browser" } }]);
+			const restoredPageState = SessionPageState.fromBranch([{ type: "message", message: { details: namespacedProbe.details, isError: false, toolName: "cdp_browser" } }]);
 			const namespacedPageStateKey = getSessionPageStateKey(String(namespacedProbe.details?.sessionName), "team");
 			assert.ok(namespacedPageStateKey);
 			assert.deepEqual(restoredPageState.get(namespacedPageStateKey).refSnapshot?.refIds, ["e1"]);
@@ -594,7 +594,7 @@ test("agentBrowserExtension launches Electron with isolated profile, snapshot ha
 });
 
 test("agentBrowserExtension retains headed autosave policy for Electron cleanup close", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-headed-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-headed-cleanup-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -645,7 +645,7 @@ test("agentBrowserExtension retains headed autosave policy for Electron cleanup 
 });
 
 test("agentBrowserExtension applies managed restore policy to every current-session electron.probe helper", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-probe-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-probe-restore-"));
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const basePath = process.env.PATH ?? "";
 	execFileSync("git", ["init", "-q", tempDir], { stdio: "ignore" });
@@ -692,7 +692,7 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension allows follow-up inspection on local file pages", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-normal-file-text-scope-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-normal-file-text-scope-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -729,7 +729,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension follows a live Electron probe onto local pages", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-probe-local-drift-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-probe-local-drift-"));
 	const logPath = join(tempDir, "agent-browser.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
@@ -768,7 +768,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 
 
 test("agentBrowserExtension reports Electron session mismatch and launchId-aware probe", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-mismatch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-mismatch-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -870,7 +870,7 @@ test("agentBrowserExtension reports Electron session mismatch and launchId-aware
 });
 
 test("agentBrowserExtension surfaces Electron post-command death and fill verification", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-post-command-health-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-post-command-health-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -984,7 +984,7 @@ else write({ ok: true, title: currentPage().title, url: currentPage().url });`,
 });
 
 test("agentBrowserExtension applies electron.probe timeoutMs to bounded subprocess probes", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-probe-timeout-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-probe-timeout-"));
 	const logPath = join(tempDir, "agent-browser.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1046,7 +1046,7 @@ setTimeout(() => {
 });
 
 test("agentBrowserExtension recommends tab recovery after No active page snapshot failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-no-active-page-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-no-active-page-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1180,7 +1180,7 @@ if (command === "connect") {
 });
 
 test("agentBrowserExtension invalidates refs after No active page snapshot failures inside batch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-no-active-page-batch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-no-active-page-batch-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

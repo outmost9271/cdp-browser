@@ -517,7 +517,7 @@ export function buildNetworkRouteDiagnosticsNextActions(diagnostics: NetworkRout
 			params: { args: withOptionalSessionArgs(sessionName, ["network", "request", diagnostic.requestId]) },
 			reason: `Inspect the routed request ${diagnostic.requestId} before assuming the route mock fulfilled normally.`,
 			safety: "Read-only request diagnostic; look for failed status, pending state, CORS/preflight errors, response body, and headers.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		});
 	}
 	actions.push({
@@ -525,7 +525,7 @@ export function buildNetworkRouteDiagnosticsNextActions(diagnostics: NetworkRout
 		params: { args: withOptionalSessionArgs(sessionName, ["network", "har", "start"]) },
 		reason: "Capture a HAR before reproducing the route mock so pending/CORS behavior has request and response headers.",
 		safety: "HARs can contain URLs and headers; stop to an explicit path and avoid sharing sensitive captures.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 	return actions;
 }
@@ -548,7 +548,7 @@ export function buildNetworkRequestsNextActions(data: unknown, sessionName: stri
 			params: { args: withOptionalSessionArgs(sessionName, ["network", "request", selected.requestId]) },
 			reason: `Inspect full request details for ${descriptor}.`,
 			safety: "Read-only network diagnostic; request inspection must not replace the active page/ref context.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 	];
 	if (selected.kind === "actionable") {
@@ -557,7 +557,7 @@ export function buildNetworkRequestsNextActions(data: unknown, sessionName: stri
 			params: { networkSourceLookup: { requestId: selected.requestId, ...(sessionName ? { session: sessionName } : {}) } },
 			reason: `Look for local source candidates related to ${descriptor}.`,
 			safety: "Read-only experimental helper; it reports bounded candidates and may miss bundled or dynamic call sites.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		});
 	}
 	if (selected.filter) {
@@ -566,7 +566,7 @@ export function buildNetworkRequestsNextActions(data: unknown, sessionName: stri
 			params: { args: withOptionalSessionArgs(sessionName, ["network", "requests", "--filter", selected.filter]) },
 			reason: `List captured requests matching ${selected.filter}.`,
 			safety: "Read-only request-list filter; absence from a compact preview is not proof the request did not happen.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		});
 	}
 	actions.push({
@@ -574,14 +574,14 @@ export function buildNetworkRequestsNextActions(data: unknown, sessionName: stri
 		params: { args: withOptionalSessionArgs(sessionName, ["network", "requests", "--clear"]) },
 		reason: "Clear the aggregate request buffer before reproducing the current-page network behavior.",
 		safety: "This mutates only diagnostic buffers for the session; capture or inspect needed old rows first.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 	actions.push({
 		id: "start-network-har-capture",
 		params: { args: withOptionalSessionArgs(sessionName, ["network", "har", "start"]) },
 		reason: "Start HAR capture before reproducing the network behavior again.",
 		safety: "HARs can contain URLs and headers; stop to an explicit path, inspect metadata, and avoid sharing sensitive captures.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 	return [...(buildNetworkRouteDiagnosticsNextActions(routeDiagnostics, sessionName) ?? []), ...actions].slice(0, NETWORK_NEXT_ACTION_LIMIT);
 }
@@ -594,14 +594,14 @@ export function buildStreamNextActions(commandInfo: CommandInfo, data: unknown, 
 			params: { args: withOptionalSessionArgs(sessionName, ["stream", "status"]) },
 			reason: "Read current stream port and connection details after the idempotent enable no-op.",
 			safety: "Read-only stream diagnostic.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 		{
 			id: "disable-existing-stream-when-done",
 			params: { args: withOptionalSessionArgs(sessionName, ["stream", "disable"]) },
 			reason: "Disable the existing stream when it is no longer needed.",
 			safety: "Only run when no other workflow is relying on the current stream.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 	];
 }

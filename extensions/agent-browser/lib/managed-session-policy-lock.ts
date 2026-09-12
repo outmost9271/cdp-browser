@@ -39,12 +39,12 @@ function getCoordinationDirectory(platform: NodeJS.Platform = process.platform):
 	if (platform !== "win32") {
 		const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
 		return platform === "android"
-			? join(tmpdir(), `host-browser-policy${uid === undefined ? "" : `-${uid}`}`)
-			: `/tmp/host-browser-policy${uid === undefined ? "" : `-${uid}`}`;
+			? join(tmpdir(), `cdp-browser-policy${uid === undefined ? "" : `-${uid}`}`)
+			: `/tmp/cdp-browser-policy${uid === undefined ? "" : `-${uid}`}`;
 	}
 	const user = process.env.USERNAME ?? process.env.USER ?? "unknown";
 	const suffix = createHash("sha256").update(user).digest("hex").slice(0, 12);
-	return join(tmpdir(), `host-browser-policy-${suffix}`);
+	return join(tmpdir(), `cdp-browser-policy-${suffix}`);
 }
 
 async function ensureCoordinationDirectory(path: string, platform: NodeJS.Platform): Promise<boolean> {
@@ -72,7 +72,7 @@ function getPolicyLockDigest(sessionName: string, namespace?: string): string {
 }
 
 export function getManagedSessionPolicyLockPath(sessionName: string, namespace?: string): string {
-	return join(getCoordinationDirectory(), `.host-browser-policy-${getPolicyLockDigest(sessionName, namespace)}.lock-v3`);
+	return join(getCoordinationDirectory(), `.cdp-browser-policy-${getPolicyLockDigest(sessionName, namespace)}.lock-v3`);
 }
 
 function parseOwner(content: string): PolicyLockOwner | undefined {
@@ -172,7 +172,7 @@ async function ownerAlive(owner: PolicyLockOwner): Promise<boolean | undefined> 
 async function removeClaimOwnedBy(path: string, token: string): Promise<boolean> {
 	const current = await readClaim(path);
 	if (current?.owner.token !== token) return false;
-	const movedPath = join(dirname(path), `.host-browser-policy-remove-${token}-${randomUUID()}`);
+	const movedPath = join(dirname(path), `.cdp-browser-policy-remove-${token}-${randomUUID()}`);
 	try {
 		await rename(path, movedPath);
 	} catch (error) {
@@ -191,7 +191,7 @@ async function cleanDeadPolicyArtifacts(directory: string): Promise<void> {
 	let names: string[];
 	try { names = await readdir(directory); } catch { return; }
 	for (const name of names.filter((candidate) =>
-		candidate.startsWith(".host-browser-policy-remove-")
+		candidate.startsWith(".cdp-browser-policy-remove-")
 		|| candidate.includes(".lock-v3.candidate-"))) {
 		const path = join(directory, name);
 		const claim = await readClaim(path);

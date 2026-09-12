@@ -22,7 +22,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension rejects ambiguous or incomplete semantic actions before spawning agent-browser", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-action-invalid-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-action-invalid-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -203,7 +203,7 @@ process.stdout.write(JSON.stringify({ success: true, data: "should not run" }));
 });
 
 test("agentBrowserExtension returns rich input recovery when semanticAction fill misses current editable refs", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-candidates-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-candidates-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -389,7 +389,7 @@ process.stdout.write(JSON.stringify({ success: true, data: "ok" }));`,
 });
 
 test("agentBrowserExtension suggests current snapshot refs when raw find role locators miss", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-find-ref-fallback-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-find-ref-fallback-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -462,7 +462,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension offers current ref fallback for failed semantic find steps inside batch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-batch-semantic-ref-fallback-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-batch-semantic-ref-fallback-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -513,7 +513,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension returns a safe semantic retry action only for stale-ref find shorthand failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-stale-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-stale-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,

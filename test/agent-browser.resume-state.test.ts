@@ -110,7 +110,7 @@ function closedSessionDetails(sessionName: string) {
 }
 
 test("agentBrowserExtension reconstructs managed session state on session_start and keeps startup-scoped flags blocked after resume", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -136,7 +136,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 			assert.equal(firstOpen.isError, false);
 			assert.equal((firstOpen.details?.compatibilityWorkaround as { id?: string } | undefined)?.id, "cloudflare-headless-user-agent");
 			const sessionName = String(firstOpen.details?.sessionName ?? "");
-			assert.match(sessionName, /^piab-/);
+			assert.match(sessionName, /^cdpb-/);
 			await runExtensionEvent(firstHarness.handlers, "session_shutdown", { reason: "resume" });
 			assert.equal((await readInvocationLog(logPath)).length, 1);
 
@@ -195,7 +195,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension closes the active managed session when pi quits", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -235,7 +235,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension closes managed sessions owned before a session_tree branch switch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-owned-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-owned-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -272,7 +272,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension closes all branch-owned managed sessions on quit", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-owned-multi-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-owned-multi-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -306,7 +306,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension closes off-branch owned managed sessions during reload", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-reload-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-reload-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -341,7 +341,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension does not double-close a branch-restored explicit close during shutdown", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-tree-owned-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-tree-owned-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -381,7 +381,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension does not double-close older branch close rows before a later active session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-tree-later-active-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-tree-later-active-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -415,7 +415,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension keeps same-process re-owned sessions despite stale branch close evidence", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-tree-stale-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-tree-stale-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -467,7 +467,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension does not double-close an explicitly closed owned managed session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-owned-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-owned-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -497,7 +497,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension rotates away from the current managed session after explicit close", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-current-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-current-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -554,7 +554,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension reserves the rotated generated session after an explicit close before reuse", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-reserve-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-reserve-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -603,7 +603,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension keeps explicit-close reserved fresh session across same-process session_tree restore", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-tree-reserve-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-tree-reserve-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -652,7 +652,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension does not restore a managed session after an explicit close row", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-restore-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -707,7 +707,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "Example Dom
 });
 
 test("agentBrowserExtension restores explicit-close generated fresh ordinal before default auto calls", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-restore-ordinal-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-restore-ordinal-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -783,7 +783,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension preserves branch-restored managed state after session_tree waits for in-flight commands", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-race-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-race-"));
 	const logPath = join(tempDir, "invocations.log");
 	const releasePath = join(tempDir, "release-snapshot");
 	const basePath = process.env.PATH ?? "";
@@ -844,7 +844,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension keeps session_tree authoritative after a slow explicit-session command", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-tree-race-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-tree-race-"));
 	const logPath = join(tempDir, "invocations.log");
 	const releasePath = join(tempDir, "release-explicit-snapshot");
 	const basePath = process.env.PATH ?? "";
@@ -894,7 +894,7 @@ if (args.includes("snapshot") && sessionName === "named-user-session") {
 });
 
 test("agentBrowserExtension does not resurrect a managed session when explicit close follows a slow implicit command", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-explicit-close-race-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-explicit-close-race-"));
 	const logPath = join(tempDir, "invocations.log");
 	const releasePath = join(tempDir, "release-implicit-snapshot");
 	const basePath = process.env.PATH ?? "";
@@ -946,7 +946,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension preserves the active managed session across reload shutdown", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -979,7 +979,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "Example Dom
 });
 
 test("agentBrowserExtension retains headed autosave policy across follow-ups and session_tree restore", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-headed-autosave-state-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-headed-autosave-state-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1045,7 +1045,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension exposes the headed handoff for a first-launch batch but not attachments or providers", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-headed-batch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-headed-batch-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -1103,7 +1103,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { result: "https
 });
 
 test("agentBrowserExtension requires a fresh daemon before changing a resumed headed autosave interval", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-headed-autosave-explicit-resume-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-headed-autosave-explicit-resume-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1180,7 +1180,7 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension omits headed autosave detail when a failed fresh launch is abandoned", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-headed-autosave-abandoned-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-headed-autosave-abandoned-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1215,7 +1215,7 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension retains headed autosave policy for an older owned session after replacement close fails", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-headed-autosave-replaced-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-headed-autosave-replaced-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1244,7 +1244,7 @@ if (command === "session") {
 	);
 
 	try {
-		await withPatchedEnv({ AGENT_BROWSER_AUTOSAVE_INTERVAL_MS: undefined, AGENT_BROWSER_HEADED: undefined, PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0", PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ AGENT_BROWSER_AUTOSAVE_INTERVAL_MS: undefined, AGENT_BROWSER_HEADED: undefined, PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0", PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const headedOpen = await executeRegisteredTool(harness.tool, harness.ctx, {
@@ -1309,7 +1309,7 @@ if (command === "session") {
 });
 
 test("agentBrowserExtension preserves named older owned dispatch, semantic replanning, and queue ordering after replacement close fails", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "piab-owned-namespace-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdpb-owned-namespace-"));
 	const cwd = join(tempDir, "project");
 	const home = join(tempDir, "home");
 	const logPath = join(tempDir, "invocations.log");
@@ -1364,7 +1364,7 @@ if (command === "session") {
 		await withPatchedEnv({
 			AGENT_BROWSER_ENCRYPTION_KEY: "a".repeat(64), AGENT_BROWSER_NAMESPACE: undefined,
 			HOME: home, USERPROFILE: home, PATH: `${tempDir}:${basePath}`,
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined, PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined, PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
 		}, async () => {
 			const harness = createExtensionHarness({ cwd });
 			let cleanupHarness = harness;
@@ -1380,7 +1380,7 @@ if (command === "session") {
 				const launched = (await readEvents()).find((entry) => entry.args.includes("open") && entry.sessionName === oldSession);
 				assert.ok(launched);
 				assert.equal(launched.namespace, "review-space");
-				assert.match(launched.restoreKey ?? "", /^piab-r2-/);
+				assert.match(launched.restoreKey ?? "", /^cdpb-r2-/);
 
 				const replacement = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["open", "https://shop.example.test/replacement"], sessionMode: "fresh" });
 				assert.equal(replacement.isError, false, JSON.stringify(replacement));
@@ -1390,7 +1390,7 @@ if (command === "session") {
 				assert.notEqual(currentSession, oldSession);
 				const replacementLaunch = (await readEvents()).find((entry) => entry.args.includes("open") && entry.sessionName === currentSession);
 				assert.equal(replacementLaunch?.namespace, "");
-				assert.match(replacementLaunch?.restoreKey ?? "", /^piab-r2-/);
+				assert.match(replacementLaunch?.restoreKey ?? "", /^cdpb-r2-/);
 
 				await withPatchedEnv({ AGENT_BROWSER_NAMESPACE: "Review Space" }, async () => {
 					const before = (await readEvents()).length;
@@ -1478,7 +1478,7 @@ if (command === "session") {
 });
 
 test("agentBrowserExtension reapplies compatibility policy for an inactive older owned session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-compat-replaced-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-compat-replaced-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
@@ -1541,7 +1541,7 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension does not restore a replaced session after successful close and post-launch failure", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-replaced-close-post-launch-failure-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-replaced-close-post-launch-failure-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1598,11 +1598,11 @@ if (args.includes("session") && args.includes("info")) {
 });
 
 test("agentBrowserExtension does not restore a managed session from a different cwd/worktree on resume", { concurrency: false }, async () => {
-	const firstParent = await mkdtemp(join(tmpdir(), "host-browser-first-"));
-	const secondParent = await mkdtemp(join(tmpdir(), "host-browser-second-"));
+	const firstParent = await mkdtemp(join(tmpdir(), "cdp-browser-first-"));
+	const secondParent = await mkdtemp(join(tmpdir(), "cdp-browser-second-"));
 	const firstDir = join(firstParent, "checkout");
 	const secondDir = join(secondParent, "checkout");
-	const binDir = await mkdtemp(join(tmpdir(), "host-browser-bin-"));
+	const binDir = await mkdtemp(join(tmpdir(), "cdp-browser-bin-"));
 	const logPath = join(binDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await mkdir(firstDir, { recursive: true });
@@ -1655,7 +1655,7 @@ test(
 	"agentBrowserExtension only blocks startup-scoped flags after a successful implicit launch and resets after close",
 	{ concurrency: false },
 	async () => {
-		const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 		const logPath = join(tempDir, "invocations.log");
 		const basePath = process.env.PATH ?? "";
 		await writeFakeAgentBrowserBinary(
@@ -1673,7 +1673,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 			await withPatchedEnv(
 				{
 					PATH: `${tempDir}:${basePath}`,
-					PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234",
+					PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234",
 				},
 				async () => {
 					const harness = createExtensionHarness({ cwd: tempDir });
@@ -1724,7 +1724,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 );
 
 test("agentBrowserExtension restores the rotated fresh managed session across resume and reuses it on follow-up auto calls", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1740,7 +1740,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234" }, async () => {
 			const firstHarness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(firstHarness.handlers, "session_start", { reason: "new" }, firstHarness.ctx);
 
@@ -1809,7 +1809,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension keeps fresh session allocation monotonic across session_tree branch restores", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-fresh-ordinal-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-fresh-ordinal-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1856,7 +1856,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension serializes overlapping base and fresh calls so fresh remains authoritative", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const gatePath = join(tempDir, "release-base");
 	const basePath = process.env.PATH ?? "";
@@ -1922,7 +1922,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension does not close an overlapping auto call's session mid-command", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const snapshotGatePath = join(tempDir, "release-snapshot");
 	const closedDir = join(tempDir, "closed-sessions");
@@ -2003,7 +2003,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 });
 
 test("agentBrowserExtension allocates distinct managed sessions for overlapping fresh launches", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const firstGatePath = join(tempDir, "release-first-fresh");
 	const basePath = process.env.PATH ?? "";
@@ -2066,7 +2066,7 @@ process.stdout.write(JSON.stringify(envelope));`,
 
 test("agentBrowserExtension restores pinned tab targets across resume for explicit sessions", { concurrency: false }, async () => {
 	for (const wrongUrl of ["https://other.example/", "about:blank"]) {
-		const tempDir = await mkdtemp(join(tmpdir(), "host-browser-resume-pin-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-resume-pin-"));
 		const logPath = join(tempDir, "invocations.log");
 		const selectedPath = join(tempDir, "selected");
 		const basePath = process.env.PATH ?? "";
@@ -2107,7 +2107,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 });
 
 test("agentBrowserExtension pre-pins resumed explicit-session eval stdin before execution", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "tab-state.json");
 	const basePath = process.env.PATH ?? "";
@@ -2184,7 +2184,7 @@ if (args.includes("tab") && args.includes("list")) {
 });
 
 test("agentBrowserExtension rejects unsupported stdin before resumed explicit-session tab planning", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2236,7 +2236,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "Wrong", url
 });
 
 test("agentBrowserExtension preserves explicit navigation in a resumed user batch and derives the resulting target", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2357,7 +2357,7 @@ test("agentBrowserExtension rejects malformed resumed explicit-session batch std
 	] as const;
 
 	for (const scenario of scenarios) {
-		const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 		const logPath = join(tempDir, "invocations.log");
 		const basePath = process.env.PATH ?? "";
 		await writeFakeAgentBrowserBinary(
@@ -2413,7 +2413,7 @@ if (args.includes("batch")) {
 });
 
 test("agentBrowserExtension does not combine stale batch title with a later url after intervening commands", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2496,7 +2496,7 @@ if (args.includes("batch")) {
 });
 
 test("agentBrowserExtension does not mark a failed first implicit command as active", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2538,7 +2538,7 @@ process.exit(shouldFail ? 1 : 0);`,
 });
 
 test("agentBrowserExtension blocks launch-scoped --state and --auto-connect flags after an implicit session is active", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2581,7 +2581,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "Example Dom
 });
 
 test("agentBrowserExtension re-selects the navigated tab after --session-name fresh opens when restored tabs steal focus", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

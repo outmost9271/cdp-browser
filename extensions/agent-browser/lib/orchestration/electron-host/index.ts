@@ -37,11 +37,11 @@ import type { AgentBrowserToolResult, ElectronManagedSessionTarget, ElectronSess
 export type { ElectronLaunchRecord } from "../../electron/launch.js";
 
 const ELECTRON_PROFILE_ISOLATION_NOTE = "Profile note: electron.launch starts an isolated temporary profile; it does not reuse the app's normal signed-in profile or attach to an already-running authenticated app.";
-const ELECTRON_EXISTING_AUTH_GUIDANCE = "For already-authenticated desktop app content, do not stop here: if host tools are allowed and the app is not running, launch the normal app with --remote-debugging-port=<port>, verify the port, then run agent_browser connect <port>; if it is already running without a debug port, ask before relaunching it.";
+const ELECTRON_EXISTING_AUTH_GUIDANCE = "For already-authenticated desktop app content, do not stop here: if host tools are allowed and the app is not running, launch the normal app with --remote-debugging-port=<port>, verify the port, then run cdp_browser connect <port>; if it is already running without a debug port, ask before relaunching it.";
 export const ELECTRON_PROFILE_ISOLATION_DETAILS = {
 	attachesToAlreadyRunningApp: false,
 	existingAuthenticatedAppGuidance: ELECTRON_EXISTING_AUTH_GUIDANCE,
-	hostDebugLaunchExample: "macOS: open -a <App Name> --args --remote-debugging-port=9222 --remote-allow-origins='*'; then agent_browser connect 9222 with sessionMode=fresh",
+	hostDebugLaunchExample: "macOS: open -a <App Name> --args --remote-debugging-port=9222 --remote-allow-origins='*'; then cdp_browser connect 9222 with sessionMode=fresh",
 	isolatedLaunch: true,
 	note: ELECTRON_PROFILE_ISOLATION_NOTE,
 	reusesExistingSignedInProfile: false,
@@ -153,7 +153,7 @@ export function restoreElectronLaunchRecordsFromBranch(branch: unknown[]): Map<s
 	for (const entry of branch) {
 		if (!isRecord(entry) || entry.type !== "message") continue;
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") continue;
+		if (!message || message.toolName !== "cdp_browser") continue;
 		const details = isRecord(message.details) ? message.details : undefined;
 		const electron = isRecord(details?.electron) ? details.electron : undefined;
 		if (!electron) continue;
@@ -670,7 +670,7 @@ function formatElectronProbeVisibleText(options: {
 		if (probe.snapshot.text) lines.push(probe.snapshot.text);
 		if (probe.snapshot.omittedLineCount) lines.push(`... ${probe.snapshot.omittedLineCount} snapshot line(s) omitted`);
 	}
-	if (probe.status === "partial") lines.push("Some probe commands did not return data; use raw agent_browser commands for deeper diagnostics.");
+	if (probe.status === "partial") lines.push("Some probe commands did not return data; use raw cdp_browser commands for deeper diagnostics.");
 	if (probe.errors && probe.errors.length > 0) lines.push(`Probe warning: ${probe.errors.slice(0, 2).join("; ")}${probe.errors.length > 2 ? "; ..." : ""}`);
 	return lines.join("\n");
 }

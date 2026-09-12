@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { CAPABILITY_BASELINE } from "../agent-browser-capability-baseline.mjs";
 
 const version = CAPABILITY_BASELINE.targetVersion;
-const image = `host-browser-platform:node24-agent-browser${version}`;
+const image = `cdp-browser-platform:node24-agent-browser${version}`;
 const args = [
 	"build",
 	"-t",

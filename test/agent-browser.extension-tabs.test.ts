@@ -28,7 +28,7 @@ import {
 
 test("agentBrowserExtension persists compact snapshot spill files for persisted sessions across shutdown cleanup", { concurrency: false }, async () => {
 	await cleanupSecureTempArtifacts();
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const sessionDir = await mkdtemp(join(tmpdir(), "pi-session-dir-"));
 	const sessionFile = join(sessionDir, "session.jsonl");
 	const basePath = process.env.PATH ?? "";
@@ -52,7 +52,7 @@ test("agentBrowserExtension persists compact snapshot spill files for persisted 
 			assert.equal(result.isError, false);
 			const spillPath = result.details?.fullOutputPath as string | undefined;
 			assert.equal(typeof spillPath, "string");
-			assert.equal(spillPath?.startsWith(join(sessionDir, ".host-browser-artifacts", TEST_SESSION_ID)), true);
+			assert.equal(spillPath?.startsWith(join(sessionDir, ".cdp-browser-artifacts", TEST_SESSION_ID)), true);
 			const manifest = result.details?.artifactManifest as { entries?: Array<{ path?: string; retentionState?: string; storageScope?: string }>; liveCount?: number } | undefined;
 			assert.equal(manifest?.liveCount, 1);
 			assert.equal(manifest?.entries?.[0]?.path, spillPath);
@@ -71,7 +71,7 @@ test("agentBrowserExtension persists compact snapshot spill files for persisted 
 
 test("agentBrowserExtension restores artifact manifest from branch history and reports later evictions", { concurrency: false }, async () => {
 	await cleanupSecureTempArtifacts();
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-manifest-resume-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-manifest-resume-"));
 	const sessionDir = await mkdtemp(join(tmpdir(), "pi-session-manifest-resume-"));
 	const sessionFile = join(sessionDir, "session.jsonl");
 	const basePath = process.env.PATH ?? "";
@@ -109,7 +109,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
 			const firstHarness = createExtensionHarness({ cwd: tempDir, sessionDir, sessionFile });
 			await runExtensionEvent(firstHarness.handlers, "session_start", { reason: "new" }, firstHarness.ctx);
 			const firstResult = await executeRegisteredTool(firstHarness.tool, firstHarness.ctx, { args: ["snapshot", "-i"] });
@@ -147,7 +147,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension preserves rich batch rendering and inline screenshot attachments", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const imagePath = join(tempDir, "batched.png");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -181,7 +181,7 @@ process.stdout.write(JSON.stringify([
 });
 
 test("agentBrowserExtension preserves mixed batch failure rendering while still marking the tool call as an error", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -226,7 +226,7 @@ process.exitCode = 1;`,
 });
 
 test("agentBrowserExtension enriches click results with a post-navigation title and url summary", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -284,7 +284,7 @@ if (args.includes("click")) {
 });
 
 test("agentBrowserExtension avoids routine tab-list probes for ordinary same-session clicks", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-no-routine-tab-list-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-no-routine-tab-list-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -343,7 +343,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension refreshes the active tab target after closing a tab", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tab-close-target-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tab-close-target-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -393,7 +393,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension live-verifies successful tab selection before later page work", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tab-selection-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tab-selection-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "tab-state");
 	const basePath = process.env.PATH ?? "";
@@ -454,7 +454,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: page }));`,
 });
 
 test("agentBrowserExtension does not treat arbitrary batch eval title/url results as session navigation", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-batch-eval-target-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-batch-eval-target-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

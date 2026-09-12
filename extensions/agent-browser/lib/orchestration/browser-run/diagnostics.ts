@@ -137,8 +137,8 @@ export function buildUnsupportedScrollIntoViewRecovery(options: { commandTokens:
 	return {
 		error: "scrollintoview accepts a CSS selector, xpath=..., or a current @e… ref; text=... is not supported and can falsely report success without moving the page.",
 		nextActions: [
-			{ id: "scroll-semantic-text-target", params: { args: withOptionalSessionArgs(options.sessionName, ["find", "text", text, "hover"]) }, reason: "Use the upstream semantic text locator; hover resolves and scrolls the matched element into view.", safety: "Hover may open a tooltip or menu. Use the snapshot/ref recovery instead when hover state could affect the workflow.", tool: "agent_browser" },
-			{ id: "refresh-refs-for-scroll-target", params: { args: withOptionalSessionArgs(options.sessionName, ["snapshot", "-i"]) }, reason: "Capture a current element ref, then retry scrollintoview with that @e… ref.", safety: "Read-only snapshot; choose the intended current ref before retrying the scroll.", tool: "agent_browser" },
+			{ id: "scroll-semantic-text-target", params: { args: withOptionalSessionArgs(options.sessionName, ["find", "text", text, "hover"]) }, reason: "Use the upstream semantic text locator; hover resolves and scrolls the matched element into view.", safety: "Hover may open a tooltip or menu. Use the snapshot/ref recovery instead when hover state could affect the workflow.", tool: "cdp_browser" },
+			{ id: "refresh-refs-for-scroll-target", params: { args: withOptionalSessionArgs(options.sessionName, ["snapshot", "-i"]) }, reason: "Capture a current element ref, then retry scrollintoview with that @e… ref.", safety: "Read-only snapshot; choose the intended current ref before retrying the scroll.", tool: "cdp_browser" },
 		],
 	};
 }
@@ -159,8 +159,8 @@ export function buildScrollNoopDiagnostic(before: ScrollPositionSnapshot | undef
 
 export function buildScrollNoopNextActions(sessionName: string | undefined): AgentBrowserNextAction[] {
 	return [
-		{ id: "inspect-after-noop-scroll", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh interactive refs and inspect whether the intended target is inside a nested scroll container.", safety: "Do not assume repeated page scrolls will move dashboard panels or nested panes.", tool: "agent_browser" },
-		{ id: "verify-noop-scroll-visually", params: { args: withOptionalSessionArgs(sessionName, ["screenshot"]) }, reason: "Capture the current viewport to verify whether the scroll actually changed visible content.", safety: "Use screenshot evidence before concluding a dense dashboard did or did not move.", tool: "agent_browser" },
+		{ id: "inspect-after-noop-scroll", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh interactive refs and inspect whether the intended target is inside a nested scroll container.", safety: "Do not assume repeated page scrolls will move dashboard panels or nested panes.", tool: "cdp_browser" },
+		{ id: "verify-noop-scroll-visually", params: { args: withOptionalSessionArgs(sessionName, ["screenshot"]) }, reason: "Capture the current viewport to verify whether the scroll actually changed visible content.", safety: "Use screenshot evidence before concluding a dense dashboard did or did not move.", tool: "cdp_browser" },
 	];
 }
 
@@ -237,9 +237,9 @@ export async function collectComboboxFocusDiagnostic(options: { command?: string
 
 export function buildComboboxFocusNextActions(sessionName: string | undefined): AgentBrowserNextAction[] {
 	return [
-		{ id: "inspect-focused-combobox", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Inspect the focused combobox and any portal/listbox refs before choosing an option.", safety: "Prefer visible option refs or select when a native/selectable option list is exposed.", tool: "agent_browser" },
-		{ id: "try-open-combobox-with-arrow", params: { args: withOptionalSessionArgs(sessionName, ["press", "ArrowDown"]) }, reason: "Many searchable comboboxes open their option list with ArrowDown after focus.", safety: "Use only when the focused combobox is still the intended control, then re-snapshot before selecting.", tool: "agent_browser" },
-		{ id: "try-open-combobox-with-enter", params: { args: withOptionalSessionArgs(sessionName, ["press", "Enter"]) }, reason: "Some comboboxes open or confirm their option list with Enter after focus.", safety: "Enter may select a highlighted/default option; prefer ArrowDown first unless Enter is the app's expected opener.", tool: "agent_browser" },
+		{ id: "inspect-focused-combobox", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Inspect the focused combobox and any portal/listbox refs before choosing an option.", safety: "Prefer visible option refs or select when a native/selectable option list is exposed.", tool: "cdp_browser" },
+		{ id: "try-open-combobox-with-arrow", params: { args: withOptionalSessionArgs(sessionName, ["press", "ArrowDown"]) }, reason: "Many searchable comboboxes open their option list with ArrowDown after focus.", safety: "Use only when the focused combobox is still the intended control, then re-snapshot before selecting.", tool: "cdp_browser" },
+		{ id: "try-open-combobox-with-enter", params: { args: withOptionalSessionArgs(sessionName, ["press", "Enter"]) }, reason: "Some comboboxes open or confirm their option list with Enter after focus.", safety: "Enter may select a highlighted/default option; prefer ArrowDown first unless Enter is the app's expected opener.", tool: "cdp_browser" },
 	];
 }
 
@@ -301,7 +301,7 @@ export function formatOverlayBlockerText(diagnostic: OverlayBlockerDiagnostic): 
 }
 
 export function buildOverlayBlockerNextActions(options: { diagnostic: OverlayBlockerDiagnostic; sessionName?: string }): AgentBrowserNextAction[] {
-	return [buildInspectOverlayStateAction(options.sessionName), ...options.diagnostic.candidates.map((candidate, index) => ({ id: `try-overlay-blocker-candidate-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, candidate.args) }, reason: candidate.reason, safety: "Only click this if the candidate is clearly a close/dismiss control for an overlay that blocks the intended workflow.", tool: "agent_browser" as const }))];
+	return [buildInspectOverlayStateAction(options.sessionName), ...options.diagnostic.candidates.map((candidate, index) => ({ id: `try-overlay-blocker-candidate-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, candidate.args) }, reason: candidate.reason, safety: "Only click this if the candidate is clearly a close/dismiss control for an overlay that blocks the intended workflow.", tool: "cdp_browser" as const }))];
 }
 
 export function collectSnapshotOverlayBlockerDiagnostic(data: unknown): OverlayBlockerDiagnostic | undefined {
@@ -423,7 +423,7 @@ export function formatSelectorTextVisibilityText(diagnostics: SelectorTextVisibi
 }
 
 export function buildSelectorTextVisibilityNextActions(options: { diagnostics: SelectorTextVisibilityDiagnostic[]; sessionName?: string }): AgentBrowserNextAction[] {
-	return options.diagnostics.map((diagnostic, index) => ({ id: index === 0 ? "inspect-visible-text-candidates" : `inspect-visible-text-candidates-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, ["eval", "--stdin"]), stdin: buildVisibleTextProbeScript(diagnostic.selector) }, reason: "Inspect selector match count and visible text before trusting get text on tabbed or hidden DOM content.", safety: "Read-only DOM inspection; use a more specific visible selector or current @ref before acting on hidden-tab text.", tool: "agent_browser" as const }));
+	return options.diagnostics.map((diagnostic, index) => ({ id: index === 0 ? "inspect-visible-text-candidates" : `inspect-visible-text-candidates-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, ["eval", "--stdin"]), stdin: buildVisibleTextProbeScript(diagnostic.selector) }, reason: "Inspect selector match count and visible text before trusting get text on tabbed or hidden DOM content.", safety: "Read-only DOM inspection; use a more specific visible selector or current @ref before acting on hidden-tab text.", tool: "cdp_browser" as const }));
 }
 
 function normalizeSelectorForScopeHeuristic(selector: string): string {
@@ -454,9 +454,9 @@ export function buildSourceLookupElectronNextActions(sourceLookup: AgentBrowserS
 	if (sourceLookup?.status !== "no-candidates" || !sourceLookup.electronContext) return [];
 	const actions: AgentBrowserNextAction[] = [];
 	const { launchId, sessionName } = sourceLookup.electronContext;
-	if (sessionName) actions.push({ id: "snapshot-electron-session", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh interactive refs in the attached Electron session before retrying source lookup with a narrower target.", safety: "Read-only snapshot; no app mutation.", tool: "agent_browser" });
-	if (launchId) actions.push({ id: "probe-electron-launch", params: { electron: { action: "probe", launchId } }, reason: "Collect bounded wrapper/session context for the packaged Electron launch after sourceLookup found no candidates.", safety: "Read-only probe of title, URL, focus, tabs, and compact snapshot metadata.", tool: "agent_browser" });
-	if (sessionName) actions.push({ id: "list-electron-tabs", params: { args: withOptionalSessionArgs(sessionName, ["tab", "list"]) }, reason: "Check current Electron tabs/targets before choosing a narrower selector or @ref.", safety: "Read-only tab listing.", tool: "agent_browser" });
+	if (sessionName) actions.push({ id: "snapshot-electron-session", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh interactive refs in the attached Electron session before retrying source lookup with a narrower target.", safety: "Read-only snapshot; no app mutation.", tool: "cdp_browser" });
+	if (launchId) actions.push({ id: "probe-electron-launch", params: { electron: { action: "probe", launchId } }, reason: "Collect bounded wrapper/session context for the packaged Electron launch after sourceLookup found no candidates.", safety: "Read-only probe of title, URL, focus, tabs, and compact snapshot metadata.", tool: "cdp_browser" });
+	if (sessionName) actions.push({ id: "list-electron-tabs", params: { args: withOptionalSessionArgs(sessionName, ["tab", "list"]) }, reason: "Check current Electron tabs/targets before choosing a narrower selector or @ref.", safety: "Read-only tab listing.", tool: "cdp_browser" });
 	return actions;
 }
 
@@ -471,7 +471,7 @@ export function formatElectronBroadGetTextScopeText(diagnostics: ElectronBroadGe
 }
 
 export function buildElectronBroadGetTextScopeNextActions(options: { diagnostics: ElectronBroadGetTextScopeDiagnostic[]; sessionName?: string }): AgentBrowserNextAction[] {
-	return options.diagnostics.map((diagnostic, index) => ({ id: index === 0 ? "snapshot-for-electron-text-scope" : `snapshot-for-electron-text-scope-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, ["snapshot", "-i"]) }, reason: `Refresh Electron refs before trusting broad get text selector ${JSON.stringify(diagnostic.selector)}.`, safety: "Read-only snapshot; prefer a current @ref or narrower selector before extracting app-shell text.", tool: "agent_browser" as const }));
+	return options.diagnostics.map((diagnostic, index) => ({ id: index === 0 ? "snapshot-for-electron-text-scope" : `snapshot-for-electron-text-scope-${index + 1}`, params: { args: withOptionalSessionArgs(options.sessionName, ["snapshot", "-i"]) }, reason: `Refresh Electron refs before trusting broad get text selector ${JSON.stringify(diagnostic.selector)}.`, safety: "Read-only snapshot; prefer a current @ref or narrower selector before extracting app-shell text.", tool: "cdp_browser" as const }));
 }
 
 function looksLikeFunctionEvalStdin(stdin: string | undefined): boolean {
@@ -640,8 +640,8 @@ function shouldVerifyContenteditableFill(fill: { refId?: string } | undefined, r
 
 export function buildFillVerificationNextActions(diagnostic: FillVerificationDiagnostic, sessionName: string | undefined): AgentBrowserNextAction[] {
 	return [
-		{ id: "inspect-after-fill-verification", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh the UI after a fill that reported success but did not appear to update the target.", safety: "Read-only snapshot; use current refs before retrying.", tool: "agent_browser" },
-		{ id: "verify-filled-value", params: { args: withOptionalSessionArgs(sessionName, ["get", diagnostic.method, diagnostic.selector]) }, reason: `Check the target ${diagnostic.method} directly before submitting or creating files.`, safety: "Read-only check; selector may still be stale if the UI rerendered.", tool: "agent_browser" },
+		{ id: "inspect-after-fill-verification", params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) }, reason: "Refresh the UI after a fill that reported success but did not appear to update the target.", safety: "Read-only snapshot; use current refs before retrying.", tool: "cdp_browser" },
+		{ id: "verify-filled-value", params: { args: withOptionalSessionArgs(sessionName, ["get", diagnostic.method, diagnostic.selector]) }, reason: `Check the target ${diagnostic.method} directly before submitting or creating files.`, safety: "Read-only check; selector may still be stale if the UI rerendered.", tool: "cdp_browser" },
 	];
 }
 

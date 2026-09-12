@@ -11,7 +11,7 @@ export function isPendingRecordingArtifact(artifact: FileArtifactMetadata): bool
 }
 
 export const SESSION_ARTIFACT_MANIFEST_VERSION = 1;
-export const SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES_ENV = "PI_AGENT_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES";
+export const SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES_ENV = "PI_CDP_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES";
 export const DEFAULT_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES = 100;
 
 function parsePositiveSafeInteger(value: string | undefined): number | undefined {

@@ -131,7 +131,7 @@ function buildWatchdogTimeoutMessage(options: { timeoutMs?: number }): string {
 		: "after waiting beyond the upstream CLI's 30s IPC retry window";
 	return [
 		`agent-browser exceeded ${timeoutText} and was stopped ${ipcTiming}.`,
-		"Prefer a condition wait or split long work into shorter calls; for legitimately long opens or captures, pass agent_browser timeoutMs with a bounded higher value and inspect details.timeoutPartialProgress before retrying.",
+		"Prefer a condition wait or split long work into shorter calls; for legitimately long opens or captures, pass cdp_browser timeoutMs with a bounded higher value and inspect details.timeoutPartialProgress before retrying.",
 	].join(" ");
 }
 
@@ -153,7 +153,7 @@ function maybeAppendStaleRefHint(message: string, args?: string[]): string {
 	}
 	return [
 		message,
-		"This @ref may be stale after navigation, scrolling, or a DOM update. Run `agent_browser` with `{ \"args\": [\"snapshot\", \"-i\"] }` again and retry with a current ref, or use a stable `find` locator.",
+		"This @ref may be stale after navigation, scrolling, or a DOM update. Run `cdp_browser` with `{ \"args\": [\"snapshot\", \"-i\"] }` again and retry with a current ref, or use a stable `find` locator.",
 	].join("\n");
 }
 

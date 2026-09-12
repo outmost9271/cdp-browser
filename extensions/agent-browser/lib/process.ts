@@ -33,9 +33,9 @@ const PROCESS_STDOUT_SPILL_FILE_PREFIX = "process-stdout";
 const AGENT_BROWSER_SOCKET_DIR_ENV = "AGENT_BROWSER_SOCKET_DIR";
 const AGENT_BROWSER_DEFAULT_TIMEOUT_ENV = "AGENT_BROWSER_DEFAULT_TIMEOUT";
 const AGENT_BROWSER_IDLE_TIMEOUT_ENV = "AGENT_BROWSER_IDLE_TIMEOUT_MS";
-const PI_AGENT_BROWSER_PROCESS_TIMEOUT_ENV = "PI_AGENT_BROWSER_PROCESS_TIMEOUT_MS";
-const PI_AGENT_BROWSER_SOCKET_DIR_ENV = "PI_AGENT_BROWSER_SOCKET_DIR";
-const DEFAULT_AGENT_BROWSER_SOCKET_DIR_PREFIX = "/tmp/piab";
+const PI_CDP_BROWSER_PROCESS_TIMEOUT_ENV = "PI_CDP_BROWSER_PROCESS_TIMEOUT_MS";
+const PI_CDP_BROWSER_SOCKET_DIR_ENV = "PI_CDP_BROWSER_SOCKET_DIR";
+const DEFAULT_AGENT_BROWSER_SOCKET_DIR_PREFIX = "/tmp/cdpb";
 const TERMUX_PACKAGE_NAME_PATTERN = /^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/;
 export const SAFE_AGENT_BROWSER_OPERATION_TIMEOUT_MS = 25_000;
 const DEFAULT_AGENT_BROWSER_PROCESS_TIMEOUT_MS = 35_000;
@@ -183,7 +183,7 @@ function clampUpstreamDefaultTimeout(childEnv: NodeJS.ProcessEnv): void {
 }
 
 export function getAgentBrowserProcessTimeoutMs(env: NodeJS.ProcessEnv = processEnv): number {
-	return parsePositiveIntegerEnv(env[PI_AGENT_BROWSER_PROCESS_TIMEOUT_ENV]) ?? DEFAULT_AGENT_BROWSER_PROCESS_TIMEOUT_MS;
+	return parsePositiveIntegerEnv(env[PI_CDP_BROWSER_PROCESS_TIMEOUT_ENV]) ?? DEFAULT_AGENT_BROWSER_PROCESS_TIMEOUT_MS;
 }
 
 export function getAgentBrowserSocketDir(
@@ -196,9 +196,9 @@ export function getAgentBrowserSocketDir(
 	}
 	const termuxAppRoot = platform === "android" && termuxPackageName && TERMUX_PACKAGE_NAME_PATTERN.test(termuxPackageName);
 	const prefix = platform === "darwin"
-		? "/private/tmp/piab"
+		? "/private/tmp/cdpb"
 		: termuxAppRoot
-			? `/data/data/${termuxPackageName}/piab`
+			? `/data/data/${termuxPackageName}/cdpb`
 			: DEFAULT_AGENT_BROWSER_SOCKET_DIR_PREFIX;
 	return `${prefix}${!termuxAppRoot && typeof uid === "number" ? `-${uid}` : ""}`;
 }
@@ -323,7 +323,7 @@ export function getAgentBrowserSocketPathValidationError(options: {
 	const socketPath = join(socketRoot, `${sessionName}.sock`);
 	const pathBytes = Buffer.byteLength(socketPath);
 	if (pathBytes <= 103) return undefined;
-	return `Agent-browser Unix socket path would be ${pathBytes} bytes (max 103) for session ${JSON.stringify(sessionName)} under ${JSON.stringify(options.socketDir)}. Set PI_AGENT_BROWSER_SOCKET_DIR to a shorter absolute private directory such as /tmp/piab-<uid> with mode 0700; retrying sessionMode \"fresh\" cannot shorten this configured root.`;
+	return `Agent-browser Unix socket path would be ${pathBytes} bytes (max 103) for session ${JSON.stringify(sessionName)} under ${JSON.stringify(options.socketDir)}. Set PI_CDP_BROWSER_SOCKET_DIR to a shorter absolute private directory such as /tmp/cdpb-<uid> with mode 0700; retrying sessionMode \"fresh\" cannot shorten this configured root.`;
 }
 
 export function buildAgentBrowserProcessEnv(
@@ -365,6 +365,8 @@ function getManagedPreSpawnPolicyError(
 export async function runAgentBrowserProcess(options: {
 	args: string[];
 	cwd: string;
+	/** Resolved upstream CLI path (vendored binary). Defaults to `agent-browser` on PATH for direct process-layer tests. */
+	cliPath?: string;
 	env?: NodeJS.ProcessEnv;
 	managedSessionRestoreState?: ManagedSessionRestoreState;
 	managedStateCurrentPageUrl?: string;
@@ -417,7 +419,7 @@ export async function runAgentBrowserProcess(options: {
 	};
 	const explicitSocketDir = processOverrides[AGENT_BROWSER_SOCKET_DIR_ENV];
 	let effectiveEnv = explicitSocketDir === undefined ? { ...processOverrides, [AGENT_BROWSER_SOCKET_DIR_ENV]: undefined } : processOverrides;
-	const requestedSocketDir = explicitSocketDir ?? parentEnv[PI_AGENT_BROWSER_SOCKET_DIR_ENV] ?? getAgentBrowserSocketDir();
+	const requestedSocketDir = explicitSocketDir ?? parentEnv[PI_CDP_BROWSER_SOCKET_DIR_ENV] ?? getAgentBrowserSocketDir();
 	if (requestedSocketDir !== undefined) {
 		const socketDirError = requestedSocketDir.length > 0
 			? await getAgentBrowserSocketDirValidationError(requestedSocketDir)
@@ -547,7 +549,7 @@ export async function runAgentBrowserProcess(options: {
 			return;
 		}
 		const spawnBrowser = processPlatform === "win32" ? crossSpawn : spawn;
-		const child = spawnBrowser("agent-browser", prepareAgentBrowserSpawnArgs(args, ownedManagedSessionCompatibilityEnv.AGENT_BROWSER_USER_AGENT, preserveAttachedBrowserSession), {
+		const child = spawnBrowser(options.cliPath?.trim() || "agent-browser", prepareAgentBrowserSpawnArgs(args, ownedManagedSessionCompatibilityEnv.AGENT_BROWSER_USER_AGENT, preserveAttachedBrowserSession), {
 			cwd,
 			env: childEnv,
 			stdio: ["pipe", "pipe", "pipe"],

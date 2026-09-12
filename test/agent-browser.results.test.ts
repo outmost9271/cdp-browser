@@ -96,9 +96,9 @@ test("rich input recovery nextAction id helpers lock exact ids", () => {
 
 test("applyNamespaceToNextActions preserves namespaced follow-up context", () => {
 	const namespaced = applyNamespaceToNextActions([
-		{ id: "snapshot", params: { args: ["--session", "work", "snapshot", "-i"] }, reason: "r", tool: "agent_browser" },
-		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1", session: "work" } }, reason: "r", tool: "agent_browser" },
-		{ id: "status", params: { electron: { action: "status", launchId: "l1" } }, reason: "r", tool: "agent_browser" },
+		{ id: "snapshot", params: { args: ["--session", "work", "snapshot", "-i"] }, reason: "r", tool: "cdp_browser" },
+		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1", session: "work" } }, reason: "r", tool: "cdp_browser" },
+		{ id: "status", params: { electron: { action: "status", launchId: "l1" } }, reason: "r", tool: "cdp_browser" },
 	], "review");
 	assert.deepEqual(namespaced?.[0]?.params?.args, ["--namespace", "review", "--session", "work", "snapshot", "-i"]);
 	assert.deepEqual(namespaced?.[1]?.params?.networkSourceLookup, { namespace: "review", requestId: "req-1", session: "work" });
@@ -106,8 +106,8 @@ test("applyNamespaceToNextActions preserves namespaced follow-up context", () =>
 	assert.deepEqual(applyNamespaceToNextActions(namespaced, "review")?.[0]?.params?.args, namespaced?.[0]?.params?.args);
 
 	const defaultNamespaced = applyNamespaceToNextActions([
-		{ id: "snapshot", params: { args: ["--session", "work", "snapshot", "-i"] }, reason: "r", tool: "agent_browser" },
-		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1", session: "work" } }, reason: "r", tool: "agent_browser" },
+		{ id: "snapshot", params: { args: ["--session", "work", "snapshot", "-i"] }, reason: "r", tool: "cdp_browser" },
+		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1", session: "work" } }, reason: "r", tool: "cdp_browser" },
 	], "");
 	assert.deepEqual(defaultNamespaced?.[0]?.params?.args, ["--namespace", "", "--session", "work", "snapshot", "-i"]);
 	assert.deepEqual(defaultNamespaced?.[1]?.params?.networkSourceLookup, { namespace: "", requestId: "req-1", session: "work" });
@@ -116,10 +116,10 @@ test("applyNamespaceToNextActions preserves namespaced follow-up context", () =>
 
 test("applySessionToNextActions preserves session-scoped follow-up context", () => {
 	const sessionScoped = applySessionToNextActions([
-		{ id: "snapshot", params: { args: ["snapshot", "-i"] }, reason: "r", tool: "agent_browser" },
-		{ id: "namespaced", params: { args: ["--namespace", "review", "snapshot", "-i"] }, reason: "r", tool: "agent_browser" },
-		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1" } }, reason: "r", tool: "agent_browser" },
-		{ id: "status", params: { electron: { action: "status", launchId: "l1" } }, reason: "r", tool: "agent_browser" },
+		{ id: "snapshot", params: { args: ["snapshot", "-i"] }, reason: "r", tool: "cdp_browser" },
+		{ id: "namespaced", params: { args: ["--namespace", "review", "snapshot", "-i"] }, reason: "r", tool: "cdp_browser" },
+		{ id: "network-source", params: { networkSourceLookup: { requestId: "req-1" } }, reason: "r", tool: "cdp_browser" },
+		{ id: "status", params: { electron: { action: "status", launchId: "l1" } }, reason: "r", tool: "cdp_browser" },
 	], "work");
 	assert.deepEqual(sessionScoped?.[0]?.params?.args, ["--session", "work", "snapshot", "-i"]);
 	assert.deepEqual(sessionScoped?.[1]?.params?.args, ["--namespace", "review", "--session", "work", "snapshot", "-i"]);
@@ -135,7 +135,7 @@ test("appendUniqueAgentBrowserNextActions preserves order and first-id wins", ()
 		id,
 		params: args ? { args, ...(stdin ? { stdin } : {}) } : undefined,
 		reason: id,
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 	const actions = [action("a")];
 	appendUniqueAgentBrowserNextActions(actions, [action("b"), action("a", ["ignored"])]);
@@ -154,14 +154,14 @@ test("alignPageChangeSummaryNextActionIds keeps only emitted action ids", () => 
 	assert.deepEqual(
 		alignPageChangeSummaryNextActionIds(
 			{ changeType: "mutation" as const, nextActionIds: ["keep", "drop"], summary: "changed" },
-			[{ id: "keep", reason: "keep", tool: "agent_browser" }],
+			[{ id: "keep", reason: "keep", tool: "cdp_browser" }],
 		),
 		{ changeType: "mutation", nextActionIds: ["keep"], summary: "changed" },
 	);
 	assert.deepEqual(
 		alignPageChangeSummaryNextActionIds(
 			{ changeType: "mutation" as const, nextActionIds: ["drop"], summary: "changed" },
-			[{ id: "keep", reason: "keep", tool: "agent_browser" }],
+			[{ id: "keep", reason: "keep", tool: "cdp_browser" }],
 		),
 		{ changeType: "mutation", nextActionIds: undefined, summary: "changed" },
 	);
@@ -169,7 +169,7 @@ test("alignPageChangeSummaryNextActionIds keeps only emitted action ids", () => 
 
 test("validateToolArgs rejects wrapper fields passed as upstream argv", () => {
 	assert.equal(validateToolArgs(["open", "https://example.com"]), undefined);
-	assert.match(validateToolArgs(["open", "https://example.com", "--session-mode", "fresh"]) ?? "", /top-level agent_browser `sessionMode` field/);
+	assert.match(validateToolArgs(["open", "https://example.com", "--session-mode", "fresh"]) ?? "", /top-level cdp_browser `sessionMode` field/);
 	assert.match(validateToolArgs(["open", "https://example.com", "--session-mode=fresh"]) ?? "", /Do not pass `--session-mode` in args/);
 });
 
@@ -293,7 +293,7 @@ test("buildAgentBrowserNextActions returns exact native-tool recommendations for
 				id: "inspect-opened-page",
 				params: { args: ["snapshot", "-i"] },
 				reason: "Inspect the opened page before choosing interactive refs.",
-				tool: "agent_browser",
+				tool: "cdp_browser",
 			},
 		], command);
 	}
@@ -314,7 +314,7 @@ test("buildAgentBrowserNextActions returns exact native-tool recommendations for
 			params: { args: ["--session", "named", "snapshot", "-i"] },
 			reason: "Refresh interactive refs and inspect whether an overlay, banner, modal, or dialog is blocking the intended click.",
 			safety: "Read-only inspection; do not blindly retry the blocked click, and use current refs from this snapshot before interacting.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 	]);
 	assert.equal(buildAgentBrowserNextActions({ command: "click", failureCategory: "upstream-error", resultCategory: "failure" }), undefined);
@@ -401,12 +401,12 @@ test("buildAgentBrowserNextActions returns exact native-tool recommendations for
 			params: { args: ["--session", "named", "record", "stop"] },
 			reason: "Stop the active recording so the requested video can be finalized and verified on disk.",
 			safety: "The file remains pending until record stop succeeds; verify details.artifactVerification afterward.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 	);
 	assert.deepEqual(
 		buildAgentBrowserNextActions({
-			electron: { launchId: "el_123", sessionName: "host-browser-electron-el_123", status: "active" },
+			electron: { launchId: "el_123", sessionName: "cdp-browser-electron-el_123", status: "active" },
 			resultCategory: "success",
 			successCategory: "completed",
 		})?.map((action) => ({ id: action.id, params: action.params })),
@@ -414,8 +414,8 @@ test("buildAgentBrowserNextActions returns exact native-tool recommendations for
 			{ id: "status-electron-launch", params: { electron: { action: "status", launchId: "el_123" } } },
 			{ id: "probe-electron-launch", params: { electron: { action: "probe", launchId: "el_123" } } },
 			{ id: "cleanup-electron-launch", params: { electron: { action: "cleanup", launchId: "el_123" } } },
-			{ id: "list-electron-tabs", params: { args: ["--session", "host-browser-electron-el_123", "tab", "list"] } },
-			{ id: "snapshot-electron-session", params: { args: ["--session", "host-browser-electron-el_123", "snapshot", "-i"] } },
+			{ id: "list-electron-tabs", params: { args: ["--session", "cdp-browser-electron-el_123", "tab", "list"] } },
+			{ id: "snapshot-electron-session", params: { args: ["--session", "cdp-browser-electron-el_123", "snapshot", "-i"] } },
 		],
 	);
 	assert.deepEqual(
@@ -806,11 +806,11 @@ test("getAgentBrowserErrorText prefers spill/write failures over downstream pars
 		exitCode: 0,
 		parseError: "agent-browser returned invalid JSON: Unexpected end of JSON input",
 		plainTextInspection: false,
-		spawnError: new Error("host-browser temp spill budget exceeded"),
+		spawnError: new Error("cdp-browser temp spill budget exceeded"),
 		stderr: "",
 	});
 
-	assert.equal(errorText, "host-browser temp spill budget exceeded");
+	assert.equal(errorText, "cdp-browser temp spill budget exceeded");
 });
 
 test("extractQaPageContext prefers batch open title over compiled checks url", async () => {

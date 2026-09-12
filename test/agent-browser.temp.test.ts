@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify secure temporary artifact lifecycle helpers for the host-browser extension.
+ * Purpose: Verify secure temporary artifact lifecycle helpers for the cdp-browser extension.
  * Responsibilities: Assert owned temp root cleanup, stale pruning, live-root safety, and aggregate disk-budget enforcement.
  * Scope: Unit-style Node test-runner coverage for temp helpers with isolated filesystem/env side effects.
  */
@@ -37,7 +37,7 @@ test("secure temp cleanup can recreate and track a later temp root", { concurren
 	await secondFile.fileHandle.close();
 	const secondRoot = dirname(secondFile.path);
 	assert.notEqual(secondRoot, firstRoot);
-	const markerPath = join(secondRoot, ".host-browser-owner.json");
+	const markerPath = join(secondRoot, ".cdp-browser-owner.json");
 	const marker = JSON.parse(await readFile(markerPath, "utf8")) as { kind?: unknown; version?: unknown };
 	assert.equal(marker.version, 2);
 
@@ -51,8 +51,8 @@ test("secure temp cleanup can recreate and track a later temp root", { concurren
 test("stale temp pruning only removes explicitly owned roots", { concurrency: false }, async () => {
 	await cleanupSecureTempArtifacts();
 	const staleTime = new Date(Date.now() - 2 * 24 * 60 * 60 * 1_000);
-	const unownedRoot = await mkdtemp(join(tmpdir(), "host-browser-unowned-"));
-	const ownedRoot = await mkdtemp(join(tmpdir(), "host-browser-owned-"));
+	const unownedRoot = await mkdtemp(join(tmpdir(), "cdp-browser-unowned-"));
+	const ownedRoot = await mkdtemp(join(tmpdir(), "cdp-browser-owned-"));
 	await chmod(unownedRoot, 0o700);
 	await chmod(ownedRoot, 0o700);
 	await writeFile(join(unownedRoot, "leftover.txt"), "keep", "utf8");
@@ -81,7 +81,7 @@ test("stale temp pruning only removes explicitly owned roots", { concurrency: fa
 test("stale temp pruning removes roots whose marker PID was reused", { concurrency: false }, async () => {
 	await cleanupSecureTempArtifacts();
 	const staleTime = new Date(Date.now() - 2 * 24 * 60 * 60 * 1_000);
-	const staleRoot = await mkdtemp(join(tmpdir(), "host-browser-reused-pid-"));
+	const staleRoot = await mkdtemp(join(tmpdir(), "cdp-browser-reused-pid-"));
 	await chmod(staleRoot, 0o700);
 	const child = spawn(process.execPath, ["-e", "setInterval(() => undefined, 1_000);"], {
 		stdio: ["ignore", "ignore", "ignore"],
@@ -129,7 +129,7 @@ test("stale temp pruning does not remove a live root when owner identity is unav
 	let liveRoot: string | undefined;
 	try {
 		liveRoot = (await readChildStdoutJsonLine<{ root: string }>(childA)).root;
-		const markerPath = join(liveRoot, ".host-browser-owner.json");
+		const markerPath = join(liveRoot, ".cdp-browser-owner.json");
 		const marker = JSON.parse(await readFile(markerPath, "utf8")) as Record<string, unknown>;
 		delete marker.ownerProcessStartIdentity;
 		await writeFile(
@@ -221,7 +221,7 @@ test("stale temp pruning preserves profile children protected by prior process m
 		assert.equal(childAExitCode, 0);
 		await stat(result.profile);
 
-		const markerPath = join(result.root, ".host-browser-owner.json");
+		const markerPath = join(result.root, ".cdp-browser-owner.json");
 		const staleTime = new Date(Date.now() - 2 * 24 * 60 * 60 * 1_000);
 		const marker = JSON.parse(await readFile(markerPath, "utf8")) as Record<string, unknown>;
 		await writeFile(
@@ -259,7 +259,7 @@ test("stale temp pruning preserves profile children protected by prior process m
 
 test("writeSecureTempFile enforces the aggregate temp-root disk budget", { concurrency: false }, async () => {
 	await cleanupSecureTempArtifacts();
-	await withPatchedEnv({ PI_AGENT_BROWSER_TEMP_ROOT_MAX_BYTES: "1024" }, async () => {
+	await withPatchedEnv({ PI_CDP_BROWSER_TEMP_ROOT_MAX_BYTES: "1024" }, async () => {
 		await writeSecureTempFile({ content: "a".repeat(600), prefix: "budget-a", suffix: ".txt" });
 		await assert.rejects(
 			writeSecureTempFile({ content: "b".repeat(500), prefix: "budget-b", suffix: ".txt" }),

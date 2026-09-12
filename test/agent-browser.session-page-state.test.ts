@@ -32,7 +32,7 @@ function toolEntry(details: Record<string, unknown>, isError = false): unknown {
 		message: {
 			details,
 			isError,
-			toolName: "agent_browser",
+			toolName: "cdp_browser",
 		},
 	};
 }

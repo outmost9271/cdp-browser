@@ -73,8 +73,8 @@ function splitShellWords(input: string): string[] | undefined {
 
 function formatNativeAgentBrowserCall(args: string[], stdin?: string): string {
 	return stdin === undefined
-		? `agent_browser { "args": ${JSON.stringify(args)} }`
-		: `agent_browser { "args": ${JSON.stringify(args)}, "stdin": ${JSON.stringify(stdin)} }`;
+		? `cdp_browser { "args": ${JSON.stringify(args)} }`
+		: `cdp_browser { "args": ${JSON.stringify(args)}, "stdin": ${JSON.stringify(stdin)} }`;
 }
 
 function formatNativeSkillContent(content: string): string {

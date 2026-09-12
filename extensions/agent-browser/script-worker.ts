@@ -17,8 +17,8 @@ const context = createContext(sandbox, {
 	codeGeneration: { strings: false, wasm: false },
 	name: "agent-browser-script",
 });
-const bridgeKey = `__piab_send_${randomBytes(16).toString("hex")}`;
-const stateName = `__piab_state_${randomBytes(16).toString("hex")}`;
+const bridgeKey = `__cdpb_send_${randomBytes(16).toString("hex")}`;
+const stateName = `__cdpb_state_${randomBytes(16).toString("hex")}`;
 const hostSend = (json: string): boolean => {
 	if (typeof json !== "string") return false;
 	const bytes = Buffer.byteLength(json, "utf8") + 1;

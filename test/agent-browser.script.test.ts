@@ -137,16 +137,16 @@ test("script browser envelopes expose actionable rejected-call errors and emit a
 		assert.match(invalidEmit.error ?? "", /emit\(value\) requires a JSON-serializable value/);
 	}
 
-	const sessionName = "piab-script-12345678-1234-4123-8123-123456789abc";
+	const sessionName = "cdpb-script-12345678-1234-4123-8123-123456789abc";
 	const replayableEnvelope = await buildScriptBrowserEnvelope({
 		content: [{ text: "Opened.", type: "text" }],
 		details: {
 			data: { url: "https://example.com" },
 			nextActions: [
-				{ id: "inspect", params: { args: ["--namespace", "", "--session", sessionName, "snapshot", "-i"] }, reason: "Inspect.", tool: "agent_browser" },
-				{ id: "local", params: { args: ["--session", sessionName, "profiles"] }, reason: "Local command.", tool: "agent_browser" },
-				{ id: "lookup", params: { networkSourceLookup: { requestId: "req-1" } }, reason: "Top-level mode.", tool: "agent_browser" },
-				{ artifactPath: "/tmp/example.png", id: "artifact", reason: "Inspect artifact.", tool: "agent_browser" },
+				{ id: "inspect", params: { args: ["--namespace", "", "--session", sessionName, "snapshot", "-i"] }, reason: "Inspect.", tool: "cdp_browser" },
+				{ id: "local", params: { args: ["--session", sessionName, "profiles"] }, reason: "Local command.", tool: "cdp_browser" },
+				{ id: "lookup", params: { networkSourceLookup: { requestId: "req-1" } }, reason: "Top-level mode.", tool: "cdp_browser" },
+				{ artifactPath: "/tmp/example.png", id: "artifact", reason: "Inspect artifact.", tool: "cdp_browser" },
 			],
 			resultCategory: "success",
 			successCategory: "completed",
@@ -155,7 +155,7 @@ test("script browser envelopes expose actionable rejected-call errors and emit a
 	}, ["open", "https://example.com"], sessionName);
 	assert.deepEqual(replayableEnvelope.nextActions?.map((action) => action.id), ["inspect", "artifact"]);
 	assert.deepEqual(replayableEnvelope.nextActions?.[0]?.params?.args, ["snapshot", "-i"]);
-	assert.doesNotMatch(JSON.stringify(replayableEnvelope), /piab-script-/);
+	assert.doesNotMatch(JSON.stringify(replayableEnvelope), /cdpb-script-/);
 
 	let replayDispatchCount = 0;
 	const replayed = await runAgentBrowserScript({
@@ -393,7 +393,7 @@ test("script inner policy rejects identity, lifecycle, batch, local, and persist
 });
 
 test("script mode fails closed when Pi session persistence is disabled", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-no-session-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-no-session-"));
 	try {
 		const harness = createExtensionHarness({ cwd: tempDir });
 		await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
@@ -407,7 +407,7 @@ test("script mode fails closed when Pi session persistence is disabled", async (
 });
 
 test("script policy rejections fail the top-level result with disjoint counters", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-rejection-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-rejection-"));
 	try {
 		const harness = createExtensionHarness({ cwd: tempDir, sessionFile: join(tempDir, "session.jsonl") });
 		await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
@@ -433,13 +433,13 @@ test("script policy rejections fail the top-level result with disjoint counters"
 });
 
 test("session_shutdown aborts and reaps an active sandbox child", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-shutdown-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-shutdown-"));
 	const basePath = process.env.PATH ?? "";
-	await writeFakeAgentBrowserBinary(tempDir, `if (__piabFakeArgs.includes("--version")) {
+	await writeFakeAgentBrowserBinary(tempDir, `if (__cdpbFakeArgs.includes("--version")) {
   setTimeout(() => process.stdout.write(${JSON.stringify(`${TARGET_AGENT_BROWSER_VERSION_LABEL}\n`)}), 500);
 }`);
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_CUSTOM_VERSION: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_CUSTOM_VERSION: "1" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir, sessionFile: join(tempDir, "session.jsonl") });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const pendingResult = executeRegisteredTool(harness.tool, harness.ctx, { script: "while (true) {}", timeoutMs: 10_000 });
@@ -456,7 +456,7 @@ test("session_shutdown aborts and reaps an active sandbox child", { concurrency:
 });
 
 test("session_tree aborts and fully cleans an active browser-bearing script", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-tree-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-tree-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
@@ -466,7 +466,7 @@ if (args.includes("session") && args.includes("info")) process.stdout.write(JSON
 else if (args.includes("close")) process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));
 else process.stdout.write(JSON.stringify({ success: true, data: { title: "Tree probe" } }));`);
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			let resolveActive!: () => void;
 			const activeLease = new Promise<void>((resolve) => { resolveActive = resolve; });
 			const harness = createExtensionHarness({
@@ -511,7 +511,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { title: "Tree p
 });
 
 test("script inner calls and cleanup clear ambient upstream launch controls", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-env-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-env-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	const ambientNames = [
@@ -533,7 +533,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { title: "Isolat
 			...ambientEnv,
 			AGENT_BROWSER_CONFIG: join(tempDir, "ambient-agent-browser.json"),
 			PATH: `${tempDir}:${basePath}`,
-			PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
+			PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
 		}, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir, sessionFile: join(tempDir, "session.jsonl") });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
@@ -562,7 +562,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { title: "Isolat
 });
 
 test("script cleanup retires its active recording reservation", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-recording-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-recording-cleanup-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const args = process.argv.slice(2);
 const command = args.find((arg) => ["open", "record", "pdf", "close", "session"].includes(arg));
@@ -573,7 +573,7 @@ else if (command === "record") process.stdout.write(JSON.stringify({ success: tr
 else if (command === "pdf") process.stdout.write(JSON.stringify({ success: true, data: { path: args[index + 1] } }));
 else process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));`);
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir, sessionFile: join(tempDir, "session.jsonl") });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const result = await executeRegisteredTool(harness.tool, harness.ctx, {
@@ -591,7 +591,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { closed: true }
 });
 
 test("agentBrowserExtension injects an isolated script session, persists its lease before spawn, and closes it", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-extension-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-extension-"));
 	const logPath = join(tempDir, "invocations.log");
 	const leaseMarkerPath = join(tempDir, "lease-active");
 	const outputPath = join(tempDir, "script-output.json");
@@ -610,7 +610,7 @@ if (args.includes("session") && args.includes("info")) {
 }`);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			const harness = createExtensionHarness({
 				cwd: tempDir,
 				sessionFile: join(tempDir, "session.jsonl"),
@@ -640,7 +640,7 @@ emit(values);`,
 			assert.equal((result.details?.scriptSteps as unknown[])?.length, 2);
 			const scriptSession = result.details?.scriptSession as { cleanup?: string; sessionName?: string } | undefined;
 			assert.equal(scriptSession?.cleanup, "closed");
-			assert.match(scriptSession?.sessionName ?? "", /^piab-script-[0-9a-f-]{36}$/);
+			assert.match(scriptSession?.sessionName ?? "", /^cdpb-script-[0-9a-f-]{36}$/);
 			const closeCommandArgs = ["--namespace", "", "--session", scriptSession?.sessionName, "close"];
 			assert.deepEqual(harness.appendedEntries.map((entry) => entry.data), [
 				{ cleanup: "active", closeCommandArgs, launchAttempted: true, sessionName: scriptSession?.sessionName },
@@ -671,7 +671,7 @@ emit(values);`,
 });
 
 test("agentBrowserExtension closes its isolated session after a script timeout", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-timeout-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-timeout-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
@@ -717,7 +717,7 @@ process.stdout.write(JSON.stringify({ success: true, data: args.includes("close"
 });
 
 test("agentBrowserExtension rehydrates only its verified compact spill for script logic", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-spill-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-spill-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const args = process.argv.slice(2);
 if (args.includes("close")) process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));
@@ -740,7 +740,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: Array.from({ len
 });
 
 test("script still runs fail-closed cleanup when the main browser command never starts", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-preflight-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-preflight-"));
 	const logPath = join(tempDir, "invocations.log");
 	const socketDir = join(tempDir, "a".repeat(80));
 	const basePath = process.env.PATH ?? "";
@@ -750,7 +750,7 @@ test("script still runs fail-closed cleanup when the main browser command never 
 fs.appendFileSync(${JSON.stringify(logPath)}, JSON.stringify({ args: process.argv.slice(2) }) + "\\n");
 process.stdout.write(JSON.stringify({ success: true, data: { title: "should not run" } }));`);
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_SOCKET_DIR: socketDir }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_SOCKET_DIR: socketDir }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir, sessionFile: join(tempDir, "session.jsonl") });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const result = await executeRegisteredTool(harness.tool, harness.ctx, {
@@ -772,7 +772,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "should not 
 });
 
 test("script cleanup failure is durable and exposes the exact close action", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-cleanup-fail-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-cleanup-fail-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const args = process.argv.slice(2);
 if (args.includes("close")) { process.stderr.write("close failed"); process.exit(1); }
@@ -797,10 +797,10 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "ok" } }));`
 });
 
 test("session_start restores failed script leases and retries close in a new extension process", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-script-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-script-restore-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
-	const sessionName = "piab-script-12345678-1234-4123-8123-123456789abc";
+	const sessionName = "cdpb-script-12345678-1234-4123-8123-123456789abc";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs"); const args = process.argv.slice(2); fs.appendFileSync(${JSON.stringify(logPath)}, JSON.stringify({ args }) + "\\n"); process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));`);
 	try {
 		await withPatchedEnv({ PATH: `${tempDir}:${basePath}` }, async () => {
@@ -808,7 +808,7 @@ test("session_start restores failed script leases and retries close in a new ext
 				branch: [
 					{ type: "custom", customType: "agent-browser-script-session", data: { cleanup: "failed", closeCommandArgs: ["--namespace", "", "--session", sessionName, "close"], launchAttempted: true, sessionName } },
 					{ type: "custom", customType: "agent-browser-script-session", data: { cleanup: "active", closeCommandArgs: ["--session", "other", "close"], launchAttempted: true, sessionName } },
-					{ type: "custom", customType: "agent-browser-script-session", data: { sessionName: "piab-script-not-a-uuid", cleanup: "active", args: ["secret"] } },
+					{ type: "custom", customType: "agent-browser-script-session", data: { sessionName: "cdpb-script-not-a-uuid", cleanup: "active", args: ["secret"] } },
 				],
 				cwd: tempDir,
 				sessionFile: join(tempDir, "session.jsonl"),
@@ -817,7 +817,7 @@ test("session_start restores failed script leases and retries close in a new ext
 			assert.deepEqual(harness.appendedEntries.map((entry) => entry.data), [{ cleanup: "closed", closeCommandArgs: ["--namespace", "", "--session", sessionName, "close"], launchAttempted: true, sessionName }]);
 			const invocations = await readInvocationLog(logPath);
 			assert.ok(invocations.some((entry) => entry.args.includes("close") && entry.args.includes(sessionName)));
-			assert.equal(invocations.some((entry) => entry.args.includes("piab-script-not-a-uuid")), false);
+			assert.equal(invocations.some((entry) => entry.args.includes("cdpb-script-not-a-uuid")), false);
 		});
 	} finally {
 		await rm(tempDir, { force: true, recursive: true });

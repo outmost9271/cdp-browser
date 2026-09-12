@@ -59,7 +59,7 @@ function buildWaitTextAssertionFailureNextAction(sessionName: string | undefined
 		params: { args: withOptionalSessionArgs(sessionName, ["snapshot", "-i"]) },
 		reason: "Inspect the current page after the text assertion failed before concluding the expected text is absent.",
 		safety: "Read-only snapshot; use current refs or visible text from this page before retrying the assertion.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 

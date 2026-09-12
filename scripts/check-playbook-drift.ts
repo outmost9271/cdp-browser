@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Purpose: Prevent drift between the canonical agent_browser playbook and checked-in README/docs fragments.
+ * Purpose: Prevent drift between the canonical cdp_browser playbook and checked-in README/docs fragments.
  * Responsibilities: Render marked Markdown blocks from canonical playbook constants, update them in write mode, and fail verification when checked-in docs are stale.
  * Scope: Documentation synchronization only; it does not inspect upstream agent-browser help or execute browser commands.
  * Usage: Run `npm run docs -- playbook check` in local verification or `npm run docs -- playbook write` after editing the canonical playbook.
@@ -34,7 +34,7 @@ const GENERATED_NOTICE = "<!-- Generated from extensions/agent-browser/lib/playb
 function printHelp(): void {
 	console.log(`Usage: tsx ./scripts/check-playbook-drift.ts [--check|--write]
 
-Checks or rewrites generated Markdown blocks sourced from the canonical agent_browser playbook.
+Checks or rewrites generated Markdown blocks sourced from the canonical cdp_browser playbook.
 
 Options:
   --check     Verify checked-in generated blocks match the canonical playbook (default)
@@ -66,7 +66,7 @@ function renderBlock(id: BlockId): string {
 	switch (id) {
 		case "inspection":
 			return [
-				"Native inspection calls use the `agent_browser` tool shape, not shell-like direct-binary commands:",
+				"Native inspection calls use the `cdp_browser` tool shape, not shell-like direct-binary commands:",
 				"",
 				bullets(INSPECTION_TOOL_CALL_EXAMPLES),
 				"",
@@ -122,7 +122,7 @@ async function main(): Promise<void> {
 	}
 	const staleBlocks = (await Promise.all(TARGETS.map((target) => processTarget(target, mode)))).flat();
 	if (staleBlocks.length === 0) {
-		console.log(`agent_browser playbook docs are ${mode === "check" ? "in sync" : "up to date"}.`);
+		console.log(`cdp_browser playbook docs are ${mode === "check" ? "in sync" : "up to date"}.`);
 		return;
 	}
 	if (mode === "write") {

@@ -92,7 +92,7 @@ test("recording reservation branch entries survive bounded manifest eviction and
 		{
 			type: "message",
 			message: {
-				toolName: "agent_browser",
+				toolName: "cdp_browser",
 				details: {
 					artifactManifest: {
 						entries: [{ createdAtMs: 3, kind: "image", path: "newer.png", retentionState: "live", storageScope: "explicit-path" }],
@@ -136,7 +136,7 @@ test("recording reservation transition replay keeps the newest pending path auth
 		{
 			type: "message",
 			message: {
-				toolName: "agent_browser",
+				toolName: "cdp_browser",
 				details: {
 					artifactManifest: { entries: newestFirstEntries, evictedCount: 0, liveCount: 2, maxEntries: 20, updatedAtMs: 2, version: 1 },
 				},
@@ -174,7 +174,7 @@ test("recording reservation transition replay keeps the newest pending path auth
 	assert.deepEqual(stoppedManifest?.entries.map((entry) => entry.subcommand), ["stop"]);
 	const manifestOnlyReplay = restoreRecordingReservationStateFromBranch([{
 		type: "message",
-		message: { toolName: "agent_browser", details: { artifactManifest: stoppedManifest } },
+		message: { toolName: "cdp_browser", details: { artifactManifest: stoppedManifest } },
 	}]);
 	assert.equal(manifestOnlyReplay.active.size, 0);
 	assert.equal(manifestOnlyReplay.terminal.size, 0);

@@ -173,7 +173,7 @@ test("buildToolPresentation formats session status and session list", async () =
 			success: true,
 			data: {
 				sessions: [
-					{ active: true, name: "piab-foreign", title: "Private", url: "https://private.example" },
+					{ active: true, name: "cdpb-foreign", title: "Private", url: "https://private.example" },
 					{ active: true, name: "PIAB-case-alias", title: "Private Alias", url: "https://alias.private.example" },
 					{ active: true, name: "work", title: "Example", url: "https://example.com" },
 				],
@@ -181,7 +181,7 @@ test("buildToolPresentation formats session status and session list", async () =
 		},
 	});
 	assert.equal(list.summary, "Sessions: 3");
-	assert.match((list.content[0] as { text: string }).text, /piab-foreign/);
+	assert.match((list.content[0] as { text: string }).text, /cdpb-foreign/);
 	assert.match((list.content[0] as { text: string }).text, /PIAB-case-alias/);
 	assert.match((list.content[0] as { text: string }).text, /name=work/);
 });
@@ -313,7 +313,7 @@ test("buildToolPresentation formats stateful browser-context results without lea
 });
 
 test("buildToolPresentation preserves managed restore capabilities and state-list rows", async () => {
-	const restoreKey = `piab-r2-${"a".repeat(32)}`;
+	const restoreKey = `cdpb-r2-${"a".repeat(32)}`;
 	const list = await buildToolPresentation({
 		commandInfo: { command: "state", subcommand: "list" },
 		cwd: process.cwd(),
@@ -330,18 +330,18 @@ test("buildToolPresentation preserves managed restore capabilities and state-lis
 	const listSerialized = JSON.stringify(list);
 	assert.equal(list.summary, "States: 2");
 	assert.match((list.content[0] as { text: string }).text, /caller-owned\.json/);
-	assert.match(listSerialized, /piab-r2-|private\.example|managed\.json/);
+	assert.match(listSerialized, /cdpb-r2-|private\.example|managed\.json/);
 
 	const sessionInfo = await buildToolPresentation({
 		commandInfo: { command: "session", subcommand: "info" },
 		cwd: process.cwd(),
 		envelope: {
 			success: true,
-			data: { active: true, runtime: { restoreKey }, unrelatedStatePath: `/tmp/piab-r-${"b".repeat(32)}-managed.json`, statePath: `/tmp/${restoreKey}-managed.json` },
+			data: { active: true, runtime: { restoreKey }, unrelatedStatePath: `/tmp/cdpb-r-${"b".repeat(32)}-managed.json`, statePath: `/tmp/${restoreKey}-managed.json` },
 		},
 	});
 	const infoSerialized = JSON.stringify(sessionInfo);
-	assert.match(infoSerialized, /piab-r(?:2)?-[a-f\d]{32}/);
+	assert.match(infoSerialized, /cdpb-r(?:2)?-[a-f\d]{32}/);
 	assert.doesNotMatch(infoSerialized, /REDACTED MANAGED STATE/);
 });
 
@@ -397,7 +397,7 @@ test("buildToolPresentation adds routed pending network diagnostics", async () =
 			data: { requests: [{ method: "GET", requestId: "r1", resourceType: "fetch", url: "https://example.test/api/items" }] },
 		},
 		networkRouteDiagnostics: [{ mode: "body", reason: "pending-routed-request", requestId: "r1", requestUrl: "https://example.test/api/items", routePattern: "**/api/**", summary: "pending" }],
-		sessionName: "host-browser-test",
+		sessionName: "cdp-browser-test",
 	});
 
 	const text = (presentation.content[0] as { text: string }).text;
@@ -405,7 +405,7 @@ test("buildToolPresentation adds routed pending network diagnostics", async () =
 	assert.match(text, /pending-routed-request/);
 	assert.deepEqual(presentation.networkRouteDiagnostics?.map((item) => item.reason), ["pending-routed-request"]);
 	assert.deepEqual(presentation.nextActions?.slice(0, 2).map((action) => action.id), ["inspect-routed-network-request", "start-network-har-capture-for-route-mock"]);
-	assert.deepEqual(presentation.nextActions?.[0]?.params?.args, ["--session", "host-browser-test", "network", "request", "r1"]);
+	assert.deepEqual(presentation.nextActions?.[0]?.params?.args, ["--session", "cdp-browser-test", "network", "request", "r1"]);
 });
 
 test("buildToolPresentation flags routed requests that return failed statuses", async () => {
@@ -417,7 +417,7 @@ test("buildToolPresentation flags routed requests that return failed statuses", 
 			data: { requests: [{ method: "GET", requestId: "r404", resourceType: "fetch", status: 404, url: "https://example.test/api/stress" }] },
 		},
 		networkRouteDiagnostics: [{ mode: "body", reason: "unfulfilled-routed-request", requestId: "r404", requestUrl: "https://example.test/api/stress", routePattern: "**/api/stress", summary: "failed" }],
-		sessionName: "host-browser-test",
+		sessionName: "cdp-browser-test",
 	});
 
 	const text = (presentation.content[0] as { text: string }).text;
@@ -456,7 +456,7 @@ test("buildToolPresentation treats stream enable already-enabled as idempotent",
 		commandInfo: { command: "stream", subcommand: "enable" },
 		cwd: process.cwd(),
 		envelope: { success: true, data: { alreadyEnabled: true, enabled: true } },
-		sessionName: "host-browser-test",
+		sessionName: "cdp-browser-test",
 	});
 
 	assert.equal(presentation.summary, "Stream already enabled");

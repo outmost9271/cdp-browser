@@ -35,7 +35,7 @@ export function buildPendingWebMcpNextActions(sessionName: string | undefined): 
 		params: { args: withOptionalSessionArgs(sessionName, ["get", "url"]) },
 		reason: "Verify the current page target before taking a fresh snapshot; use webmcp result or cancel to settle the detached invocation.",
 		safety: "Read-only URL inspection. It does not settle the pending page tool, which may still mutate or navigate later.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	}];
 }
 

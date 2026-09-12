@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Purpose: Manage host-browser package config under Pi-scoped config paths.
+ * Purpose: Manage cdp-browser package config under Pi-scoped config paths.
  * Responsibilities: Thin CLI argument parsing and config-file mutation around the shared config policy; preserve safe permissions and avoid echoing secrets.
  * Scope: Maintainer/user setup CLI only; canonical config validation, merge, provider descriptors, and status projection live in extensions/agent-browser/lib/config-policy.js.
  */
@@ -43,29 +43,29 @@ class UsageError extends Error {
 }
 
 function usage() {
-	return `host-browser config helper
+	return `cdp-browser config helper
 
 Usage through npm exec:
-  npm exec --yes --package host-browser@latest -- host-browser-config paths
-  npm exec --yes --package host-browser@latest -- host-browser-config show
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search status
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search set-key --stdin --provider <exa|brave> [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search set-env <ENV_VAR> [--provider brave|exa] [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search set-command <command> --provider <exa|brave> [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search clear --provider <exa|brave|all> [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search prefer <exa|brave|auto> [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search enable [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config web-search disable [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config browser profile status
-  npm exec --yes --package host-browser@latest -- host-browser-config browser profile set <name|path> [--policy explicit-only|authenticated-only|always] [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config browser profile clear [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config browser executable status
-  npm exec --yes --package host-browser@latest -- host-browser-config browser executable set <path> [--global|--project]
-  npm exec --yes --package host-browser@latest -- host-browser-config browser executable clear [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config paths
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config show
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search status
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search set-key --stdin --provider <exa|brave> [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search set-env <ENV_VAR> [--provider brave|exa] [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search set-command <command> --provider <exa|brave> [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search clear --provider <exa|brave|all> [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search prefer <exa|brave|auto> [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search enable [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config web-search disable [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser profile status
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser profile set <name|path> [--policy explicit-only|authenticated-only|always] [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser profile clear [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser executable status
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser executable set <path> [--global|--project]
+  npm exec --yes --package cdp-browser@latest -- cdp-browser-config browser executable clear [--global|--project]
 
 Notes:
-  Global config:  ~/.pi/config/host-browser/config.json
-  Project config: .pi/config/host-browser/config.json
+  Global config:  ~/.pi/config/cdp-browser/config.json
+  Project config: .pi/config/cdp-browser/config.json
   Override:       ${AGENT_BROWSER_CONFIG_ENV}=/path/to/config.json
   Loaded config may use plaintext, environment interpolation, or !command credential sources; displayed status redacts resolved keys.
   Use --provider for set-key, set-command, and clear; set-env infers exa/brave from ${EXA_API_KEY_ENV} or ${BRAVE_API_KEY_ENV}.
@@ -273,7 +273,7 @@ async function handleWebSearch(args, flags) {
 		mutateConfig(path, (config) => {
 			config.webSearch = { ...(config.webSearch ?? {}), enabled: action === "enable" };
 		});
-		console.log(`${action === "enable" ? "Enabled" : "Disabled"} agent_browser_web_search in ${scope} config: ${path}`);
+		console.log(`${action === "enable" ? "Enabled" : "Disabled"} cdp_browser_web_search in ${scope} config: ${path}`);
 		return;
 	}
 	throw new UsageError(`Unsupported web-search action: ${action ?? ""}`);

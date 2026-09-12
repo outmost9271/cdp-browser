@@ -6,16 +6,16 @@ import { basename, dirname, join, resolve } from "node:path";
 import { isRecord, parsePositiveInteger } from "./parsing.js";
 import { processStartIdentitiesMatch, readProcessStartIdentity } from "./process-identity.js";
 
-const TEMP_ROOT_PREFIX = "host-browser-";
-const TEMP_ROOT_MARKER_FILE_NAME = ".host-browser-owner.json";
-const TEMP_ROOT_MARKER_KIND = "host-browser-temp-root";
+const TEMP_ROOT_PREFIX = "cdp-browser-";
+const TEMP_ROOT_MARKER_FILE_NAME = ".cdp-browser-owner.json";
+const TEMP_ROOT_MARKER_KIND = "cdp-browser-temp-root";
 const TEMP_ROOT_MARKER_VERSION = 2;
 const STALE_TEMP_ROOT_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
-const TEMP_ROOT_MAX_BYTES_ENV = "PI_AGENT_BROWSER_TEMP_ROOT_MAX_BYTES";
+const TEMP_ROOT_MAX_BYTES_ENV = "PI_CDP_BROWSER_TEMP_ROOT_MAX_BYTES";
 const DEFAULT_TEMP_ROOT_MAX_BYTES = 32 * 1_024 * 1_024;
-const SESSION_ARTIFACT_MAX_BYTES_ENV = "PI_AGENT_BROWSER_SESSION_ARTIFACT_MAX_BYTES";
+const SESSION_ARTIFACT_MAX_BYTES_ENV = "PI_CDP_BROWSER_SESSION_ARTIFACT_MAX_BYTES";
 const DEFAULT_SESSION_ARTIFACT_MAX_BYTES = 32 * 1_024 * 1_024;
-const SESSION_ARTIFACTS_ROOT_DIR_NAME = ".host-browser-artifacts";
+const SESSION_ARTIFACTS_ROOT_DIR_NAME = ".cdp-browser-artifacts";
 
 export interface PersistentSessionArtifactStore {
 	protectedPaths?: readonly string[];
@@ -368,7 +368,7 @@ async function assertSecureTempRootBudget(tempRoot: string, additionalBytes: num
 	const maxBytes = getSecureTempRootMaxBytes();
 	const nextBytes = currentBytes + additionalBytes;
 	if (nextBytes > maxBytes) {
-		throw new Error(`host-browser temp spill budget exceeded (${nextBytes} bytes > ${maxBytes} byte limit).`);
+		throw new Error(`cdp-browser temp spill budget exceeded (${nextBytes} bytes > ${maxBytes} byte limit).`);
 	}
 }
 
@@ -447,7 +447,7 @@ async function prunePersistentSessionArtifactsToBudget(
 			return evictedArtifacts;
 		}
 	}
-	throw new Error(`host-browser persisted spill budget exceeded (${totalBytes + additionalBytes} bytes > ${maxBytes} byte limit).`);
+	throw new Error(`cdp-browser persisted spill budget exceeded (${totalBytes + additionalBytes} bytes > ${maxBytes} byte limit).`);
 }
 
 async function getSessionTempRoot(): Promise<string> {
@@ -525,7 +525,7 @@ export async function getSecureTempChildDirectoryValidationError(path: string, c
 	}
 	const ownershipMarker = await readTempRootOwnershipMarker(parentDirectory);
 	if (!ownershipMarker) {
-		return `Refusing to remove ${path}; parent directory is not a host-browser owned temp root.`;
+		return `Refusing to remove ${path}; parent directory is not a cdp-browser owned temp root.`;
 	}
 	const currentUid = getCurrentProcessUid();
 	if (currentUid !== undefined && ownershipMarker.ownerUid !== undefined && ownershipMarker.ownerUid !== currentUid) {

@@ -19,7 +19,7 @@ function buildArtifactAction(path: string): AgentBrowserNextAction {
 		id: "use-saved-artifact",
 		reason: "Use the saved artifact path from the structured result instead of scraping it from text.",
 		safety: "Verify artifact metadata such as exists/status before treating the file as durable.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 
@@ -29,7 +29,7 @@ function buildArtifactVerificationAction(artifact: FileArtifactMetadata): AgentB
 		id: "verify-artifact-path",
 		reason: "The wrapper has artifact metadata but did not verify this file as present on disk.",
 		safety: "Check details.artifactVerification and the filesystem before treating the artifact as durable.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 
@@ -45,7 +45,7 @@ function buildElectronToolAction(options: {
 		params: { electron: { action: options.action, launchId: options.launchId } },
 		reason: options.reason,
 		...(options.safety ? { safety: options.safety } : {}),
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 

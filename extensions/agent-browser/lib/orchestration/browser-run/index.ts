@@ -1,4 +1,7 @@
 import { runAgentBrowserProcess, withAttachedBrowserSessionContext } from "../../process.js";
+import { resolveAgentBrowserBinary } from "../../agent-browser-binary.js";
+import { injectRemoteCdpArgs } from "../../cdp-config.js";
+import { buildAgentBrowserResultCategoryDetails } from "../../results/categories.js";
 import { isRecord } from "../../parsing.js";
 import { withOwnedManagedSessionContext } from "../../managed-session-restore.js";
 import { cleanupClickDispatchProbe } from "./click-dispatch.js";
@@ -11,6 +14,18 @@ import type { AgentBrowserToolResult, BrowserRunOptions } from "./types.js";
 export { closeManagedSession } from "./managed-session-daemon-policy.js";
 export { getSessionContextKey } from "./session-state.js";
 export type { AgentBrowserToolResult, BrowserRunOptions, BrowserRunState, TraceOwner } from "./types.js";
+
+function buildRemoteCdpFailureResult(args: string[], errorText: string): AgentBrowserToolResult {
+	return {
+		content: [{ type: "text", text: errorText }],
+		details: {
+			args,
+			...buildAgentBrowserResultCategoryDetails({ args, errorText, succeeded: false, validationError: errorText }),
+			validationError: errorText,
+		},
+		isError: true,
+	};
+}
 
 export async function runAgentBrowserTool(options: BrowserRunOptions): Promise<AgentBrowserToolResult> {
 	const result = await withAttachedBrowserSessionContext(options.preserveAttachedBrowserSession === true, () => runAgentBrowserToolInContext(options));
@@ -35,8 +50,42 @@ async function runAgentBrowserToolInContext(options: BrowserRunOptions): Promise
 	return await withOwnedManagedSessionContext(ownedManagedSession, async () => {
 		try {
 			const artifactRunStartedAtMs = Date.now();
+			const cdpInjection = injectRemoteCdpArgs(prepared.processArgs, { cwd: options.cwd, env: process.env });
+			if (cdpInjection.error) {
+				return buildRemoteCdpFailureResult(prepared.redactedArgs, cdpInjection.error);
+			}
+			let agentBrowserCliPath: string;
+			try {
+				agentBrowserCliPath = resolveAgentBrowserBinary();
+			} catch (binaryError) {
+				const binaryMessage = binaryError instanceof Error ? binaryError.message : String(binaryError);
+				const missingResult = await buildMissingBinaryFailureResult({
+					compatibilityWorkaround: prepared.compatibilityWorkaround,
+					electronLaunch: prepared.electronLaunch,
+					executionPlan: prepared.executionPlan,
+					implicitSessionCloseTimeoutMs: options.implicitSessionCloseTimeoutMs,
+					managedSessionActive: options.state.managedSessionActive,
+					managedSessionName: options.state.managedSessionName,
+					managedSessionNamespace: options.state.managedSessionNamespace,
+					processResult: {
+						aborted: false,
+						agentBrowserStarted: false,
+						exitCode: 127,
+						spawnError: Object.assign(new Error(binaryMessage), { code: "ENOENT" }),
+						stderr: "",
+						stdout: "",
+						timedOut: false,
+					},
+					redactedArgs: prepared.redactedArgs,
+					redactedProcessArgs: prepared.redactedProcessArgs,
+					sessionMode: prepared.sessionMode,
+					sessionTabCorrection: prepared.sessionTabCorrection,
+				});
+				return missingResult ?? buildRemoteCdpFailureResult(prepared.redactedArgs, binaryMessage);
+			}
 			const processResult = await runAgentBrowserProcess({
-				args: prepared.processArgs,
+				args: cdpInjection.args,
+				cliPath: agentBrowserCliPath,
 				cwd: options.cwd,
 				env: ownedManagedSession
 					? { AGENT_BROWSER_IDLE_TIMEOUT_MS: options.implicitSessionIdleTimeoutMs }

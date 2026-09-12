@@ -90,7 +90,7 @@ test("unsupported batch bail assignment explains raw argv precedence without rec
 	assert.equal(getPageTargetValidationError({ args: ["batch", "fill '#field' '--bail=true'"], pageUrlUnknown: false }), undefined);
 });
 
-const real = process.env.PI_AGENT_BROWSER_REAL_UPSTREAM === "1";
+const real = process.env.PI_CDP_BROWSER_REAL_UPSTREAM === "1";
 
 test("real upstream artifact argv matches native operand selection", { skip: !real, timeout: 120_000 }, async (t) => {
 	const dir = await mkdtemp(join(tmpdir(), "av-"));
@@ -100,7 +100,7 @@ test("real upstream artifact argv matches native operand selection", { skip: !re
 	try {
 		await withPatchedEnv({
 			HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"),
-			PI_AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir,
+			PI_CDP_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir,
 			AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined,
 			AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined,
 			AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined,
@@ -238,7 +238,7 @@ test("real upstream recording FPS preserves destinations and the intended page",
 	const fixture = await startAgentBrowserContractFixtureServer();
 	const url = `${fixture.baseUrl}/contract`;
 	try {
-		await withPatchedEnv({ HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"), PI_AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined, AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined, AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined }, async () => {
+		await withPatchedEnv({ HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"), PI_CDP_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined, AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined, AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined }, async () => {
 			const version = (await runAgentBrowserProcess({ args: ["--version"], cwd: dir })).stdout.match(/agent-browser (\d+)\.(\d+)\./);
 			assert.ok(version);
 			if (Number(version[1]) === 0 && Number(version[2]) < 37) { t.skip("Recording FPS requires native 0.37 or newer; older recording controls run separately."); return; }
@@ -340,7 +340,7 @@ test("real upstream batch argv and ref fidelity for pinned and unpinned register
 	try {
 		await withPatchedEnv({
 			HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"),
-			PI_AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir,
+			PI_CDP_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir,
 			AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined,
 			AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined,
 			AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined,
@@ -402,7 +402,7 @@ test("real upstream batch argv and ref fidelity for pinned and unpinned register
 							assert.deepEqual(rows.map((row) => row.success), bail ? [true, false] : [true, false, true]);
 							assert.equal((result.details?.batchFailure as { failedStep: { index: number } }).failedStep.index, 1);
 							assert.match(result.content[0]?.text ?? "", /Batch failed:/);
-							const patches = await runExtensionEventResults<{ isError?: boolean }>(h.handlers, "tool_result", { toolName: "agent_browser", toolCallId: "fixture", input: { args: [...prefix, "batch"] }, ...result, isError: false }, h.ctx);
+							const patches = await runExtensionEventResults<{ isError?: boolean }>(h.handlers, "tool_result", { toolName: "cdp_browser", toolCallId: "fixture", input: { args: [...prefix, "batch"] }, ...result, isError: false }, h.ctx);
 							assert.equal(patches[0]?.isError, true);
 							assert.equal(JSON.parse((await direct(["get", "value", "#name-input"])).stdout).data.value, bail ? "before" : "after");
 						}

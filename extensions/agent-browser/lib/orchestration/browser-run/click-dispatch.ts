@@ -177,7 +177,7 @@ export function buildClickDispatchNextActions(options: { commandTokens: string[]
 			params: { args: withOptionalSessionArgs(options.sessionName, ["snapshot", "-i"]) },
 			reason: "Refresh interactive refs and verify the intended click target before retrying upstream click.",
 			safety: "Read-only snapshot; the wrapper does not replay clicks in-page when upstream reports success without DOM events.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		},
 	];
 	if (options.diagnostic?.scrollContainer) {
@@ -188,7 +188,7 @@ export function buildClickDispatchNextActions(options: { commandTokens: string[]
 				? `The target may be outside nested scroll container ${options.diagnostic.scrollContainer.selector}; scroll the target into view before retrying the click.`
 				: "The target may be inside an offscreen nested scroll container; scroll the target into view before retrying the click.",
 			safety: "Use only for the same current page and target; run snapshot -i again if the page rerendered.",
-			tool: "agent_browser",
+			tool: "cdp_browser",
 		});
 	}
 	actions.push({
@@ -196,7 +196,7 @@ export function buildClickDispatchNextActions(options: { commandTokens: string[]
 		params: { args: withOptionalSessionArgs(options.sessionName, retryArgs) },
 		reason: "Retry the same upstream click after confirming the target is visible; do not assume the prior success mutated the page.",
 		safety: "Only retry when the target is still intended; use page-change evidence or a fresh snapshot before continuing the workflow.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 	return actions;
 }

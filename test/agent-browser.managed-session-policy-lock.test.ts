@@ -16,10 +16,10 @@ import {
 	getManagedSessionPolicyLockPath,
 } from "../extensions/agent-browser/lib/managed-session-policy-lock.js";
 
-const sessionName = `piab-policy-lock-${process.pid}`;
+const sessionName = `cdpb-policy-lock-${process.pid}`;
 const lockBasePath = getManagedSessionPolicyLockPath(sessionName);
 const claimPrefix = `${basename(lockBasePath)}.claim-`;
-const testOrphanPath = join(dirname(lockBasePath), `.host-browser-policy-remove-test-${process.pid}`);
+const testOrphanPath = join(dirname(lockBasePath), `.cdp-browser-policy-remove-test-${process.pid}`);
 
 async function claimPaths(): Promise<string[]> {
 	try {

@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify optional Exa/Brave-backed agent_browser_web_search registration, request shaping, result normalization, and secret redaction.
+ * Purpose: Verify optional Exa/Brave-backed cdp_browser_web_search registration, request shaping, result normalization, and secret redaction.
  */
 
 import assert from "node:assert/strict";
@@ -46,7 +46,7 @@ async function withFakeFetch<T>(handler: (input: string | URL | Request, init?: 
 }
 
 async function createFixture() {
-	const root = await mkdtemp(join(tmpdir(), "host-browser-web-search-test-"));
+	const root = await mkdtemp(join(tmpdir(), "cdp-browser-web-search-test-"));
 	const home = join(root, "home");
 	const cwd = join(root, "repo");
 	await mkdir(home, { recursive: true });
@@ -55,7 +55,7 @@ async function createFixture() {
 		cwd,
 		home,
 		overrideConfigPath: join(root, "override-config.json"),
-		projectConfigPath: join(cwd, ".pi", "config", "host-browser", "config.json"),
+		projectConfigPath: join(cwd, ".pi", "config", "cdp-browser", "config.json"),
 	};
 }
 
@@ -79,12 +79,12 @@ async function withTemporaryArgv<T>(argv: string[], run: () => Promise<T>): Prom
 	}
 }
 
-test("does not register agent_browser_web_search without env or config credential", async () => {
+test("does not register cdp_browser_web_search without env or config credential", async () => {
 	const fixture = await createFixture();
 	await withPatchedEnv({ HOME: fixture.home, [AGENT_BROWSER_CONFIG_ENV]: undefined, [BRAVE_API_KEY_ENV]: undefined, [EXA_API_KEY_ENV]: undefined }, async () => {
 		const harness = createExtensionHarness({ cwd: fixture.cwd });
 		assert.equal(harness.getTool(AGENT_BROWSER_WEB_SEARCH_TOOL_NAME), undefined);
-		assert.equal(harness.getTool("agent_browser")?.promptGuidelines.includes("Use agent_browser for real browser or live web content."), true);
+		assert.equal(harness.getTool("cdp_browser")?.promptGuidelines.includes("Use cdp_browser for real browser or live web content."), true);
 	});
 });
 
@@ -134,10 +134,10 @@ test("project config can disable web-search execution despite env fallback", asy
 			const harness = createExtensionHarness({ cwd: fixture.cwd });
 			const tool = harness.getTool(AGENT_BROWSER_WEB_SEARCH_TOOL_NAME);
 			assert.ok(tool);
-			assert.ok(harness.getTool("agent_browser"));
+			assert.ok(harness.getTool("cdp_browser"));
 			await assert.rejects(
 				() => executeRegisteredTool(tool, harness.ctx, { query: "disabled project config" }),
-				/agent_browser_web_search is disabled by host-browser config/,
+				/cdp_browser_web_search is disabled by cdp-browser config/,
 			);
 		});
 	});
@@ -168,7 +168,7 @@ test("project web-search plaintext config passes through at execution without ex
 	});
 });
 
-test("--no-approve prevents project config from disabling env-backed agent_browser_web_search execution", async () => {
+test("--no-approve prevents project config from disabling env-backed cdp_browser_web_search execution", async () => {
 	const fixture = await createFixture();
 	await writeJson(fixture.projectConfigPath, { version: 1, webSearch: { enabled: false } });
 	await withPatchedEnv({ HOME: fixture.home, [AGENT_BROWSER_CONFIG_ENV]: undefined, [BRAVE_API_KEY_ENV]: "env-secret", [EXA_API_KEY_ENV]: undefined }, async () => {
@@ -176,13 +176,13 @@ test("--no-approve prevents project config from disabling env-backed agent_brows
 			await withTemporaryArgv(["node", "pi", "--no-approve"], async () => {
 				const harness = createExtensionHarness({ cwd: fixture.cwd });
 				assert.ok(harness.getTool(AGENT_BROWSER_WEB_SEARCH_TOOL_NAME));
-				assert.ok(harness.getTool("agent_browser"));
+				assert.ok(harness.getTool("cdp_browser"));
 			});
 		});
 	});
 });
 
-test("agent_browser_web_search registration and execution ignore project config when project config is not approved", async () => {
+test("cdp_browser_web_search registration and execution ignore project config when project config is not approved", async () => {
 	const fixture = await createFixture();
 	await writeJson(fixture.projectConfigPath, { version: 1, webSearch: { enabled: false, preferredProvider: "brave" } });
 	await withPatchedEnv({ HOME: fixture.home, [AGENT_BROWSER_CONFIG_ENV]: undefined, [BRAVE_API_KEY_ENV]: "brave-secret", [EXA_API_KEY_ENV]: "exa-secret" }, async () => {
@@ -204,17 +204,17 @@ test("agent_browser_web_search registration and execution ignore project config 
 	});
 });
 
-test("registers agent_browser_web_search with actionable search-type and rate-limit guidance", async () => {
+test("registers cdp_browser_web_search with actionable search-type and rate-limit guidance", async () => {
 	const fixture = await createFixture();
 	await withPatchedEnv({ HOME: fixture.home, [AGENT_BROWSER_CONFIG_ENV]: undefined, [BRAVE_API_KEY_ENV]: "test-secret", [EXA_API_KEY_ENV]: undefined }, async () => {
 		const harness = createExtensionHarness({ cwd: fixture.cwd });
 		const tool = harness.getTool(AGENT_BROWSER_WEB_SEARCH_TOOL_NAME);
 		assert.ok(tool);
-		assert.ok(harness.getTool("agent_browser"));
+		assert.ok(harness.getTool("cdp_browser"));
 		const guidelines = tool.promptGuidelines.join("\n");
-		assert.match(guidelines, /Prefer agent_browser_web_search for current or external web facts/);
+		assert.match(guidelines, /Prefer cdp_browser_web_search for current or external web facts/);
 		assert.match(guidelines, /searchType.*deep-lite/);
-		assert.match(guidelines, /Do not run parallel agent_browser_web_search calls/);
+		assert.match(guidelines, /Do not run parallel cdp_browser_web_search calls/);
 		assert.match(guidelines, /HTTP 429/);
 		assert.match(tool.description, /deep-lite/);
 		const schema = tool.parameters as { properties?: Record<string, { description?: string; maxItems?: number }> };
@@ -595,7 +595,7 @@ test("search execution reports API and JSON failures without leaking key", async
 					() => fetchBraveSearchJson(buildBraveSearchUrl({ query: "rate limit", count: 1, offset: 0 }), "secret-that-must-not-leak"),
 					(error: Error) => {
 						assert.match(error.message, /Brave search rate limit exceeded \(HTTP 429\)/);
-						assert.match(error.message, /Do not issue parallel or repeated agent_browser_web_search calls/);
+						assert.match(error.message, /Do not issue parallel or repeated cdp_browser_web_search calls/);
 						assert.doesNotMatch(error.message, /secret-that-must-not-leak/);
 						return true;
 					},
@@ -604,7 +604,7 @@ test("search execution reports API and JSON failures without leaking key", async
 					() => fetchExaSearchJson({ query: "rate limit", contents: { highlights: true } }, "secret-that-must-not-leak"),
 					(error: Error) => {
 						assert.match(error.message, /Exa search rate limit exceeded \(HTTP 429\)/);
-						assert.match(error.message, /Do not issue parallel or repeated agent_browser_web_search calls/);
+						assert.match(error.message, /Do not issue parallel or repeated cdp_browser_web_search calls/);
 						assert.doesNotMatch(error.message, /secret-that-must-not-leak/);
 						return true;
 					},

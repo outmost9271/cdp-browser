@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify the host-browser-config user setup CLI writes Pi-scoped config safely and redacts secrets.
+ * Purpose: Verify the cdp-browser-config user setup CLI writes Pi-scoped config safely and redacts secrets.
  */
 
 import assert from "node:assert/strict";
@@ -10,7 +10,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 
 const CONFIG_SCRIPT = join(process.cwd(), "scripts", "config.mjs");
-const DOCUMENTED_CONFIG_HELPER_PREFIX = "npm exec --yes --package host-browser@latest -- host-browser-config";
+const DOCUMENTED_CONFIG_HELPER_PREFIX = "npm exec --yes --package cdp-browser@latest -- cdp-browser-config";
 const LOCAL_PACKAGE_SPEC = process.cwd();
 const NPM_COMMAND = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -48,7 +48,7 @@ async function runConfig(args: string[], options: { cwd?: string; env?: NodeJS.P
 }
 
 async function createFixture() {
-	const root = await mkdtemp(join(tmpdir(), "host-browser-config-cli-test-"));
+	const root = await mkdtemp(join(tmpdir(), "cdp-browser-config-cli-test-"));
 	const cwd = join(root, "repo");
 	const home = join(root, "home");
 	const npmCache = join(root, "npm-cache");
@@ -65,10 +65,10 @@ async function createFixture() {
 			NPM_CONFIG_CACHE: npmCache,
 			BRAVE_API_KEY: undefined,
 			EXA_API_KEY: undefined,
-			PI_AGENT_BROWSER_CONFIG: undefined,
+			PI_CDP_BROWSER_CONFIG: undefined,
 		},
-		globalPath: join(home, ".pi", "config", "host-browser", "config.json"),
-		projectPath: join(cwd, ".pi", "config", "host-browser", "config.json"),
+		globalPath: join(home, ".pi", "config", "cdp-browser", "config.json"),
+		projectPath: join(cwd, ".pi", "config", "cdp-browser", "config.json"),
 		root,
 	};
 }
@@ -128,7 +128,7 @@ function documentedNpmExecArgs(command: string): { args: string[]; input?: strin
 	assert.equal(tokens[0], "npm", `documented command must start with npm exec: ${command}`);
 	const packageIndex = tokens.indexOf("--package");
 	assert.notEqual(packageIndex, -1, `documented command must use --package: ${command}`);
-	assert.equal(tokens[packageIndex + 1], "host-browser@latest", `documented command must use the published package spec: ${command}`);
+	assert.equal(tokens[packageIndex + 1], "cdp-browser@latest", `documented command must use the published package spec: ${command}`);
 	tokens[packageIndex + 1] = LOCAL_PACKAGE_SPEC;
 	return { args: tokens.slice(1), input };
 }
@@ -136,11 +136,11 @@ function documentedNpmExecArgs(command: string): { args: string[]; input?: strin
 test("config CLI prints Pi-scoped paths and pass-through setup help", async () => {
 	const fixture = await createFixture();
 	const { stdout } = await runConfig(["paths"], { cwd: fixture.cwd, env: fixture.env });
-	assert.match(stdout, /\.pi\/config\/host-browser\/config\.json/);
+	assert.match(stdout, /\.pi\/config\/cdp-browser\/config\.json/);
 	const { stdout: help } = await runConfig(["--help"], { cwd: fixture.cwd, env: fixture.env });
 	assert.match(help, /Loaded config may use plaintext, environment interpolation, or !command credential sources/);
 	assert.match(help, /displayed status redacts resolved keys/);
-	assert.doesNotMatch(help, /^  host-browser-config/m);
+	assert.doesNotMatch(help, /^  cdp-browser-config/m);
 });
 
 test("published package config docs only use npm-exec helper examples", async () => {
@@ -149,7 +149,7 @@ test("published package config docs only use npm-exec helper examples", async ()
 	for (const path of markdownFiles) {
 		const text = await readFile(path, "utf8");
 		for (const [lineIndex, line] of text.split("\n").entries()) {
-			if (line.includes("host-browser-config") && !line.includes(DOCUMENTED_CONFIG_HELPER_PREFIX)) {
+			if (line.includes("cdp-browser-config") && !line.includes(DOCUMENTED_CONFIG_HELPER_PREFIX)) {
 				violations.push(`${path}:${lineIndex + 1}: ${line.trim()}`);
 			}
 		}
@@ -253,7 +253,7 @@ test("config CLI writes project env source, project profile, and project executa
 	await runConfig(["web-search", "disable", "--project"], { cwd: fixture.cwd, env: fixture.env });
 	await runConfig(["browser", "profile", "set", "Profile 1", "--policy", "authenticated-only", "--project"], { cwd: fixture.cwd, env: fixture.env });
 	await runConfig(["browser", "executable", "set", "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser", "--project"], { cwd: fixture.cwd, env: fixture.env });
-	const projectPath = join(fixture.cwd, ".pi", "config", "host-browser", "config.json");
+	const projectPath = join(fixture.cwd, ".pi", "config", "cdp-browser", "config.json");
 	const config = JSON.parse(await readFile(projectPath, "utf8")) as {
 		webSearch?: { braveApiKey?: string; enabled?: boolean; exaApiKey?: string; preferredProvider?: string };
 		browser?: { defaultProfile?: { name?: string; policy?: string }; executablePath?: string };

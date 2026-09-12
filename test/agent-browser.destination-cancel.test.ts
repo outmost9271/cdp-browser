@@ -116,8 +116,8 @@ save(); process.stdout.write(JSON.stringify(output)); process.exitCode = failed 
 	try {
 		await withPatchedEnv({
 			PATH: `${root}${delimiter}${process.env.PATH ?? ""}`, HOME: home, USERPROFILE: home,
-			PI_CODING_AGENT_DIR: join(root, "pi"), PI_AGENT_BROWSER_SOCKET_DIR: join(root, "s"),
-			AGENT_BROWSER_NAMESPACE: "", PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
+			PI_CODING_AGENT_DIR: join(root, "pi"), PI_CDP_BROWSER_SOCKET_DIR: join(root, "s"),
+			AGENT_BROWSER_NAMESPACE: "", PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
 		}, async () => {
 			const branch: unknown[] = [];
 			let harness = createExtensionHarness({ branch, cwd });

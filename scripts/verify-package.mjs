@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify the published npm tarball shape, package-path Pi loadability, and key repo release prerequisites for host-browser.
+ * Purpose: Verify the published npm tarball shape, package-path Pi loadability, and key repo release prerequisites for cdp-browser.
  * Responsibilities: Parse CLI options, run `npm pack`, validate required and forbidden repo and packed files, catch repo-local auto-discovery shims, smoke-load and deterministically smoke-execute the packed package in an isolated Pi resource loader when requested, and print concise release reports.
  * Scope: Packaging and release verification only; code compilation/tests stay in the normal npm verify scripts.
  * Usage: Run with `node scripts/verify-package.mjs`, `node scripts/verify-package.mjs --smoke-pi`, `npm run verify -- package`, `npm run verify -- package-pi`, or `npm run verify -- release`.
@@ -48,9 +48,9 @@ Usage:
 Options:
   --list-files   Print every packed file path after validation.
   --smoke-pi     Pack and extract the package, verify Pi can load exactly one
-                 agent_browser tool from that package in isolation after installing
+                 cdp_browser tool from that package in isolation after installing
                  runtime dependencies (no lifecycle scripts), and execute a
-                 deterministic fake-binary-backed agent_browser --version smoke.
+                 deterministic fake-binary-backed cdp_browser --version smoke.
   -h, --help     Show this help text.
 
 Checks:
@@ -59,7 +59,7 @@ Checks:
   3. Required published files are present.
   4. Development-only or superseded files are absent from the tarball.
   5. With --smoke-pi, the packed package load path registers exactly one
-     agent_browser tool whose source resolves inside the extracted package.
+     cdp_browser tool whose source resolves inside the extracted package.
   6. With --smoke-pi, that packaged tool executes through Pi's native tool
      handler using a temporary fake agent-browser --version binary.
 
@@ -145,7 +145,7 @@ async function getDryRunPackResult(cwd = process.cwd()) {
 }
 
 export async function packToTemporaryPackageDir(cwd = process.cwd()) {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-package-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-package-"));
 	let tarballPath;
 
 	try {
@@ -255,21 +255,21 @@ function isInsidePath(childPath, parentPath) {
 
 export function evaluatePiSmokeResult(options) {
 	const { packageDir, tools } = options;
-	const agentBrowserTools = tools.filter((tool) => tool.name === "agent_browser");
+	const agentBrowserTools = tools.filter((tool) => tool.name === "cdp_browser");
 	const failures = [];
 
 	if (agentBrowserTools.length !== 1) {
-		failures.push(`Expected exactly one packaged agent_browser tool, found ${agentBrowserTools.length}.`);
+		failures.push(`Expected exactly one packaged cdp_browser tool, found ${agentBrowserTools.length}.`);
 	}
 
 	for (const tool of agentBrowserTools) {
 		const sourcePath = tool.sourceInfo?.path ?? tool.source?.path ?? tool.path;
 		if (typeof sourcePath !== "string" || sourcePath.length === 0) {
-			failures.push("agent_browser tool did not expose source path metadata for package-path verification.");
+			failures.push("cdp_browser tool did not expose source path metadata for package-path verification.");
 			continue;
 		}
 		if (!isInsidePath(sourcePath, packageDir)) {
-			failures.push(`agent_browser loaded from ${sourcePath}; expected a source inside packed package ${packageDir}.`);
+			failures.push(`cdp_browser loaded from ${sourcePath}; expected a source inside packed package ${packageDir}.`);
 		}
 	}
 
@@ -298,7 +298,7 @@ function summarizeToolResult(result) {
 }
 
 async function createFakeAgentBrowserBinary() {
-	const binDir = await mkdtemp(join(tmpdir(), "host-browser-fake-bin-"));
+	const binDir = await mkdtemp(join(tmpdir(), "cdp-browser-fake-bin-"));
 	const nodeExecutable = JSON.stringify(process.execPath);
 	const fakeScript = `#!/usr/bin/env node
 const args = process.argv.slice(2);
@@ -344,11 +344,11 @@ async function withFakeAgentBrowserOnPath(work) {
 export async function executePackagedAgentBrowserSmoke(options) {
 	const { packageDir, session } = options;
 	const toolDefinition =
-		typeof session.getToolDefinition === "function" ? session.getToolDefinition("agent_browser") : undefined;
+		typeof session.getToolDefinition === "function" ? session.getToolDefinition("cdp_browser") : undefined;
 
 	if (!toolDefinition || typeof toolDefinition.execute !== "function") {
 		return {
-			failures: ["Packaged agent_browser tool definition was not executable via Pi session.getToolDefinition()."],
+			failures: ["Packaged cdp_browser tool definition was not executable via Pi session.getToolDefinition()."],
 			invocation: undefined,
 		};
 	}
@@ -379,7 +379,7 @@ export async function executePackagedAgentBrowserSmoke(options) {
 		const message = error instanceof Error ? error.message : String(error);
 		return {
 			failures: [
-				`Packaged agent_browser invocation threw for args ${JSON.stringify(PACKAGED_AGENT_BROWSER_SMOKE_ARGS)}: ${message}`,
+				`Packaged cdp_browser invocation threw for args ${JSON.stringify(PACKAGED_AGENT_BROWSER_SMOKE_ARGS)}: ${message}`,
 			],
 			invocation: { args: PACKAGED_AGENT_BROWSER_SMOKE_ARGS, error: message, updates },
 		};
@@ -390,18 +390,18 @@ export async function executePackagedAgentBrowserSmoke(options) {
 	const failures = [];
 	if (result?.isError === true) {
 		failures.push(
-			`Packaged agent_browser invocation failed for args ${JSON.stringify(PACKAGED_AGENT_BROWSER_SMOKE_ARGS)}:\n${text}`,
+			`Packaged cdp_browser invocation failed for args ${JSON.stringify(PACKAGED_AGENT_BROWSER_SMOKE_ARGS)}:\n${text}`,
 		);
 	}
 	if (details.inspection !== true) {
-		failures.push("Packaged agent_browser --version smoke did not report a plain-text inspection result.");
+		failures.push("Packaged cdp_browser --version smoke did not report a plain-text inspection result.");
 	}
 	if (details.exitCode !== 0) {
-		failures.push(`Packaged agent_browser --version smoke exited with ${String(details.exitCode)}; expected 0.`);
+		failures.push(`Packaged cdp_browser --version smoke exited with ${String(details.exitCode)}; expected 0.`);
 	}
 	if (!text.includes(FAKE_AGENT_BROWSER_VERSION)) {
 		failures.push(
-			`Packaged agent_browser --version smoke did not return expected fake version text ${JSON.stringify(FAKE_AGENT_BROWSER_VERSION)}.`,
+			`Packaged cdp_browser --version smoke did not return expected fake version text ${JSON.stringify(FAKE_AGENT_BROWSER_VERSION)}.`,
 		);
 	}
 
@@ -483,9 +483,9 @@ function printVerificationReport(report, options) {
 
 function printPiSmokeReport(report) {
 	console.log(`Pi package smoke path: ${report.packageDir}`);
-	console.log(`agent_browser tools found: ${report.agentBrowserToolCount}`);
+	console.log(`cdp_browser tools found: ${report.agentBrowserToolCount}`);
 	console.log(
-		`Packaged agent_browser invocation: ${
+		`Packaged cdp_browser invocation: ${
 			report.agentBrowserSmokeExecuted ? report.agentBrowserSmokeArgs.join(" ") : "not run"
 		}`,
 	);
@@ -521,7 +521,7 @@ export async function verifyPackagedPiLoad(options = {}) {
 	let tempAgentDir;
 
 	try {
-		tempAgentDir = await mkdtemp(join(tmpdir(), "host-browser-agent-"));
+		tempAgentDir = await mkdtemp(join(tmpdir(), "cdp-browser-agent-"));
 		// The tarball already contains dist; install only its runtime dependencies, as a consumer would.
 		await execFile(npmCommand, ["install", "--omit=dev", "--omit=peer", "--ignore-scripts", "--no-audit", "--no-fund"], {
 			...npmExecOptions,
@@ -563,7 +563,7 @@ export async function verifyPackagedPiLoad(options = {}) {
 		return {
 			agentBrowserSmokeArgs: PACKAGED_AGENT_BROWSER_SMOKE_ARGS,
 			agentBrowserSmokeExecuted: invocation !== undefined,
-			agentBrowserToolCount: tools.filter((tool) => tool.name === "agent_browser").length,
+			agentBrowserToolCount: tools.filter((tool) => tool.name === "cdp_browser").length,
 			failures,
 			invocation,
 			packageDir,

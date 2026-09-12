@@ -212,7 +212,7 @@ export function getPageTargetValidationError(options: {
 			return "Use exact batch --bail for fail-fast, or omit it to continue after errors. --bail=<value> is a raw command upstream; stdin is ignored when raw batch arguments are present.";
 		}
 		const batch = getBatchCommandSteps(options.args, options.stdin);
-		if (batch.error) return batch.error.startsWith("agent_browser batch stdin") || batch.error === NESTED_BATCH_ARGUMENT_MESSAGE
+		if (batch.error) return batch.error.startsWith("cdp_browser batch stdin") || batch.error === NESTED_BATCH_ARGUMENT_MESSAGE
 			? batch.error
 			: UNSAFE_BATCH_ARGUMENT_MESSAGE;
 		const bailOnFirstError = batchBailsOnFirstError(options.args);

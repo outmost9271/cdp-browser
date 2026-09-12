@@ -17,8 +17,8 @@ function validate(args: string[], stdin?: string, currentPageUrl?: string): stri
 
 test("upstream state, session, config, file, and browser launch capabilities pass through", () => {
 	for (const args of [
-		["--session", "piab-foreign", "snapshot", "-i"],
-		["--restore", `piab-r2-${"a".repeat(32)}`, "open", "https://example.com"],
+		["--session", "cdpb-foreign", "snapshot", "-i"],
+		["--restore", `cdpb-r2-${"a".repeat(32)}`, "open", "https://example.com"],
 		["--state", "/tmp/foreign.json", "open", "https://example.com"],
 		["state", "save", "/other/checkout/state.json"],
 		["state", "load", "/other/checkout/state.json"],

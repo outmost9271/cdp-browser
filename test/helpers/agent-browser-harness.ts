@@ -1,15 +1,16 @@
 /**
- * Purpose: Provide shared test harness utilities for the host-browser extension test suites.
+ * Purpose: Provide shared test harness utilities for the cdp-browser extension test suites.
  * Responsibilities: Build fake pi extension contexts, run registered extension events/tools, patch process env safely, create fake agent-browser binaries, read invocation logs, and manage child-process fixtures.
  * Scope: Test-only utilities for `test/agent-browser.*.test.ts`; production code must not import this module.
  * Usage: Import focused helpers from `./helpers/agent-browser-harness.js` inside Node test-runner suites.
- * Invariants/Assumptions: Helpers preserve caller-owned cleanup responsibilities and restore patched environment variables after each run. `writeFakeAgentBrowserBinary` installs a Unix shell-script launcher or a Windows `agent-browser.cmd`; fake daemons report inactive `session info` by default, and stateful daemon tests set `PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO=1`; pass `platform: "win32"` to assert Windows launcher layout from non-Windows hosts (spawn/PATHEXT behavior still needs a real Windows runner).
+ * Invariants/Assumptions: Helpers preserve caller-owned cleanup responsibilities and restore patched environment variables after each run. `writeFakeAgentBrowserBinary` installs a Unix shell-script launcher or a Windows `agent-browser.cmd`; fake daemons report inactive `session info` by default, and stateful daemon tests set `PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO=1`; pass `platform: "win32"` to assert Windows launcher layout from non-Windows hosts (spawn/PATHEXT behavior still needs a real Windows runner).
  */
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { existsSync } from "node:fs";
 import { chmod, readFile, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -30,7 +31,7 @@ import { TARGET_AGENT_BROWSER_VERSION_LABEL } from "../../scripts/agent-browser-
 
 export const TEST_SESSION_ID = "12345678-1234-5678-9abc-def012345678";
 export const DOWNLOAD_FIXTURE_CONTENT = "download contract fixture report\n";
-export const DOWNLOAD_FIXTURE_FILENAME = "host-browser-wait-download-contract.txt";
+export const DOWNLOAD_FIXTURE_FILENAME = "cdp-browser-wait-download-contract.txt";
 
 export interface FixtureServer {
 	baseUrl: string;
@@ -255,7 +256,7 @@ export function createToolBranchEntry(options: { details: Record<string, unknown
 		message: {
 			isError: options.isError,
 			details: options.details,
-			toolName: "agent_browser",
+			toolName: "cdp_browser",
 		},
 	};
 }
@@ -452,8 +453,8 @@ export function createExtensionHarness(options: {
 		},
 	} as Parameters<typeof agentBrowserExtension>[0]);
 
-	const registeredTool = registeredTools.get("agent_browser");
-	assert.ok(registeredTool, "expected the extension to register the agent_browser tool");
+	const registeredTool = registeredTools.get("cdp_browser");
+	assert.ok(registeredTool, "expected the extension to register the cdp_browser tool");
 
 	let branch = options.branch ?? buildUserBranch(options.prompt);
 	const sessionDir = options.sessionDir ?? (options.sessionFile ? dirname(options.sessionFile) : undefined);
@@ -524,9 +525,33 @@ export async function executeRegisteredTool(
 const patchedEnvScope = new AsyncLocalStorage<boolean>();
 let patchedEnvQueue: Promise<void> = Promise.resolve();
 
+/**
+ * When a test patches PATH with a directory that contains a fake `agent-browser`,
+ * point the extension's binary override at it so production binary resolution can
+ * stay PATH-independent while tests keep driving the fake CLI. A placeholder CDP
+ * endpoint keeps remote-mode validation satisfied; fake CLIs ignore it, and tests
+ * can override either value explicitly.
+ */
+function deriveTestEnvPatch(patch: Record<string, string | undefined>): Record<string, string | undefined> {
+	const next: Record<string, string | undefined> = Object.hasOwn(patch, "PI_CDP_BROWSER_CDP_ENDPOINT")
+		? { ...patch }
+		: { ...patch, PI_CDP_BROWSER_CDP_ENDPOINT: "http://127.0.0.1:9" };
+	if (Object.hasOwn(next, "PI_CDP_BROWSER_BINARY")) return next;
+	const pathPatch = next.PATH;
+	if (typeof pathPatch !== "string" || pathPatch.length === 0) return next;
+	const delimiter = processPlatform === "win32" ? ";" : ":";
+	const candidate = pathPatch
+		.split(delimiter)
+		.map((directory) => join(directory, processPlatform === "win32" ? "agent-browser.cmd" : "agent-browser"))
+		.find((file) => existsSync(file));
+	if (candidate) next.PI_CDP_BROWSER_BINARY = candidate;
+	return next;
+}
+
 async function runWithPatchedEnv<T>(patch: Record<string, string | undefined>, run: () => Promise<T>): Promise<T> {
+	const derivedPatch = deriveTestEnvPatch(patch);
 	const previousValues = new Map<string, string | undefined>();
-	for (const [name, value] of Object.entries(patch)) {
+	for (const [name, value] of Object.entries(derivedPatch)) {
 		previousValues.set(name, process.env[name]);
 		if (value === undefined) {
 			delete process.env[name];
@@ -576,7 +601,7 @@ const linger = spawn(process.execPath, ["-e", "setTimeout(() => process.exit(0),
 	detached: true,
 	stdio: ["ignore", "inherit", "inherit"],
 });
-writeFileSync(process.env.PI_AGENT_BROWSER_TEST_LINGER_PID_PATH, String(linger.pid));
+writeFileSync(process.env.PI_CDP_BROWSER_TEST_LINGER_PID_PATH, String(linger.pid));
 linger.unref();
 ${options.afterSpawnBody}`;
 }
@@ -586,18 +611,26 @@ export async function writeFakeAgentBrowserBinary(
 	scriptBody: string,
 	platform: NodeJS.Platform = processPlatform,
 ): Promise<string> {
-	const defaultSessionInfo = `if (process.env.PI_AGENT_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS !== "1") {
+	const defaultSessionInfo = `if (process.env.PI_CDP_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS !== "1") {
   const rawArgsIndex = process.argv.indexOf("--args");
   if (rawArgsIndex >= 0 && process.argv[rawArgsIndex + 1] === "") process.argv.splice(rawArgsIndex, 2);
   const fileAccessIndex = process.argv.indexOf("--allow-file-access");
   if (fileAccessIndex >= 0 && process.argv[fileAccessIndex + 1] === "false") process.argv.splice(fileAccessIndex, 2);
+  while (true) {
+    const cdpIndex = process.argv.indexOf("--cdp");
+    if (cdpIndex < 0) break;
+    process.argv.splice(cdpIndex, 2);
+  }
+  for (let cdpInlineIndex = process.argv.length - 1; cdpInlineIndex >= 0; cdpInlineIndex -= 1) {
+    if (process.argv[cdpInlineIndex].startsWith("--cdp=")) process.argv.splice(cdpInlineIndex, 1);
+  }
 }
-const __piabFakeArgs = process.argv.slice(2);
-if (process.env.PI_AGENT_BROWSER_TEST_CUSTOM_VERSION !== "1" && __piabFakeArgs.includes("--version")) {
+const __cdpbFakeArgs = process.argv.slice(2);
+if (process.env.PI_CDP_BROWSER_TEST_CUSTOM_VERSION !== "1" && __cdpbFakeArgs.includes("--version")) {
   process.stdout.write(${JSON.stringify(`${TARGET_AGENT_BROWSER_VERSION_LABEL}\n`)});
   process.exit(0);
 }
-if (process.env.PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO !== "1" && __piabFakeArgs.includes("session") && __piabFakeArgs.includes("info")) {
+if (process.env.PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO !== "1" && __cdpbFakeArgs.includes("session") && __cdpbFakeArgs.includes("info")) {
   process.stdout.write(JSON.stringify({ success: true, data: { active: false, runtime: null } }));
   process.exit(0);
 }`;

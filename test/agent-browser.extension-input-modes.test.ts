@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify high-level agent_browser input-mode compilation at the extension entrypoint.
+ * Purpose: Verify high-level cdp_browser input-mode compilation at the extension entrypoint.
  * Responsibilities: Assert semanticAction, visible-ref semantic resolution, constrained job, and lightweight QA compile/result contracts.
  * Scope: Integration-style Node test-runner coverage split out of the broad extension-validation suite; source/network lookup and validation-error tails remain in their focused suites.
  * Usage: Run with `npx tsx --test test/agent-browser.extension-input-modes.test.ts` or via `npm run verify`.
@@ -247,7 +247,7 @@ test("compileAgentBrowserJob assertUrl delegates patterns to upstream wait --url
 });
 
 test("agentBrowserExtension compiles semantic actions to upstream find commands", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-action-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-action-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -375,7 +375,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { args, title: "Click
 });
 
 test("agentBrowserExtension resolves semantic role fills through one exact current editable ref", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-fill-visible-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-fill-visible-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -430,7 +430,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension warns when contenteditable fill does not replace existing text", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-contenteditable-fill-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-contenteditable-fill-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -487,7 +487,7 @@ if (command === "open") {
 });
 
 test("agentBrowserExtension resolves semantic role clicks through current visible snapshot refs when available", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-visible-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-visible-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const snapshotCountPath = join(tempDir, "snapshot-count.txt");
 	const basePath = process.env.PATH ?? "";
@@ -558,7 +558,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension resolves semantic locator select through current visible combobox refs", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-select-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-select-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -614,7 +614,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension resolves semantic role fills after stored snapshot misses", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-semantic-fill-fresh-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-semantic-fill-fresh-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const snapshotCountPath = join(tempDir, "snapshot-count.txt");
 	const basePath = process.env.PATH ?? "";
@@ -666,7 +666,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension compiles constrained jobs to upstream batch commands", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-job-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-job-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -718,7 +718,7 @@ process.stdin.on("end", () => {
 			assert.deepEqual(result.details?.args, ["batch", "--bail"]);
 			const effectiveArgs = result.details?.effectiveArgs as string[] | undefined;
 			assert.deepEqual(effectiveArgs?.slice(0, 2), ["--json", "--session"]);
-			assert.match(effectiveArgs?.[2] ?? "", process.platform === "android" ? /^piab-[a-f0-9]{20}$/ : /^piab-host-browser-job-/);
+			assert.match(effectiveArgs?.[2] ?? "", process.platform === "android" ? /^cdpb-[a-f0-9]{20}$/ : /^cdpb-cdp-browser-job-/);
 			assert.equal(effectiveArgs?.[3], "batch");
 			assert.equal(effectiveArgs?.[4], "--bail");
 			const compiledJob = result.details?.compiledJob as { args?: string[]; failFast?: boolean; stdin?: string; steps?: Array<{ action: string; args: string[]; generatedFrom?: string }> } | undefined;
@@ -785,7 +785,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension reports failed fresh jobs as post-launch failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-fresh-job-failure-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-fresh-job-failure-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -853,7 +853,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension compiles lightweight QA presets and fails diagnostics", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-qa-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-qa-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1063,7 +1063,7 @@ process.stdin.on("end", () => {
 			const [realPiFailurePatch] = await runExtensionEventResults<{ content?: Array<{ text?: string; type: string }>; isError?: boolean }>(
 				harness.handlers,
 				"tool_result",
-				{ content: result.content, details: result.details, isError: false, toolName: "agent_browser" },
+				{ content: result.content, details: result.details, isError: false, toolName: "cdp_browser" },
 			);
 			assert.equal(realPiFailurePatch?.isError, true);
 			assert.match(realPiFailurePatch?.content?.[0]?.text ?? "", /Result category: failure; failureCategory: qa-failure; Pi tool isError: true\./);
@@ -1077,7 +1077,7 @@ process.stdin.on("end", () => {
 					details: { args: ["--json", "get", "url"], failureCategory: "upstream-error", resultCategory: "failure" },
 					input: { args: ["--json", "get", "url"] },
 					isError: false,
-					toolName: "agent_browser",
+					toolName: "cdp_browser",
 				},
 			);
 			assert.equal(jsonFailurePatch?.isError, true);
@@ -1092,7 +1092,7 @@ process.stdin.on("end", () => {
 					details: { args: ["--json", "get", "url"], failureCategory: "validation-error", resultCategory: "failure" },
 					input: { args: ["--json", "get", "url"] },
 					isError: false,
-					toolName: "agent_browser",
+					toolName: "cdp_browser",
 				},
 			);
 			assert.equal(proseJsonArgsFailurePatch?.isError, true);
@@ -1232,7 +1232,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension allows qa.attached preflight when get title fails but get url succeeds", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-qa-attached-title-fail-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-qa-attached-title-fail-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1325,7 +1325,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension allows qa.attached for non-http page URLs", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-qa-attached-precondition-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-qa-attached-precondition-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

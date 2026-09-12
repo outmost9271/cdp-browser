@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Purpose: Provide the Crabbox-backed platform smoke CLI for host-browser releases.
+ * Purpose: Provide the Crabbox-backed platform smoke CLI for cdp-browser releases.
  * Responsibilities: Load the project platform smoke config, validate target/suite names, run doctor, and fan out target suites.
  * Scope: Maintainer release verification only; target command rendering and artifact assertions live under scripts/platform-smoke/.
  */
@@ -40,7 +40,7 @@ Targets:
 
 Suites:
   platform-build             npm ci, npm run verify -- platform-target, npm pack, packed pi install --approve, pi list --approve
-  browser-dogfood-smoke      model-free native agent_browser smoke with real agent-browser/browser
+  browser-dogfood-smoke      model-free native cdp_browser smoke with real agent-browser/browser
 
 Options:
   --target <names>           Comma-separated target names; defaults to configured required targets
@@ -62,11 +62,11 @@ Environment:
   PLATFORM_SMOKE_MAC_USER             macOS SSH user; default $USER
   PLATFORM_SMOKE_MAC_WORK_ROOT        macOS Crabbox work root
   PLATFORM_SMOKE_MAC_PORT             macOS SSH port; default 22
-  PLATFORM_SMOKE_UBUNTU_IMAGE         Ubuntu local-container image; default ${config?.ubuntuContainerImage ?? "host-browser-platform:node24-agent-browser<target>"}
+  PLATFORM_SMOKE_UBUNTU_IMAGE         Ubuntu local-container image; default ${config?.ubuntuContainerImage ?? "cdp-browser-platform:node24-agent-browser<target>"}
   PLATFORM_SMOKE_WINDOWS_VM           Parallels Windows template VM
   PLATFORM_SMOKE_WINDOWS_SNAPSHOT     Parallels snapshot name
   PLATFORM_SMOKE_WINDOWS_USER         Windows SSH user
-  PLATFORM_SMOKE_WINDOWS_WORK_ROOT    Windows work root, for example C:\\crabbox\\host-browser
+  PLATFORM_SMOKE_WINDOWS_WORK_ROOT    Windows work root, for example C:\\crabbox\\cdp-browser
   PLATFORM_SMOKE_AUTH_ENV             Optional comma-separated secret env names to redact/forward for future live suites
 `);
 }

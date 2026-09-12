@@ -1,5 +1,5 @@
 /**
- * Purpose: Prove Pi applies the agent_browser tool_result patch through the real AgentSession pipeline.
+ * Purpose: Prove Pi applies the cdp_browser tool_result patch through the real AgentSession pipeline.
  * Responsibilities: Use a model-free SDK session with a deterministic fake provider and fake upstream agent-browser binary, then inspect persisted tool results.
  * Scope: Pi integration coverage for extension event semantics that direct tool.execute() tests intentionally bypass.
  */
@@ -33,10 +33,10 @@ import {
 	writeFakeAgentBrowserBinary,
 } from "./helpers/agent-browser-harness.js";
 
-const PIPELINE_PROVIDER = "piab-pipeline";
+const PIPELINE_PROVIDER = "cdpb-pipeline";
 const PIPELINE_MODEL_ID = "tool-pipeline";
 
-type PipelineToolResult = ToolResultMessage<unknown> & { toolName: "agent_browser" };
+type PipelineToolResult = ToolResultMessage<unknown> & { toolName: "cdp_browser" };
 
 type PipelinePromptResult = {
 	inMemoryResult: PipelineToolResult;
@@ -48,7 +48,7 @@ type PipelinePromptResult = {
 function isAgentBrowserToolResult(message: unknown): message is PipelineToolResult {
 	return typeof message === "object" && message !== null &&
 		(message as { role?: unknown }).role === "toolResult" &&
-		(message as { toolName?: unknown }).toolName === "agent_browser";
+		(message as { toolName?: unknown }).toolName === "cdp_browser";
 }
 
 function usage() {
@@ -94,16 +94,16 @@ function streamTextResponse(model: Model<any>, text: string) {
 
 function createToolCallingStream(toolArguments: Record<string, unknown>) {
 	return (model: Model<any>, context: Context, _options?: SimpleStreamOptions) => {
-		const hasToolResult = context.messages.some((message) => message.role === "toolResult" && message.toolName === "agent_browser");
-		if (hasToolResult) return streamTextResponse(model, "Observed agent_browser result.");
+		const hasToolResult = context.messages.some((message) => message.role === "toolResult" && message.toolName === "cdp_browser");
+		if (hasToolResult) return streamTextResponse(model, "Observed cdp_browser result.");
 
 		const stream = createAssistantMessageEventStream();
 		queueMicrotask(() => {
 			const output = createAssistantMessage(model, "toolUse");
 			const toolCall = {
 				arguments: toolArguments,
-				id: "call_agent_browser_pipeline",
-				name: "agent_browser",
+				id: "call_cdp_browser_pipeline",
+				name: "cdp_browser",
 				type: "toolCall" as const,
 			};
 			stream.push({ type: "start", partial: output });
@@ -144,14 +144,14 @@ async function readPersistedAgentBrowserResult(sessionDir: string): Promise<{ re
 		.map((entry) => entry.message)
 		.filter(isAgentBrowserToolResult);
 	const result = results.at(-1);
-	assert.ok(result, "persisted session JSONL should include an agent_browser tool result");
+	assert.ok(result, "persisted session JSONL should include an cdp_browser tool result");
 	return { result, sessionFile };
 }
 
 function registerPipelineProvider(modelRuntime: ModelRuntime, toolArguments: Record<string, unknown>): Model<any> {
 	modelRuntime.registerProvider(PIPELINE_PROVIDER, {
 		api: "openai-completions",
-		apiKey: "piab-pipeline-key",
+		apiKey: "cdpb-pipeline-key",
 		baseUrl: "https://pipeline.example.test/v1",
 		models: [{
 			contextWindow: 128_000,
@@ -170,7 +170,7 @@ function registerPipelineProvider(modelRuntime: ModelRuntime, toolArguments: Rec
 }
 
 async function runPipelinePrompt(options: { fakeScript: string; toolArguments: Record<string, unknown> }): Promise<PipelinePromptResult> {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-pipeline-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-pipeline-"));
 	const sessionDir = join(tempDir, "sessions");
 	const invocationLogPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
@@ -204,13 +204,13 @@ async function runPipelinePrompt(options: { fakeScript: string; toolArguments: R
 				modelRuntime,
 				noTools: "builtin",
 				resourceLoader,
-				sessionManager: SessionManager.create(tempDir, sessionDir, { id: "piab-pipeline-session" }),
-				tools: ["agent_browser"],
+				sessionManager: SessionManager.create(tempDir, sessionDir, { id: "cdpb-pipeline-session" }),
+				tools: ["cdp_browser"],
 			});
 			try {
-				await session.prompt("Use agent_browser once.");
+				await session.prompt("Use cdp_browser once.");
 				const inMemoryResult = session.messages.find(isAgentBrowserToolResult);
-				assert.ok(inMemoryResult, "agent_browser tool result should be recorded by Pi");
+				assert.ok(inMemoryResult, "cdp_browser tool result should be recorded by Pi");
 				const persisted = await readPersistedAgentBrowserResult(sessionDir);
 				return {
 					inMemoryResult,

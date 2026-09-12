@@ -56,7 +56,7 @@ console.log(JSON.stringify({
 	return JSON.parse(result.stdout.trim()) as StartupMeasurement;
 }
 
-test("agent_browser cold startup stays below the issue #84 regression budget", async () => {
+test("cdp_browser cold startup stays below the issue #84 regression budget", async () => {
 	const entrypoint = await getPackageExtensionEntrypoint();
 	assert.equal(entrypoint, "./dist/extensions/agent-browser/index.js");
 	// Concurrent cold imports measure scheduler contention rather than one Pi startup on thermally constrained Android devices.
@@ -68,7 +68,7 @@ test("agent_browser cold startup stays below the issue #84 regression budget", a
 
 	for (const measurement of measurements) {
 		assert.ok(measurement.events > 0, "extension factory should register lifecycle handlers");
-		assert.ok(measurement.tools.includes("agent_browser"), "extension factory should register the native browser tool");
+		assert.ok(measurement.tools.includes("cdp_browser"), "extension factory should register the native browser tool");
 	}
 	assert.ok(
 		maxTotal < STARTUP_BUDGET_MS,

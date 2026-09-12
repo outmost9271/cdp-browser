@@ -46,8 +46,8 @@ import { TARGET_AGENT_BROWSER_VERSION } from "./upstream-version.js";
 const OPENAI_HEADLESS_COMPAT_HOSTS = new Set(["chat.com", "chat.openai.com", "chatgpt.com"]);
 const CLOUDFLARE_HEADLESS_COMPAT_HOST = "dash.cloudflare.com";
 const AGENT_BROWSER_IDLE_TIMEOUT_ENV = "AGENT_BROWSER_IDLE_TIMEOUT_MS";
-const IMPLICIT_SESSION_IDLE_TIMEOUT_ENV = "PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS";
-const IMPLICIT_SESSION_CLOSE_TIMEOUT_ENV = "PI_AGENT_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS";
+const IMPLICIT_SESSION_IDLE_TIMEOUT_ENV = "PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS";
+const IMPLICIT_SESSION_CLOSE_TIMEOUT_ENV = "PI_CDP_BROWSER_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS";
 const DEFAULT_IMPLICIT_SESSION_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const DEFAULT_IMPLICIT_SESSION_CLOSE_TIMEOUT_MS = 5_000;
 const INSPECTION_FLAGS = new Set(["--help", "-h", "--version", "-V"]);
@@ -564,7 +564,7 @@ export function restoreManagedSessionStateFromBranch(
 			continue;
 		}
 		const message = isRecord(entry.message) ? entry.message : undefined;
-		if (!message || message.toolName !== "agent_browser") {
+		if (!message || message.toolName !== "cdp_browser") {
 			continue;
 		}
 		const details = isRecord(message.details) ? message.details : undefined;
@@ -747,7 +747,7 @@ function getBareMcpValidationError(args: string[]): string | undefined {
 	const { commandInfo, upstreamCommandTokens: commandTokens } = parseArgvDescriptor(args);
 	if (commandInfo.command !== "mcp") return undefined;
 	if (commandTokens.includes("--help") || commandTokens.includes("-h")) return undefined;
-	return "agent-browser mcp starts a stdio MCP server for external MCP clients, not a one-shot native agent_browser tool workflow. Use the native agent_browser tool modes directly, or configure an MCP client to launch `agent-browser mcp`. Use `mcp --help` for help.";
+	return "agent-browser mcp starts a stdio MCP server for external MCP clients, not a one-shot native cdp_browser tool workflow. Use the native cdp_browser tool modes directly, or configure an MCP client to launch `agent-browser mcp`. Use `mcp --help` for help.";
 }
 
 function getUnsupportedInlineWaitDownloadError(args: string[]): string | undefined {
@@ -780,7 +780,7 @@ export function validateToolArgs(args: string[], options: { batchStep?: boolean 
 
 	const sessionModeArg = args.find((token) => token === "--session-mode" || token.startsWith("--session-mode="));
 	if (sessionModeArg) {
-		return "Do not pass `--session-mode` in args. Use the top-level agent_browser `sessionMode` field instead, for example { args: [\"--profile\", \"Default\", \"open\", \"https://example.com\"], sessionMode: \"fresh\" }.";
+		return "Do not pass `--session-mode` in args. Use the top-level cdp_browser `sessionMode` field instead, for example { args: [\"--profile\", \"Default\", \"open\", \"https://example.com\"], sessionMode: \"fresh\" }.";
 	}
 
 	const inspection = !options.batchStep && isPlainTextInspectionArgs(args);

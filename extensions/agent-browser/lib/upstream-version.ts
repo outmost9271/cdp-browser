@@ -25,6 +25,6 @@ export function getAgentBrowserVersionValidationError(stdout: string): string | 
 	const observed = parseAgentBrowserVersionOutput(stdout);
 	if (observed && isSupportedAgentBrowserVersion(observed)) return undefined;
 	return observed
-		? `Installed agent-browser ${observed} is unsupported; stable versions must be at least ${MINIMUM_AGENT_BROWSER_VERSION_LABEL}. Install ${TARGET_AGENT_BROWSER_VERSION_LABEL} (recommended), run host-browser-doctor, then reload Pi.`
-		: `agent-browser --version returned an unrecognized value; expected ${SUPPORTED_AGENT_BROWSER_VERSION_LABEL}. Run host-browser-doctor and install a supported upstream version.`;
+		? `Installed agent-browser ${observed} is unsupported; stable versions must be at least ${MINIMUM_AGENT_BROWSER_VERSION_LABEL}. Install ${TARGET_AGENT_BROWSER_VERSION_LABEL} (recommended), run cdp-browser-doctor, then reload Pi.`
+		: `agent-browser --version returned an unrecognized value; expected ${SUPPORTED_AGENT_BROWSER_VERSION_LABEL}. Run cdp-browser-doctor and install a supported upstream version.`;
 }

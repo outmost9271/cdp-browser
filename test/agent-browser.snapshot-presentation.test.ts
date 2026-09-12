@@ -142,7 +142,7 @@ test("buildToolPresentation keeps compact snapshot spill files in the persisted 
 
 		const spillPath = presentation.fullOutputPath;
 		assert.equal(typeof spillPath, "string");
-		assert.equal(spillPath?.startsWith(join(sessionDir, ".host-browser-artifacts", TEST_SESSION_ID)), true);
+		assert.equal(spillPath?.startsWith(join(sessionDir, ".cdp-browser-artifacts", TEST_SESSION_ID)), true);
 		await cleanupSecureTempArtifacts();
 		assert.match(await readFile(String(spillPath), "utf8"), /Persisted snapshot row 120/);
 		assert.equal((await stat(String(spillPath))).mode & 0o777, 0o600);
@@ -175,7 +175,7 @@ test("buildToolPresentation evicts the oldest persisted snapshot spill files whe
 	) + 512;
 
 	try {
-		await withPatchedEnv({ PI_AGENT_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
+		await withPatchedEnv({ PI_CDP_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
 			const firstPresentation = await buildToolPresentation({
 				commandInfo: { command: "snapshot" },
 				cwd: process.cwd(),
@@ -236,7 +236,7 @@ test("buildToolPresentation keeps earlier batch snapshot spill paths live when a
 	const budgetBytes = Buffer.byteLength(JSON.stringify(firstData, null, 2)) + 512;
 
 	try {
-		await withPatchedEnv({ PI_AGENT_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
+		await withPatchedEnv({ PI_CDP_BROWSER_SESSION_ARTIFACT_MAX_BYTES: String(budgetBytes) }, async () => {
 			const presentation = await buildToolPresentation({
 				commandInfo: { command: "batch" },
 				cwd: process.cwd(),
@@ -681,7 +681,7 @@ test("buildToolPresentation degrades gracefully when snapshot spill creation exc
 	const snapshot = Array.from({ length: 120 }, (_, index) => `- button "Budget row ${index + 1}" [ref=e${index + 1}]`).join("\n");
 
 	try {
-		await withPatchedEnv({ PI_AGENT_BROWSER_TEMP_ROOT_MAX_BYTES: "1024" }, async () => {
+		await withPatchedEnv({ PI_CDP_BROWSER_TEMP_ROOT_MAX_BYTES: "1024" }, async () => {
 			const presentation = await buildToolPresentation({
 				commandInfo: { command: "snapshot" },
 				cwd: process.cwd(),

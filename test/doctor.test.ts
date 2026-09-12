@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify the package-level first-run doctor for host-browser.
+ * Purpose: Verify the package-level first-run doctor for cdp-browser.
  * Responsibilities: Assert CLI parsing, PATH/version diagnostics, duplicate-source remediation text, and read-only injected I/O behavior.
  * Scope: Focused unit coverage for `scripts/doctor.mjs`; real upstream and Pi smoke validation remain in verifier scripts and manual release workflow.
  * Usage: Run with `npx tsx --test test/doctor.test.ts` or via `npm run verify`.
@@ -137,7 +137,7 @@ test("doctor warns instead of failing when Pi version cannot be inspected", asyn
 
 test("doctor reports duplicate package and checkout sources with remediation", async () => {
 	const settingsByPath = new Map([
-		["/agent/settings.json", JSON.stringify({ packages: ["npm:host-browser"] })],
+		["/agent/settings.json", JSON.stringify({ packages: ["npm:cdp-browser"] })],
 		["/repo/.pi/settings.json", JSON.stringify({ extensions: ["/repo/extensions/agent-browser/index.ts"] })],
 	]);
 	const report = await evaluateDoctorWithPi({
@@ -150,16 +150,16 @@ test("doctor reports duplicate package and checkout sources with remediation", a
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 1);
-	assert.match(text, /Duplicate host-browser sources detected/);
-	assert.match(text, /`agent_browser`/);
-	assert.match(text, /npm:host-browser/);
+	assert.match(text, /Duplicate cdp-browser sources detected/);
+	assert.match(text, /`cdp_browser`/);
+	assert.match(text, /npm:cdp-browser/);
 	assert.match(text, /extensions\/agent-browser\/index\.ts/);
 	assert.match(text, /pi --approve --no-extensions -e <source>/);
 	assert.match(text, /keep exactly one active source/i);
 });
 
 test("doctor passes the source check when exactly one configured source is active", async () => {
-	const settingsByPath = new Map([["/agent/settings.json", JSON.stringify({ packages: ["npm:host-browser"] })]]);
+	const settingsByPath = new Map([["/agent/settings.json", JSON.stringify({ packages: ["npm:cdp-browser"] })]]);
 	const report = await evaluateDoctorWithPi({
 		agentDir: "/agent",
 		cwd: "/repo",
@@ -170,15 +170,15 @@ test("doctor passes the source check when exactly one configured source is activ
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 0);
-	assert.match(text, /No duplicate host-browser sources detected/);
-	assert.match(text, /Detected source: npm:host-browser/);
+	assert.match(text, /No duplicate cdp-browser sources detected/);
+	assert.match(text, /Detected source: npm:cdp-browser/);
 });
 
 test("doctor resolves relative package sources from their settings file directory", async () => {
-	const settingsByPath = new Map([["/home/user/.pi/agent/settings.json", JSON.stringify({ packages: ["../../Projects/AI/host-browser"] })]]);
+	const settingsByPath = new Map([["/home/user/.pi/agent/settings.json", JSON.stringify({ packages: ["../../Projects/AI/cdp-browser"] })]]);
 	const report = await evaluateDoctorWithPi({
 		agentDir: "/home/user/.pi/agent",
-		cwd: "/home/user/Projects/AI/host-browser",
+		cwd: "/home/user/Projects/AI/cdp-browser",
 		pathExists: async (path) => settingsByPath.has(path),
 		readText: async (path) => settingsByPath.get(path),
 		runAgentBrowser: async () => passingVersion(),
@@ -186,17 +186,17 @@ test("doctor resolves relative package sources from their settings file director
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 0);
-	assert.match(text, /No duplicate host-browser sources detected/);
-	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/host-browser/);
+	assert.match(text, /No duplicate cdp-browser sources detected/);
+	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/cdp-browser/);
 });
 
 test("doctor resolves relative extension sources from their settings file directory", async () => {
 	const settingsByPath = new Map([
-		["/home/user/.pi/agent/settings.json", JSON.stringify({ extensions: ["../../Projects/AI/host-browser/extensions/agent-browser/index.ts"] })],
+		["/home/user/.pi/agent/settings.json", JSON.stringify({ extensions: ["../../Projects/AI/cdp-browser/extensions/agent-browser/index.ts"] })],
 	]);
 	const report = await evaluateDoctorWithPi({
 		agentDir: "/home/user/.pi/agent",
-		cwd: "/home/user/Projects/AI/host-browser",
+		cwd: "/home/user/Projects/AI/cdp-browser",
 		pathExists: async (path) => settingsByPath.has(path),
 		readText: async (path) => settingsByPath.get(path),
 		runAgentBrowser: async () => passingVersion(),
@@ -204,17 +204,17 @@ test("doctor resolves relative extension sources from their settings file direct
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 0);
-	assert.match(text, /No duplicate host-browser sources detected/);
-	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/host-browser\/extensions\/agent-browser\/index\.ts/);
+	assert.match(text, /No duplicate cdp-browser sources detected/);
+	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/cdp-browser\/extensions\/agent-browser\/index\.ts/);
 });
 
 test("doctor recognizes compiled extension entrypoint sources", async () => {
 	const settingsByPath = new Map([
-		["/home/user/.pi/agent/settings.json", JSON.stringify({ extensions: ["../../Projects/AI/host-browser/dist/extensions/agent-browser/index.js"] })],
+		["/home/user/.pi/agent/settings.json", JSON.stringify({ extensions: ["../../Projects/AI/cdp-browser/dist/extensions/agent-browser/index.js"] })],
 	]);
 	const report = await evaluateDoctorWithPi({
 		agentDir: "/home/user/.pi/agent",
-		cwd: "/home/user/Projects/AI/host-browser",
+		cwd: "/home/user/Projects/AI/cdp-browser",
 		pathExists: async (path) => settingsByPath.has(path),
 		readText: async (path) => settingsByPath.get(path),
 		runAgentBrowser: async () => passingVersion(),
@@ -222,8 +222,8 @@ test("doctor recognizes compiled extension entrypoint sources", async () => {
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 0);
-	assert.match(text, /No duplicate host-browser sources detected/);
-	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/host-browser\/dist\/extensions\/agent-browser\/index\.js/);
+	assert.match(text, /No duplicate cdp-browser sources detected/);
+	assert.match(text, /Detected source: ..\/..\/Projects\/AI\/cdp-browser\/dist\/extensions\/agent-browser\/index\.js/);
 });
 
 test("doctor treats no configured source as an informational warning, not a failure", async () => {
@@ -237,13 +237,13 @@ test("doctor treats no configured source as an informational warning, not a fail
 	const text = formatDoctorReport(report);
 
 	assert.equal(report.failures.length, 0);
-	assert.match(text, /No configured host-browser source was found/);
+	assert.match(text, /No configured cdp-browser source was found/);
 	assert.match(text, /Doctor passed/);
 });
 
 test("doctor remains read-only through injected I/O", async () => {
 	const calls: string[] = [];
-	const settingsByPath = new Map([["/agent/settings.json", JSON.stringify({ packages: ["npm:host-browser"] })]]);
+	const settingsByPath = new Map([["/agent/settings.json", JSON.stringify({ packages: ["npm:cdp-browser"] })]]);
 	const report = await evaluateDoctorWithPi({
 		agentDir: "/agent",
 		cwd: "/repo",
@@ -269,11 +269,11 @@ test("doctor remains read-only through injected I/O", async () => {
 test("isDirectRun resolves npm bin symlinks before comparing the entrypoint", () => {
 	const metaUrl = "file:///package/scripts/doctor.mjs";
 	const resolveRealPath = (path: string) => {
-		if (path === "/tmp/node_modules/.bin/host-browser-doctor") return "/package/scripts/doctor.mjs";
+		if (path === "/tmp/node_modules/.bin/cdp-browser-doctor") return "/package/scripts/doctor.mjs";
 		return path;
 	};
 
-	assert.equal(isDirectRun(metaUrl, "/tmp/node_modules/.bin/host-browser-doctor", resolveRealPath), true);
+	assert.equal(isDirectRun(metaUrl, "/tmp/node_modules/.bin/cdp-browser-doctor", resolveRealPath), true);
 	assert.equal(isDirectRun(metaUrl, "/other/script.mjs", resolveRealPath), false);
 	assert.equal(isDirectRun(metaUrl, undefined, resolveRealPath), false);
 });

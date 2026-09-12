@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Purpose: Run a deterministic, model-free live-browser smoke through the native agent_browser extension surface.
+ * Purpose: Run a deterministic, model-free live-browser smoke through the native cdp_browser extension surface.
  * Responsibilities: Exercise top-level script, qa, semanticAction, job, artifact verification, and close without relying on an LLM to choose tool calls.
  * Scope: Maintainer verification only; it uses a loopback HTTP fixture and the local extension harness, and it is not part of the published runtime package.
  * Usage: `npm run verify -- dogfood` or `npx tsx scripts/verify-agent-browser-dogfood.ts [--keep-artifacts] [--artifact-dir <path>] [--json]`.
@@ -179,7 +179,7 @@ async function assertSuccessfulStep(options: {
 
 export async function runAgentBrowserDogfood(options: DogfoodOptions = {}): Promise<DogfoodStepReport[]> {
 	const cwd = options.cwd ?? process.cwd();
-	const artifactDir = resolve(options.artifactDir ?? await mkdtemp(join(tmpdir(), "host-browser-dogfood-")));
+	const artifactDir = resolve(options.artifactDir ?? await mkdtemp(join(tmpdir(), "cdp-browser-dogfood-")));
 	const shouldRemoveArtifacts = !options.keepArtifacts && !options.artifactDir;
 	await mkdir(artifactDir, { recursive: true });
 	const jobScreenshotPath = join(artifactDir, "job.png");
@@ -287,7 +287,7 @@ emit(values);`,
 }
 
 function printReport(reports: DogfoodStepReport[], artifactDir: string | undefined) {
-	console.log("agent_browser dogfood smoke passed");
+	console.log("cdp_browser dogfood smoke passed");
 	if (artifactDir) console.log(`Artifacts: ${resolve(artifactDir)}`);
 	for (const report of reports) {
 		const artifact = report.artifactPath ? ` artifact=${report.verifiedArtifact ? "verified" : "missing"} size=${report.artifactSizeBytes ?? 0}` : "";

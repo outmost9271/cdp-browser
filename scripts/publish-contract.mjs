@@ -1,5 +1,5 @@
 /**
- * Purpose: Build the canonical npm publish contract for host-browser.
+ * Purpose: Build the canonical npm publish contract for cdp-browser.
  * Responsibilities: Read package.json's files list, expand declared package file and directory entries into package-relative file paths, and expose shared required/forbidden release-gate rules.
  * Scope: Package contract data only; npm packing, CLI parsing, Pi smoke loading, and report printing stay in verify-package.mjs.
  * Usage: Import loadPublishContract from verifier scripts and tests that need the publish contract.

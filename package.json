@@ -1,7 +1,7 @@
 {
-  "name": "host-browser",
-  "version": "0.6.10",
-  "description": "Pi extension that drives the local browser as a native tool for browser automation",
+  "name": "cdp-browser",
+  "version": "0.1.0",
+  "description": "Pi extension that drives a remote Chrome browser over CDP with a bundled agent-browser CLI (no local browser, no PATH dependency)",
   "type": "module",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",
   "keywords": [
@@ -10,28 +10,30 @@
     "pi-extension",
     "extension",
     "agent-browser",
+    "cdp",
+    "remote-browser",
     "browser-automation",
-    "typescript",
-    "npm-package"
+    "typescript"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/outmost9271/host-browser.git"
+    "url": "git+https://github.com/outmost9271/cdp-browser.git"
   },
-  "homepage": "https://github.com/outmost9271/host-browser#readme",
+  "homepage": "https://github.com/outmost9271/cdp-browser#readme",
   "bugs": {
-    "url": "https://github.com/outmost9271/host-browser/issues"
+    "url": "https://github.com/outmost9271/cdp-browser/issues"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "bin": {
-    "host-browser-config": "scripts/config.mjs",
-    "host-browser-doctor": "scripts/doctor.mjs"
+    "cdp-browser-config": "scripts/config.mjs",
+    "cdp-browser-doctor": "scripts/doctor.mjs"
   },
   "files": [
     "dist",
+    "vendor",
     "platform-smoke.config.mjs",
     "scripts/config.mjs",
     "scripts/doctor.mjs",

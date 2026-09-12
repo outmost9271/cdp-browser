@@ -259,9 +259,9 @@ async function repairScreenshotData(options: {
 export { repairScreenshotData };
 
 const DIALOG_COMMAND_PROCESS_TIMEOUT_MS = 5_000;
-const DIALOG_COMMAND_PROCESS_TIMEOUT_ENV = "PI_AGENT_BROWSER_DIALOG_PROCESS_TIMEOUT_MS";
+const DIALOG_COMMAND_PROCESS_TIMEOUT_ENV = "PI_CDP_BROWSER_DIALOG_PROCESS_TIMEOUT_MS";
 const LIKELY_DIALOG_TRIGGER_PROCESS_TIMEOUT_MS = 8_000;
-const LIKELY_DIALOG_TRIGGER_PROCESS_TIMEOUT_ENV = "PI_AGENT_BROWSER_DIALOG_TRIGGER_PROCESS_TIMEOUT_MS";
+const LIKELY_DIALOG_TRIGGER_PROCESS_TIMEOUT_ENV = "PI_CDP_BROWSER_DIALOG_TRIGGER_PROCESS_TIMEOUT_MS";
 const DIALOG_TRIGGER_TEXT_PATTERN = /\b(?:alert|confirm|dialog|prompt)\b/i;
 
 function getPositiveIntegerEnv(name: string): number | undefined {
@@ -352,7 +352,7 @@ function getIdleTimeoutMismatch(args: string[], configuredValue: string): string
 		if (args[index] !== "--idle-timeout") continue;
 		const requestedToken = args[++index];
 		if (!requestedToken || !/^\d+$/.test(requestedToken) || Number(requestedToken) === Number(configuredValue)) continue;
-		return `--idle-timeout ${requestedToken} conflicts with this Pi process's managed-session idle timeout (${configuredValue} ms). Restart Pi with PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS=${requestedToken} and omit --idle-timeout; changing the launch value for one call can restart the upstream browser and discard the active tab.`;
+		return `--idle-timeout ${requestedToken} conflicts with this Pi process's managed-session idle timeout (${configuredValue} ms). Restart Pi with PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS=${requestedToken} and omit --idle-timeout; changing the launch value for one call can restart the upstream browser and discard the active tab.`;
 	}
 	return undefined;
 }
@@ -382,7 +382,7 @@ export function validateStdinCommandContract(options: { command?: string; comman
 		return undefined;
 	}
 	const commandLabel = options.command ? `\`${options.command}\`` : "the requested command";
-	return `agent_browser stdin is only supported for \`batch\`, \`eval --stdin\`, and \`auth save --password-stdin\`; remove stdin from ${commandLabel} or use one of those command forms.`;
+	return `cdp_browser stdin is only supported for \`batch\`, \`eval --stdin\`, and \`auth save --password-stdin\`; remove stdin from ${commandLabel} or use one of those command forms.`;
 }
 
 function canResolveSemanticVisibleRef(compiled: CompiledAgentBrowserSemanticAction | undefined): compiled is CompiledAgentBrowserSemanticAction {
@@ -498,7 +498,7 @@ export async function prepareBrowserRun(options: BrowserRunOptions): Promise<Pre
 		if (!(error instanceof Error) || !("syscall" in error) || error.syscall !== "mkdir" || !("path" in error) || typeof error.path !== "string") throw error;
 		const guidance = "Choose a writable artifact path whose parent components are directories. Use absolute paths in raw batch artifact rows.";
 		const validationError = redactSensitiveText(`Could not prepare artifact directory ${error.path}: ${error.message}. ${guidance}`);
-		const nextActions = [{ artifactPath: redactSensitiveText(error.path), id: "verify-artifact-path", reason: guidance, safety: "The requested browser command did not run; inspect the directory with host file tools before retrying.", tool: "agent_browser" as const }];
+		const nextActions = [{ artifactPath: redactSensitiveText(error.path), id: "verify-artifact-path", reason: guidance, safety: "The requested browser command did not run; inspect the directory with host file tools before retrying.", tool: "cdp_browser" as const }];
 		return { kind: "early-result", result: {
 			content: [{ type: "text", text: validationError }],
 			details: {
@@ -677,7 +677,7 @@ export async function prepareBrowserRun(options: BrowserRunOptions): Promise<Pre
 				? await ensureSessionTabTarget({ cwd, namespace: executionPlan.namespace, sessionName: executionPlan.sessionName, signal, target: priorSessionTabTarget })
 				: { error: "agent-browser could not reopen the remembered URL after the managed browser shut down. Navigate explicitly, then run snapshot -i before retrying." };
 			if (coldManagedSession && signal?.aborted) {
-				const errorText = "agent_browser was aborted while reopening the remembered page. The requested command did not run.";
+				const errorText = "cdp_browser was aborted while reopening the remembered page. The requested command did not run.";
 				return { kind: "early-result", result: {
 					content: [{ type: "text", text: errorText }],
 					details: {

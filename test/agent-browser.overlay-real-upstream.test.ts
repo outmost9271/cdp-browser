@@ -9,11 +9,11 @@ import type { AgentBrowserNextAction } from "../extensions/agent-browser/lib/res
 import { runAgentBrowserProcess } from "../extensions/agent-browser/lib/process.js";
 import { createExtensionHarness, executeRegisteredTool, runExtensionEvent, withPatchedEnv } from "./helpers/agent-browser-harness.js";
 
-const enabled = process.env.PI_AGENT_BROWSER_REAL_UPSTREAM === "1";
+const enabled = process.env.PI_CDP_BROWSER_REAL_UPSTREAM === "1";
 
 for (const mode of ["explicit", "empty-namespace", "managed"] as const) {
 	test(`native covered-click recovery through registered tools (${mode})`, {
-		skip: enabled ? false : "Set PI_AGENT_BROWSER_REAL_UPSTREAM=1 to run against the installed upstream browser.",
+		skip: enabled ? false : "Set PI_CDP_BROWSER_REAL_UPSTREAM=1 to run against the installed upstream browser.",
 	}, async (t) => {
 		const root = await mkdtemp(join(tmpdir(), "ov-"));
 		const server = createServer((_request, response) => {
@@ -33,7 +33,7 @@ for (const mode of ["explicit", "empty-namespace", "managed"] as const) {
 			await withPatchedEnv({
 				HOME: root, USERPROFILE: root, AGENT_BROWSER_CONFIG: undefined,
 				AGENT_BROWSER_NAMESPACE: mode === "explicit" ? namespace : "ambient",
-				PI_AGENT_BROWSER_SOCKET_DIR: join(root, "s"), PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0",
+				PI_CDP_BROWSER_SOCKET_DIR: join(root, "s"), PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0",
 			}, async () => {
 				const harness = createExtensionHarness({ cwd: root, sessionId: "overlay" });
 				await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);

@@ -9,7 +9,7 @@ function batch(steps: string[][]): string {
 }
 
 test("getCommandAwareProcessTimeoutMs extends process timeout for wait, read, and WebMCP budgets", async () => {
-	await withPatchedEnv({ PI_AGENT_BROWSER_PROCESS_TIMEOUT_MS: "10000" }, async () => {
+	await withPatchedEnv({ PI_CDP_BROWSER_PROCESS_TIMEOUT_MS: "10000" }, async () => {
 		assert.equal(getCommandAwareProcessTimeoutMs(["open", "https://example.com"], undefined), undefined);
 		assert.equal(getCommandAwareProcessTimeoutMs(["wait", "4000"], undefined), undefined);
 		assert.equal(getCommandAwareProcessTimeoutMs(["wait", "6000"], undefined), 11000);

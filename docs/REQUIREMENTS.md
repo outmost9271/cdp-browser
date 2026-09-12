@@ -10,7 +10,7 @@ Related docs:
 
 ## Purpose
 
-Define the product requirements and constraints for `host-browser`.
+Define the product requirements and constraints for `cdp-browser`.
 
 ## Product requirements
 
@@ -47,22 +47,22 @@ Define the product requirements and constraints for `host-browser`.
 ### Install priority
 
 - Prioritize the package install path first.
-- User-facing install docs should lead with `pi install npm:host-browser`; ephemeral package trials and validation should use `pi --no-extensions -e npm:host-browser[@<version>]` so configured checkout or global sources cannot duplicate `agent_browser`, adding `--approve` in Pi 0.84.0+ automation when the current project is intentionally trusted.
-- User-facing install docs should also include the GitHub source path `pi install https://github.com/fitchmultz/pi-agent-browser-native`.
+- User-facing install docs should lead with `pi install npm:cdp-browser`; ephemeral package trials and validation should use `pi --no-extensions -e npm:cdp-browser[@<version>]` so configured checkout or global sources cannot duplicate `cdp_browser`, adding `--approve` in Pi 0.84.0+ automation when the current project is intentionally trusted.
+- User-facing install docs should also include the GitHub source path `pi install https://github.com/fitchmultz/cdp-browser`.
 - Provide a read-only package-level doctor command that checks upstream `agent-browser` PATH/version and duplicate Pi package/checkout sources before first use. It must not mutate Pi settings and must remain distinct from upstream `agent-browser doctor`.
 - Keep the current local-checkout path documented as the practical pre-release and development flow.
 - Most users will install this extension globally rather than as a project-local extension.
-- Local trusted-checkout smoke testing should use explicit CLI loading such as `pi --approve --no-extensions -e .` or `pi --approve --no-extensions -e /absolute/path/to/host-browser`; automatic extension loading is disabled, but Pi settings and configured package resolution remain active. Use temporary `HOME` and `PI_CODING_AGENT_DIR` directories for isolated test settings, with `PI_OFFLINE=1` to disable automatic startup network/update operations. Code edits require a process restart for validation. Omit `--approve` only when the test is meant to cover Pi's Project Trust prompt.
+- Local trusted-checkout smoke testing should use explicit CLI loading such as `pi --approve --no-extensions -e .` or `pi --approve --no-extensions -e /absolute/path/to/cdp-browser`; automatic extension loading is disabled, but Pi settings and configured package resolution remain active. Use temporary `HOME` and `PI_CODING_AGENT_DIR` directories for isolated test settings, with `PI_OFFLINE=1` to disable automatic startup network/update operations. Code edits require a process restart for validation. Omit `--approve` only when the test is meant to cover Pi's Project Trust prompt.
 - Local checkout hot-reload and exact-session relaunch validation should use configured-source lifecycle mode: exactly one active checkout/package source in Pi settings, launched with plain `pi` (or the lifecycle harness' exact `--session-id` relaunch path), so `/reload` and relaunch events exercise discovered/configured resources. Focused extension harness tests validate Pi `session_tree` branch rehydration and cleanup ownership.
 - Do **not** rely on repo-local `.pi/extensions/` auto-discovery for this package, because it conflicts with the global installed-package path.
 
 ### Native-tool preference
 
-- When this native extension is available, the native `agent_browser` tool should be the preferred path for browser automation.
+- When this native extension is available, the native `cdp_browser` tool should be the preferred path for browser automation.
 - Keep the handling simple and global-install-friendly.
 - Do not rely on package skill overrides as the primary answer.
 
-### Native `agent_browser` inputs
+### Native `cdp_browser` inputs
 
 - Each tool invocation must supply **exactly one** of: top-level `script` (bounded one-shot JavaScript orchestration with `browser()` / `emit()` in a unique always-closed isolated session), `args` (full upstream argv after the binary name), top-level `semanticAction` (a small intent object compiled into existing upstream `find` argv for locator actions, direct selector/ref `click` / `check` / `fill` argv, or upstream `select <selector> <value...>` argv for native dropdown selection), `job`, `qa`, `sourceLookup`, `networkSourceLookup`, or `electron` (bounded desktop lifecycle: host `list`, wrapper-owned isolated `launch` with CDP attach, `status`, compact `probe`, and `cleanup`; mutually exclusive with caller `stdin`). Supplying multiple modes or none is rejected before launch (`extensions/agent-browser/index.ts`, `test/agent-browser.extension-validation.test.ts`). Contract and field rules: [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#input-mode-chooser); operator workflow: [`COMMAND_REFERENCE.md`](COMMAND_REFERENCE.md#core-mental-model).
 - Direct upstream capability is the default: explicit sessions, state/restore paths, profiles, config, file access, launch arguments, environment variables, local pages, output paths, and close arguments pass through unchanged. Session/state lists keep all upstream rows and restore identifiers. Wrapper policy must not decide which valid upstream resources the agent or operator may use; validation is limited to input shape, process/lifecycle integrity, and truthful page/action evidence.
@@ -80,7 +80,7 @@ Define the product requirements and constraints for `host-browser`.
 - Someone opening the repo should quickly understand the goal, purpose, install model, and usage.
 - Documents should read as complete documents, not iterative logs, unless they are explicitly meant to be iterative, such as a changelog.
 - Requirements, expectations, and durable rules from user conversations should be reflected in the appropriate docs.
-- Because direct-binary usage is commonly blocked in normal agent sessions, the repo must carry a local command reference for the effective `agent_browser` surface and keep it in sync with upstream changes.
+- Because direct-binary usage is commonly blocked in normal agent sessions, the repo must carry a local command reference for the effective `cdp_browser` surface and keep it in sync with upstream changes.
 - Repository verification must include a lightweight command-reference drift check against the targeted installed upstream `agent-browser` version.
 - Published package contents should include the canonical user-facing docs plus `LICENSE`.
 - Published package contents should exclude agent-only and internal planning docs such as `AGENTS.md`.
@@ -132,4 +132,4 @@ The design should comfortably support workflows such as:
 - Treat argv-supplied `--allowed-domains` as launch-scoped so it starts in a fresh browser context. Keep upstream responsible for request/worker/popup/WebRTC containment and incompatible launch-mode rejection; pass its result through unchanged.
 - Upstream restore-state periodic autosave remains upstream-owned. Forward an explicit `AGENT_BROWSER_AUTOSAVE_INTERVAL_MS` unchanged when a daemon launches; otherwise default it to `0` for wrapper-owned headed launches, persist the effective launch-time interval, and retain that environment across helpers, follow-ups, still-owned off-current sessions, Electron cleanup closes, and transcript reload/resume to avoid upstream 0.33.2's visible temporary collector tabs and per-call daemon-configuration drift. Reject attempts to change that interval on an already-running wrapper-owned headed daemon until the caller closes it and launches fresh. If automatic cleanup of a replaced wrapper-owned session fails, persist that outcome and restore the older identity's ownership from the transcript so explicit follow-up and cleanup remain possible. Document the 30-second upstream default, native-close preservation, and the direct-window-close loss risk because headed browsers are exempt from idle shutdown; do not duplicate its timer or claim its restore files as wrapper artifacts.
 - Read-only upstream `skills list`, `skills get …`, and `skills path …` must stay free of implicit managed `--session` under default `sessionMode: "auto"` (still with `--json`), matching plain-text `--help` / `--version` inspection semantics so bundled skill text does not pin or rotate the active browser session; new `skills` subcommands pick up that behavior only after allowlisting in `extensions/agent-browser/lib/runtime.ts` with regression coverage.
-- Optional `semanticAction.session` on native `agent_browser` must compile to a leading `--session <name>` pair before upstream `find` or `select` argv so the shorthand can target a named upstream browser without hand-built `args`, while `buildExecutionPlan` still skips double-injecting the extension-managed implicit session whenever planned argv already starts with `--session`; stale-ref retries for compiled `find` actions and bounded `try-*` candidate `nextActions` must preserve that same prefix. Contract in [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#semanticaction) / [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#sessionmode); implementation in `extensions/agent-browser/index.ts` and `extensions/agent-browser/lib/runtime.ts`.
+- Optional `semanticAction.session` on native `cdp_browser` must compile to a leading `--session <name>` pair before upstream `find` or `select` argv so the shorthand can target a named upstream browser without hand-built `args`, while `buildExecutionPlan` still skips double-injecting the extension-managed implicit session whenever planned argv already starts with `--session`; stale-ref retries for compiled `find` actions and bounded `try-*` candidate `nextActions` must preserve that same prefix. Contract in [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#semanticaction) / [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#sessionmode); implementation in `extensions/agent-browser/index.ts` and `extensions/agent-browser/lib/runtime.ts`.

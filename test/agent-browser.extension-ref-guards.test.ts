@@ -45,7 +45,7 @@ function pidIsAlive(pid: number | undefined): boolean {
 }
 
 function spawnElectronFixtureProcess(userDataDir: string): ChildProcess {
-	const child = spawn("/bin/sh", ["-c", "while true; do sleep 1; done", "host-browser-electron-fixture", `--user-data-dir=${userDataDir}`], { detached: true, stdio: "ignore" });
+	const child = spawn("/bin/sh", ["-c", "while true; do sleep 1; done", "cdp-browser-electron-fixture", `--user-data-dir=${userDataDir}`], { detached: true, stdio: "ignore" });
 	child.unref();
 	return child;
 }
@@ -120,7 +120,7 @@ function electronCleanupDetails(sessionName: string, electronRecord: Record<stri
 }
 
 test("agentBrowserExtension blocks page-scoped ref reuse after navigation before upstream can recycle it", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-generation-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-generation-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -175,7 +175,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension invalidates prior refs when a failed transition command keeps the page verified", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-failed-transition-refs-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-failed-transition-refs-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -238,7 +238,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension rehydrates page-scoped refs from the current tree branch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-refs-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-refs-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -295,7 +295,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { clicked: true } }))
 });
 
 test("agentBrowserExtension rehydrates managed browser session state from the current tree branch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-managed-session-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-managed-session-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -345,7 +345,7 @@ if (args.includes("open")) {
 });
 
 test("agentBrowserExtension rehydrates artifact manifest state from the current tree branch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-artifacts-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-artifacts-"));
 	const logPath = join(tempDir, "invocations.log");
 	const firstArtifact = join(tempDir, "first.png");
 	const secondArtifact = join(tempDir, "second.png");
@@ -399,7 +399,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: true } }));
 });
 
 test("agentBrowserExtension keeps Electron cleanup ownership after session_tree switches away from the launch branch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-electron-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-electron-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -473,7 +473,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension does not double-clean a branch-restored Electron cleanup during shutdown", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-electron-cleaned-shutdown-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-electron-cleaned-shutdown-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -538,7 +538,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension clears namespaced attachment context after Electron cleanup replay", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cleanup-attached-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cleanup-attached-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
@@ -547,7 +547,7 @@ fs.appendFileSync(${JSON.stringify(logPath)}, JSON.stringify({ args }) + "\\n");
 process.stdout.write(JSON.stringify({ success: true, data: { result: "https://safe.example/", url: "https://safe.example/" } }));`);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1" }, async () => {
 			const sessionName = "caller-owned-electron";
 			const namespace = "team";
 			const branch = [
@@ -588,7 +588,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { result: "https://sa
 });
 
 test("agentBrowserExtension keeps same-process re-owned Electron resources despite stale branch cleanup evidence", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-electron-cleanup-stale-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-electron-cleanup-stale-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -662,7 +662,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension preserves branch ownership of untouched Electron launch after targeted cleanup", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-untouched-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-untouched-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let childA: ChildProcess | undefined;
@@ -760,7 +760,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension preserves branch ownership of Electron launch after failing explicit-session command", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-failed-cmd-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-failed-cmd-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -830,7 +830,7 @@ if (args.includes("close")) {
 });
 
 test("agentBrowserExtension exposes off-branch owned Electron records to status, probe, and cleanup by launchId", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-tree-electron-status-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-tree-electron-status-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -893,7 +893,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { closed: args.i
 });
 
 test("agentBrowserExtension restores headed autosave policy for an off-current Electron session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-resume-electron-headed-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-resume-electron-headed-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -1001,7 +1001,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { closed: args.i
 });
 
 test("agentBrowserExtension does not reuse current Electron managed session after cleanup", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-current-cleanup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-current-cleanup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1053,7 +1053,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension keeps Electron cleanup post-close reservation across same-process session_tree restore", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cleanup-tree-reserve-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cleanup-tree-reserve-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1129,7 +1129,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension does not restore Electron managed session after cleanup result", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cleanup-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cleanup-restore-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1189,7 +1189,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { result: "ok", url: 
 });
 
 test("agentBrowserExtension preserves active branch Electron launch across reload", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-reload-active-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-reload-active-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -1246,7 +1246,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension reuses only verified tracked Electron connections after reload", { concurrency: false }, async (t) => {
-	const tempDir = await mkdtemp(join(tmpdir(), "piab-electron-reload-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdpb-electron-reload-"));
 	const logPath = join(tempDir, "invocations.log");
 	const connectionPath = join(tempDir, "connection.json");
 	let child: ChildProcess | undefined;
@@ -1282,7 +1282,7 @@ else if (args.includes("snapshot")) data = { origin: data.url, snapshot: '- butt
 else if (args.includes("close")) { fs.writeFileSync(${JSON.stringify(connectionPath)}, JSON.stringify({ ...connection, active: false })); data = { closed: true }; }
 process.stdout.write(JSON.stringify({ success: true, data }));`);
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${process.env.PATH ?? ""}`, AGENT_BROWSER_NAMESPACE: "reload-team", PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${process.env.PATH ?? ""}`, AGENT_BROWSER_NAMESPACE: "reload-team", PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1" }, async () => {
 			userDataDir = await createSecureTempDirectory("electron-profile-");
 			child = spawnElectronFixtureProcess(userDataDir);
 			const sessionName = `${createImplicitSessionName(TEST_SESSION_ID, tempDir, "test-seed")}-fresh-electron-verified`;
@@ -1378,7 +1378,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 });
 
 test("agentBrowserExtension cleans off-branch Electron launches during reload", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-reload-offbranch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-reload-offbranch-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -1391,7 +1391,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1" }, async () => {
 			const userDataDir = await createSecureTempDirectory("electron-profile-");
 			child = spawnElectronFixtureProcess(userDataDir);
 			const baseSessionName = createImplicitSessionName(TEST_SESSION_ID, tempDir, "test-seed");
@@ -1428,7 +1428,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension preserves off-branch Electron profile when reload cleanup is partial", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-reload-partial-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-reload-partial-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -1498,7 +1498,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension preserves off-branch Electron profile when quit cleanup is partial", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-quit-partial-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-quit-partial-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let child: ChildProcess | undefined;
@@ -1566,7 +1566,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension does not promote unrelated off-branch Electron launches after targeted cleanup", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cleanup-promote-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cleanup-promote-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	let childA: ChildProcess | undefined;
@@ -1645,7 +1645,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension serializes explicit Electron cleanup behind in-flight managed commands", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cleanup-queue-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cleanup-queue-"));
 	const logPath = join(tempDir, "invocations.log");
 	const releasePath = join(tempDir, "release-snapshot");
 	const basePath = process.env.PATH ?? "";
@@ -1711,7 +1711,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension untracks managed sessions after partial Electron cleanup closes the session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-partial-close-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-partial-close-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1757,7 +1757,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { closed: args.includ
 });
 
 test("agentBrowserExtension keeps network request diagnostics from replacing the active page target", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-network-request-target-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-network-request-target-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1839,7 +1839,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension ignores restored diagnostic session targets that contain request URLs", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-network-request-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-network-request-restore-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1930,7 +1930,7 @@ if (args.includes("tab") && args.includes("list")) {
 });
 
 test("agentBrowserExtension restores empty successful batch snapshots as ref state", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-empty-ref-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-empty-ref-restore-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1992,7 +1992,7 @@ if (args.includes("click")) {
 });
 
 test("agentBrowserExtension treats successful snapshots without refs as empty ref state", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-missing-refs-snapshot-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-missing-refs-snapshot-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "snapshot-count.txt");
 	const basePath = process.env.PATH ?? "";
@@ -2054,7 +2054,7 @@ if (args.includes("snapshot")) {
 
 
 test("agentBrowserExtension blocks stale refs after page-changing steps inside a batch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-batch-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-batch-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2140,7 +2140,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension keeps pending WebMCP targets unknown and trusts a later batch snapshot", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-webmcp-page-state-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-webmcp-page-state-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2258,7 +2258,7 @@ if (args.includes("batch")) {
 });
 
 test("agentBrowserExtension invalidates direct and batched refs when record start opens a fresh page", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-record-start-refs-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-record-start-refs-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2450,7 +2450,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension invalidates refs when a batch recording start times out before returning rows", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-record-batch-timeout-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-record-batch-timeout-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2526,7 +2526,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension allows same-snapshot form fills before a batch click", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-batch-form-fills-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-batch-form-fills-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2597,7 +2597,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension allows same-snapshot form control batches before a hard invalidating click", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-batch-form-controls-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-batch-form-controls-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2701,7 +2701,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension allows batch stdin ref steps after snapshot following an invalidating step", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-batch-snapshot-reset-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-batch-snapshot-reset-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2753,7 +2753,7 @@ if (args.includes("batch")) {
 });
 
 test("agentBrowserExtension records snapshot refs returned inside a successful batch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-batch-snapshot-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-batch-snapshot-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2796,7 +2796,7 @@ if (args.includes("batch")) {
 });
 
 test("agentBrowserExtension rejects batched getter refs after same-page rerender changes current snapshot identity", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-rerender-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-rerender-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "state.json");
 	const basePath = process.env.PATH ?? "";
@@ -2825,7 +2825,7 @@ if (args.includes("snapshot")) {
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_IMPLICIT_SESSION_IDLE_TIMEOUT_MS: "1234" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 
@@ -2853,7 +2853,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension rejects refs absent from the latest same-page snapshot", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ref-missing-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ref-missing-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2896,7 +2896,7 @@ if (args.includes("snapshot")) {
 });
 
 test("agentBrowserExtension keeps upstream-ignored batch stdin out of artifact and screenshot preflights", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-ignored-stdin-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-ignored-stdin-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

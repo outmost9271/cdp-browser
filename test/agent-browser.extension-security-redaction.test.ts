@@ -22,7 +22,7 @@ import {
 } from "./helpers/agent-browser-harness.js";
 
 test("agentBrowserExtension redacts sensitive args in updates and persisted details", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-test-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-test-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -113,7 +113,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { title: "ok", url: "
 });
 
 test("agentBrowserExtension allows auth password stdin without echoing the secret in tool details", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-auth-stdin-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-auth-stdin-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -157,7 +157,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { saved: true, echoed
 });
 
 test("agentBrowserExtension redacts auth password stdin echoed in upstream failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-auth-error-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-auth-error-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -192,7 +192,7 @@ process.exit(1);`,
 });
 
 test("agentBrowserExtension discards auth password parse-failure output", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-auth-parse-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-auth-parse-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -223,7 +223,7 @@ process.stdout.write("invalid-json " + stdin + " " + "x".repeat(600000));`,
 });
 
 test("agentBrowserExtension renders confirmation recovery and redacts sensitive confirmation context", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-confirm-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-confirm-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -264,7 +264,7 @@ process.exit(1);`,
 });
 
 test("agentBrowserExtension passes confirm and deny recovery calls through to upstream", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-confirm-deny-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-confirm-deny-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(

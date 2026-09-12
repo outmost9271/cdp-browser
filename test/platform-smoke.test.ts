@@ -83,7 +83,7 @@ const result = {
   targets: config.requiredTargets,
 };
 console.log(JSON.stringify(result));
-if (result.packageName !== "host-browser" || result.privateConstantsExported) process.exit(1);
+if (result.packageName !== "cdp-browser" || result.privateConstantsExported) process.exit(1);
 if (result.crabboxMinVersion !== "0.26.0") process.exit(1);
 if (result.nodeValidationMajor !== 22) process.exit(1);
 if (!result.ubuntuContainerImage.includes("agent-browser" + result.agentBrowserVersion)) process.exit(1);
@@ -101,9 +101,9 @@ test("platform command rendering uses POSIX and PowerShell without source-extens
 import { readFileSync } from "node:fs";
 import { CAPABILITY_BASELINE } from "./scripts/agent-browser-capability-baseline.mjs";
 import { buildBrowserDogfoodCommand, buildPlatformBuildCommand, platformFor } from "./scripts/platform-smoke/targets.mjs";
-const posix = buildPlatformBuildCommand("ubuntu", "host-browser", 22);
-const macos = buildPlatformBuildCommand("macos", "host-browser", 22);
-const powershell = buildPlatformBuildCommand("windows-native", "host-browser", 22);
+const posix = buildPlatformBuildCommand("ubuntu", "cdp-browser", 22);
+const macos = buildPlatformBuildCommand("macos", "cdp-browser", 22);
+const powershell = buildPlatformBuildCommand("windows-native", "cdp-browser", 22);
 const powershellScript = readFileSync("scripts/platform-smoke/platform-build-windows.ps1", "utf8");
 const dogfoodPosix = buildBrowserDogfoodCommand("ubuntu");
 const dogfoodWarmPosix = buildBrowserDogfoodCommand("ubuntu", CAPABILITY_BASELINE.targetVersion, true);
@@ -115,13 +115,13 @@ const result = {
   ubuntuPlatform: platformFor("ubuntu") === "posix",
   windowsPlatform: platformFor("windows-native") === "powershell",
   posixHasVerify: posix.includes("npm run verify -- platform-target"),
-  posixHasPackedInstall: posix.includes("install -l --approve ./node_modules/host-browser"),
+  posixHasPackedInstall: posix.includes("install -l --approve ./node_modules/cdp-browser"),
   posixHasApprovedList: posix.includes("list --approve"),
   posixNoExtensionShortcut: !/\bpi\s+(?:-e|--extension)\s+\./.test(posix),
   posixNoFixtureCopy: !posix.includes("cp -R src prompts"),
   macosHasVerify: macos.includes("npm run verify -- platform-target"),
   powershellUsesScript: powershell.includes("platform-build-windows.ps1"),
-  powershellHasPackage: powershell.includes("host-browser"),
+  powershellHasPackage: powershell.includes("cdp-browser"),
   powershellHasApprovedPackageCommands: powershellScript.includes("install -l --approve") && powershellScript.includes("list --approve"),
   powershellNoExtensionShortcut: !/\bpi\s+(?:-e|--extension)\s+\./.test(powershell),
   dogfoodRunsScript: dogfoodPosix.includes("verify-agent-browser-dogfood.ts"),
@@ -149,19 +149,19 @@ import { join } from "node:path";
 import { collectSecretValues, redactSecrets, scanForSecrets, writeManifest } from "./scripts/platform-smoke/artifacts.mjs";
 import { createLeaseCleanupFailureResult, createLeaseCleanupResult, createLeaseWarmupFailureResult } from "./scripts/platform-smoke/targets.mjs";
 
-const root = mkdtempSync(join(tmpdir(), "host-browser-platform-smoke-test-"));
+const root = mkdtempSync(join(tmpdir(), "cdp-browser-platform-smoke-test-"));
 try {
   const suiteDir = join(root, "suite");
   mkdirSync(suiteDir, { recursive: true });
   writeFileSync(join(suiteDir, "present.txt"), "ok");
   const manifest = writeManifest(suiteDir, ["artifact-manifest.json", "present.txt", "missing.txt"]);
-  const cleanup = createLeaseCleanupFailureResult({ artifactRoot: root, packageName: "host-browser" }, "ubuntu", "cbx_failed", {
+  const cleanup = createLeaseCleanupFailureResult({ artifactRoot: root, packageName: "cdp-browser" }, "ubuntu", "cbx_failed", {
     stdout: "",
     stderr: "stop failed",
     code: 1,
     signal: null,
   });
-  const cleanupSuccess = createLeaseCleanupResult({ artifactRoot: root, packageName: "host-browser" }, "ubuntu", "cbx_ok", {
+  const cleanupSuccess = createLeaseCleanupResult({ artifactRoot: root, packageName: "cdp-browser" }, "ubuntu", "cbx_ok", {
     stdout: "stopped",
     stderr: "",
     code: 0,
@@ -172,7 +172,7 @@ try {
     code: 0,
     signal: null,
   });
-  const warmupFailure = createLeaseWarmupFailureResult({ artifactRoot: root, packageName: "host-browser" }, "ubuntu", {
+  const warmupFailure = createLeaseWarmupFailureResult({ artifactRoot: root, packageName: "cdp-browser" }, "ubuntu", {
     stdout: "",
     stderr: "warmup failed",
     code: 1,
@@ -190,7 +190,7 @@ try {
     cleanupOk: cleanup.ok,
     cleanupSuccessOk: cleanupSuccess.ok,
     cleanupSuccessRecorded: successManifest.present.includes("crabbox.stop.stdout.txt") && successManifest.present.includes("crabbox.cleanup.stdout.txt"),
-    cleanupTargetMetadata: successTarget.packageName === "host-browser" && successTarget.crabbox.provider === "local-container" && successTarget.crabbox.workRoot === "/work/crabbox",
+    cleanupTargetMetadata: successTarget.packageName === "cdp-browser" && successTarget.crabbox.provider === "local-container" && successTarget.crabbox.workRoot === "/work/crabbox",
     warmupFailureRecorded: warmupFailure.ok === false && readFileSync(join(warmupFailure.suiteDir, "failures.md"), "utf8").includes("lease-warmup"),
     assertionsOk: assertions.ok,
     leaseCleanupFailed: assertions.checks.some((check) => check.id === "lease-cleanup" && check.ok === false),

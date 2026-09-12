@@ -1,5 +1,5 @@
 /**
- * Purpose: Guard public agent_browser tool schema compatibility while production startup uses lightweight JSON-schema builders.
+ * Purpose: Guard public cdp_browser tool schema compatibility while production startup uses lightweight JSON-schema builders.
  * Responsibilities: Compare production schema output against the canonical TypeBox/StringEnum builder shape without importing heavy builders on the extension cold path.
  * Scope: Schema parity and semantic compiler agreement; browser behavior remains in extension input-mode tests.
  */
@@ -27,13 +27,13 @@ function stableJson(value: unknown): string {
 	});
 }
 
-test("agent_browser keeps every input mode in a compact model-facing schema", () => {
+test("cdp_browser keeps every input mode in a compact model-facing schema", () => {
 	const schema = createAgentBrowserParamsSchema() as { properties?: Record<string, unknown> };
 	for (const mode of ["script", "args", "semanticAction", "job", "qa", "sourceLookup", "networkSourceLookup", "electron"]) {
 		assert.ok(schema.properties?.[mode], `missing ${mode} input mode`);
 	}
 	const bytes = Buffer.byteLength(JSON.stringify(schema));
-	assert.ok(bytes <= 10 * 1024, `agent_browser parameter schema is ${bytes} bytes; budget is 10 KiB`);
+	assert.ok(bytes <= 10 * 1024, `cdp_browser parameter schema is ${bytes} bytes; budget is 10 KiB`);
 });
 
 test("semantic schema keeps optional properties visible to Pi null normalization", () => {
@@ -59,7 +59,7 @@ test("semantic schema rejects non-select values and select text like the compile
 
 test("semantic schema keeps supported locators, role aliases, selectors and select options", () => {
 	const schema = createAgentBrowserParamsSchema();
-	const tool = { name: "agent_browser", description: "Browser", parameters: schema };
+	const tool = { name: "cdp_browser", description: "Browser", parameters: schema };
 	const [providerTool] = convertResponsesTools([tool]);
 	assert.equal(providerTool.type, "function");
 	assert.equal(providerTool.strict, false);

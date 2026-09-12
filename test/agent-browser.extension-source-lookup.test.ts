@@ -23,7 +23,7 @@ import {
 import { writeFakeLaunchableElectronApp } from "./helpers/extension-validation-fixtures.js";
 
 test("agentBrowserExtension compiles experimental source lookups and reports candidate evidence", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-source-lookup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-source-lookup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await mkdir(join(tempDir, "src"), { recursive: true });
@@ -90,7 +90,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension explains packaged Electron sourceLookup no-candidate boundaries", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-source-lookup-electron-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-source-lookup-electron-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const logPath = join(tempDir, "invocations.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -197,7 +197,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension allows sourceLookup after local-file URL verification", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-source-lookup-file-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-source-lookup-file-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	const fileUrl = `file://${join(tempDir, "plain.html")}`;
@@ -258,7 +258,7 @@ process.stdin.on("end", () => {
 
 
 test("agentBrowserExtension compiles experimental network source lookups and reports failed-request candidates", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-network-source-lookup-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-network-source-lookup-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await mkdir(join(tempDir, "src"), { recursive: true });

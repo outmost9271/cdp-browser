@@ -336,9 +336,9 @@ export function verifySteps(options) {
 			return [scriptStep(["./scripts/profile-startup.mjs", ...options.passthrough])];
 		case "real-upstream":
 			return [
-				localToolStep("tsx", ["--test", "--test-force-exit", "--test-name-pattern", "plugin list stays sessionless", "test/agent-browser.real-upstream-contract.test.ts"], { PI_AGENT_BROWSER_REAL_UPSTREAM: "1" }),
-				localToolStep("tsx", ["--test", "--test-force-exit", "--test-name-pattern", "contract suite matches", "test/agent-browser.real-upstream-contract.test.ts"], { PI_AGENT_BROWSER_REAL_UPSTREAM: "1" }),
-				localToolStep("tsx", ["--test", "--test-force-exit", "test/agent-browser.batch-fidelity.test.ts"], { PI_AGENT_BROWSER_REAL_UPSTREAM: "1" }),
+				localToolStep("tsx", ["--test", "--test-force-exit", "--test-name-pattern", "plugin list stays sessionless", "test/agent-browser.real-upstream-contract.test.ts"], { PI_CDP_BROWSER_REAL_UPSTREAM: "1" }),
+				localToolStep("tsx", ["--test", "--test-force-exit", "--test-name-pattern", "contract suite matches", "test/agent-browser.real-upstream-contract.test.ts"], { PI_CDP_BROWSER_REAL_UPSTREAM: "1" }),
+				localToolStep("tsx", ["--test", "--test-force-exit", "test/agent-browser.batch-fidelity.test.ts"], { PI_CDP_BROWSER_REAL_UPSTREAM: "1" }),
 			];
 		case "dogfood":
 			return [buildStep(), localToolStep("tsx", ["./scripts/verify-agent-browser-dogfood.ts", ...options.passthrough])];

@@ -58,8 +58,8 @@ process.stdout.write(Buffer.from(JSON.stringify({ args: process.argv.slice(2), s
 			const env = {
 				PATH: `${chosen}${delimiter}${process.env.PATH ?? ""}`,
 				AGENT_BROWSER_NAMESPACE: "child-env",
-				PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
-				PI_AGENT_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1",
+				PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
+				PI_CDP_BROWSER_TEST_PRESERVE_INTERNAL_LAUNCH_FLAGS: "1",
 			};
 			for (const item of cases) {
 				const result = await runAgentBrowserProcess({ args: item.args, stdin: item.stdin, cwd: root, env });

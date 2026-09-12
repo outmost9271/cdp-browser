@@ -5,7 +5,7 @@ import { buildNextToolAction } from "../next-actions.js";
 
 const BROWSER_PROFILE_CONFIG_HINT = [
 	"Agent-browser profile/config hint: this looks like a local browser profile or Chrome user-data-dir setup problem, not a page-specific failure.",
-	"Do not keep retrying the same open/profile call. Run `profiles` and/or `doctor` through agent_browser, then tell the user whether Chrome/Chromium is installed, which Chrome profile directory names are available, or whether they need to configure a full profile/user-data directory path, a non-default Chromium-compatible `--executable-path`, or remove the profile requirement for public-page browsing.",
+	"Do not keep retrying the same open/profile call. Run `profiles` and/or `doctor` through cdp_browser, then tell the user whether Chrome/Chromium is installed, which Chrome profile directory names are available, or whether they need to configure a full profile/user-data directory path, a non-default Chromium-compatible `--executable-path`, or remove the profile requirement for public-page browsing.",
 	"Use the top-level `sessionMode: \"fresh\"` field for launch-scoped profile/debug/provider flags; do not pass `--session-mode` inside args.",
 ].join(" ");
 

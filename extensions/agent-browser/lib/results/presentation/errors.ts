@@ -153,7 +153,7 @@ function buildUnknownCommandSuggestionActions(suggestions: CommandSuggestion[], 
 			params: { args: withOptionalSessionArgs(sessionName, suggestion.args) },
 			reason: suggestion.description,
 			safety: "Read-only getter command; safe to retry when you intended to inspect page state.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		}));
 	return actions.length > 0 ? actions : undefined;
 }
@@ -174,7 +174,7 @@ function getLocalhostNavigationHint(commandInfo: CommandInfo, errorText: string)
 	return [
 		"Agent-browser local fixture hint: the browser process could not read a loopback URL from its own network namespace or browser host.",
 		"Verify the server is still running and bound to an address the browser host can reach; if curl works from the shell but browser navigation fails, try the other loopback alias, add a proxy bypass for localhost/127.0.0.1 if a proxy is configured, or use a browser-host-reachable URL.",
-		"Use file:// only for static fallback fixtures and clean up any temporary server process outside agent_browser when the check is done.",
+		"Use file:// only for static fallback fixtures and clean up any temporary server process outside cdp_browser when the check is done.",
 	].join(" ");
 }
 

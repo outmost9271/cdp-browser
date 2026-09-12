@@ -55,7 +55,7 @@ import {
 } from "./helpers/extension-validation-fixtures.js";
 
 test("agentBrowserExtension supports Electron launch handoff modes", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-handoff-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-handoff-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -85,7 +85,7 @@ test("agentBrowserExtension supports Electron launch handoff modes", { concurren
 });
 
 test("agentBrowserExtension targets Electron webviews and keeps host cleanup after close failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-webview-close-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-webview-close-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -136,7 +136,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { connected: true } }
 });
 
 test("agentBrowserExtension aborts Electron launch before and during app startup", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-abort-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-abort-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const launchLogPath = join(tempDir, "electron-launch.log");
 	try {
@@ -175,7 +175,7 @@ test("agentBrowserExtension aborts Electron launch before and during app startup
 });
 
 test("agentBrowserExtension blocks Electron launch by caller policy without spawning", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-policy-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-policy-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -206,7 +206,7 @@ test("agentBrowserExtension cleans Electron resources when launch fails before u
 		{ expectedCategory: "timeout", mode: "no-port-file", timeoutMs: 500, writeLaunchLog: false },
 		{ expectedCategory: "upstream-error", mode: "invalid-cdp", timeoutMs: 5_000, writeLaunchLog: true },
 	] as const) {
-		const tempDir = await mkdtemp(join(tmpdir(), `host-browser-electron-failed-${mode}-`));
+		const tempDir = await mkdtemp(join(tmpdir(), `cdp-browser-electron-failed-${mode}-`));
 		const applicationsDir = join(tempDir, "Applications");
 		const launchLogPath = join(tempDir, "electron-launch.log");
 		try {
@@ -253,7 +253,7 @@ test("agentBrowserExtension cleans Electron resources when launch fails before u
 });
 
 test("agentBrowserExtension returns bounded redacted Electron startup output and preserves empty-output failures", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-output-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-output-"));
 	const launchLogPath = join(tempDir, "launch.json");
 	const stdoutEnd = "\nstdout-end\nAuthorization: Bearer fixture-output-secret\n";
 	const stderrEnd = "\nstderr-end\nAPI_KEY=fixture-error-secret\n";
@@ -303,7 +303,7 @@ process.exit(42);
 });
 
 test("failed Electron startup preserves a live writer after injected kill denial, temp cleanup, and host exit", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-live-output-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-live-output-"));
 	const launchLogPath = join(tempDir, "launch.json");
 	const app = await writeFakeMacElectronApp({ applicationsDir: tempDir, bundleId: "com.example.LiveOutput", name: "Live Output" });
 	await writeFile(app.executablePath, `#!/usr/bin/env node
@@ -312,7 +312,7 @@ const path = require("node:path");
 const userDataDir = process.argv.find((arg) => arg.startsWith("--user-data-dir=")).slice("--user-data-dir=".length);
 fs.writeFileSync(${JSON.stringify(launchLogPath)}, JSON.stringify({ pid: process.pid, userDataDir }));
 if (process.argv.includes("--break-marker")) {
-	const marker = path.join(path.dirname(userDataDir), ".host-browser-owner.json");
+	const marker = path.join(path.dirname(userDataDir), ".cdp-browser-owner.json");
 	fs.unlinkSync(marker);
 	fs.mkdirSync(marker);
 }
@@ -366,7 +366,7 @@ setInterval(() => { fs.writeSync(1, "stdout-live\\n"); fs.writeSync(2, "stderr-l
 					await delay(60);
 					assert.ok((await stat(path)).size > before.size, "detached app must still write after the host exits");
 				}
-				const markerPath = join(dirname(launch.userDataDir), ".host-browser-owner.json");
+				const markerPath = join(dirname(launch.userDataDir), ".cdp-browser-owner.json");
 				if (breakMarker) assert.match(receipt.result.failure.cleanupError ?? "", /preserv/i);
 				else assert.deepEqual(JSON.parse(await readFile(markerPath, "utf8")).protectedChildNames, [basename(launch.userDataDir)]);
 				await assert.rejects(stat(receipt.sibling), { code: "ENOENT" });
@@ -385,7 +385,7 @@ setInterval(() => { fs.writeSync(1, "stdout-live\\n"); fs.writeSync(2, "stderr-l
 });
 
 test("Electron capture closes real file handles and retains startup errors when capture or spawn fails", { concurrency: false }, async (t) => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-capture-errors-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-capture-errors-"));
 	const app = await writeFakeMacElectronApp({ applicationsDir: tempDir, bundleId: "com.example.CaptureErrors", name: "Capture Errors" });
 	const nativeOpen = fsPromises.open;
 	const handles: FileHandle[] = [];
@@ -402,7 +402,7 @@ test("Electron capture closes real file handles and retains startup errors when 
 	try {
 		for (fault of ["open-stderr", "spawn-sync", "spawn-async", "read-stdout"] as const) {
 			handles.length = 0;
-			await writeFile(app.executablePath, fault === "spawn-async" ? "#!/does-not-exist/piab-node\n" : "#!/usr/bin/env node\nprocess.exit(42);\n");
+			await writeFile(app.executablePath, fault === "spawn-async" ? "#!/does-not-exist/cdpb-node\n" : "#!/usr/bin/env node\nprocess.exit(42);\n");
 			const harness = createExtensionHarness({ cwd: tempDir });
 			const result = await executeRegisteredTool(harness.tool, harness.ctx, {
 				electron: { action: "launch", appPath: app.appPath, appArgs: fault === "spawn-sync" ? ["bad\0argument"] : [], timeoutMs: 5_000 },
@@ -434,7 +434,7 @@ test("Electron capture closes real file handles and retains startup errors when 
 });
 
 test("agentBrowserExtension cleans Electron resources when upstream connect cannot spawn", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-missing-upstream-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-missing-upstream-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const emptyBinDir = join(tempDir, "empty-bin");
 	const nodeOnlyBinDir = join(tempDir, "node-only-bin");
@@ -450,7 +450,7 @@ test("agentBrowserExtension cleans Electron resources when upstream connect cann
 		// a real binary from the Node install directory.
 		const pathSeparator = process.platform === "win32" ? ";" : ":";
 		const isolatedPath = `${nodeOnlyBinDir}${pathSeparator}${emptyBinDir}`;
-		await withPatchedEnv({ PATH: isolatedPath }, async () => {
+		await withPatchedEnv({ PATH: isolatedPath, PI_CDP_BROWSER_BINARY: join(emptyBinDir, "agent-browser") }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			const result = await executeRegisteredTool(harness.tool, harness.ctx, { electron: { action: "launch", appPath: app.appPath } });
@@ -468,7 +468,7 @@ test("agentBrowserExtension cleans Electron resources when upstream connect cann
 });
 
 test("Electron profile status measures the current path without changing the launch record", async (t) => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-profile-status-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-profile-status-"));
 	const present = join(tempDir, "present");
 	const absent = join(tempDir, "removed");
 	const dangling = join(tempDir, "dangling");
@@ -541,7 +541,7 @@ test("agentBrowserExtension keeps restored Electron profile when process ownersh
 
 
 test("agentBrowserExtension restores Electron launch records and cleans them on shutdown", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-restore-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-restore-"));
 	const applicationsDir = join(tempDir, "Applications");
 	const upstreamLogPath = join(tempDir, "agent-browser.log");
 	const launchLogPath = join(tempDir, "electron-launch.log");
@@ -603,7 +603,7 @@ test("agentBrowserExtension rejects electron mixed with other input modes and ca
 });
 
 test("electron discovery finds macOS Electron app bundles with query filtering", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-macos-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-macos-"));
 	try {
 		const applicationsDir = join(tempDir, "Applications");
 		await mkdir(applicationsDir, { recursive: true });
@@ -642,7 +642,7 @@ test("electron discovery finds macOS Electron app bundles with query filtering",
 });
 
 test("electron discovery annotates likely sensitive apps without blocking discovery", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-sensitive-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-sensitive-"));
 	try {
 		const applicationsDir = join(tempDir, "Applications");
 		await mkdir(applicationsDir, { recursive: true });
@@ -672,7 +672,7 @@ test("electron discovery annotates likely sensitive apps without blocking discov
 });
 
 test("electron discovery scans Linux desktop files and applies Electron evidence gates", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-linux-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-linux-"));
 	try {
 		const desktopDir = join(tempDir, "applications");
 		const appRoot = join(tempDir, "opt");
@@ -766,7 +766,7 @@ Exec=/usr/bin/flatpak run com.example.Flat
 });
 
 test("electron discovery caps results, clamps maxResults, and reports omittedCount", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-electron-cap-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-electron-cap-"));
 	try {
 		const applicationsDir = join(tempDir, "Applications");
 		await mkdir(applicationsDir, { recursive: true });

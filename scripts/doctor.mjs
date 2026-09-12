@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Purpose: Diagnose first-run host-browser setup without mutating Pi or agent-browser state.
+ * Purpose: Diagnose first-run cdp-browser setup without mutating Pi or agent-browser state.
  * Responsibilities: Check upstream agent-browser PATH/version, inspect Pi settings for duplicate package/checkout sources, and print actionable remediation.
  * Scope: Read-only package diagnostics only; upstream browser runtime health remains the responsibility of upstream `agent-browser doctor`.
- * Usage: Run via `host-browser-doctor`, `npm exec --package host-browser -- host-browser-doctor`, or `npm run doctor` from this repository.
+ * Usage: Run via `cdp-browser-doctor`, `npm exec --package cdp-browser -- cdp-browser-doctor`, or `npm run doctor` from this repository.
  * Invariants/Assumptions: The wrapper recommends TARGET_AGENT_BROWSER_VERSION, enforces the configured stable version floor, does not bundle agent-browser, and must not edit Pi settings or run fixing commands.
  */
 
@@ -19,10 +19,10 @@ import { CAPABILITY_BASELINE_SOURCE } from "./agent-browser-capability-baseline.
 import { MINIMUM_AGENT_BROWSER_VERSION, TARGET_AGENT_BROWSER_SOURCE, TARGET_AGENT_BROWSER_VERSION, isSupportedAgentBrowserVersion } from "./agent-browser-target.mjs";
 
 const execFile = promisify(execFileCallback);
-const PACKAGE_NAME = "host-browser";
+const PACKAGE_NAME = "cdp-browser";
 const REPO_URL_FRAGMENTS = [
-	"github.com/outmost9271/host-browser",
-	"github.com/fitchmultz/pi-agent-browser-native",
+	"github.com/outmost9271/cdp-browser",
+	"github.com/fitchmultz/cdp-browser",
 ];
 const EXTENSION_ENTRYPOINTS = Object.freeze([
 	"extensions/agent-browser/index.ts",
@@ -59,10 +59,10 @@ function versionAtLeast(actual, minimum) {
 }
 
 function printHelp() {
-	console.log(`host-browser-doctor
+	console.log(`cdp-browser-doctor
 
 Usage:
-  host-browser-doctor [options]
+  cdp-browser-doctor [options]
 
 Options:
   --cwd <path>              Project directory used for project Pi settings and local source detection. Defaults to process.cwd().
@@ -75,13 +75,13 @@ Checks:
   1. agent-browser is installed on PATH.
   2. agent-browser --version is supported by this package.
   3. pi --version is at least the minimum Pi runtime version for this release.
-  4. Pi settings and repo-local autoload locations do not point at multiple active host-browser sources.
+  4. Pi settings and repo-local autoload locations do not point at multiple active cdp-browser sources.
 
 Examples:
-  host-browser-doctor
-  npm exec --package host-browser -- host-browser-doctor
+  cdp-browser-doctor
+  npm exec --package cdp-browser -- cdp-browser-doctor
   npm run doctor
-  host-browser-doctor --cwd /path/to/project --settings /tmp/pi-settings.json
+  cdp-browser-doctor --cwd /path/to/project --settings /tmp/pi-settings.json
 
 Exit codes:
   0  Doctor passed.
@@ -164,7 +164,7 @@ function isPathLikeSource(source) {
 function sourceLooksLikeThisPackage(source, cwd, sourceBaseDir = cwd) {
 	const text = String(source ?? "").trim();
 	if (text.length === 0) return false;
-	if (/^npm:(?:host-browser|pi-agent-browser-native)(?:@|$)/.test(text)) return true;
+	if (/^npm:(?:cdp-browser|cdp-browser)(?:@|$)/.test(text)) return true;
 	if (text === PACKAGE_NAME) return true;
 	if (REPO_URL_FRAGMENTS.some((fragment) => text.includes(fragment))) return true;
 
@@ -396,13 +396,13 @@ async function checkPiSources({ cwd, agentDir, settingsPaths, readText, pathExis
 	if (sources.length > 1) {
 		return {
 			status: "fail",
-			title: "Duplicate host-browser sources detected.",
+			title: "Duplicate cdp-browser sources detected.",
 			lines: [
-				"Pi may register multiple `agent_browser` tools when a checkout source and a package source are both active.",
+				"Pi may register multiple `cdp_browser` tools when a checkout source and a package source are both active.",
 				"Detected sources:",
 				...sources.map((source) => `- ${source.source} from ${source.location}`),
 				"Keep exactly one active source:",
-				"- for normal use: keep `pi install npm:host-browser` and remove/disable checkout paths from Pi settings",
+				"- for normal use: keep `pi install npm:cdp-browser` and remove/disable checkout paths from Pi settings",
 				"- for temporary package or checkout trials: use `pi --approve --no-extensions -e <source>` when you intentionally trust the current project, or omit `--approve` to let Pi prompt in interactive mode",
 				"- for configured-source lifecycle validation: keep exactly one checkout or package source, then launch plain `pi`",
 			],
@@ -412,16 +412,16 @@ async function checkPiSources({ cwd, agentDir, settingsPaths, readText, pathExis
 	if (sources.length === 1) {
 		return {
 			status: "pass",
-			title: "No duplicate host-browser sources detected.",
+			title: "No duplicate cdp-browser sources detected.",
 			lines: [`Detected source: ${sources[0].source} from ${sources[0].location}`],
 			warnings,
 		};
 	}
 	return {
 		status: "warn",
-		title: "No configured host-browser source was found in inspected Pi settings.",
+		title: "No configured cdp-browser source was found in inspected Pi settings.",
 		lines: [
-			"This is OK for isolated runs such as `pi --no-extensions -e npm:host-browser`, but normal package use should install exactly one source with `pi install npm:host-browser`.",
+			"This is OK for isolated runs such as `pi --no-extensions -e npm:cdp-browser`, but normal package use should install exactly one source with `pi install npm:cdp-browser`.",
 		],
 		warnings,
 	};
@@ -458,7 +458,7 @@ export async function evaluateDoctor(options = {}) {
 }
 
 export function formatDoctorReport(report) {
-	const lines = ["host-browser doctor", ""];
+	const lines = ["cdp-browser doctor", ""];
 	for (const check of report.checks) {
 		const prefix = check.status === "pass" ? "✓" : check.status === "warn" ? "!" : "✗";
 		lines.push(`${prefix} ${check.title}`);

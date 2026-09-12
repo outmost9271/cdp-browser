@@ -146,7 +146,7 @@ async function resolveCommandCredential(rawValue: string, signal?: AbortSignal):
 		return value.length > 0 ? value : undefined;
 	} catch (error) {
 		if (signal?.aborted) throw error;
-		throw new Error("Credential command failed without exposing command output. Check host-browser-config web-search status and the configured secret manager command.");
+		throw new Error("Credential command failed without exposing command output. Check cdp-browser-config web-search status and the configured secret manager command.");
 	}
 }
 

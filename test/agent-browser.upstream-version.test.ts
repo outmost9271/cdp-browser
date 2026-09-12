@@ -29,20 +29,20 @@ test("upstream version output accepts stable versions at or above the supported 
 });
 
 test("browser-backed calls fail before launch on upstream version mismatch while inspection stays available", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "piab-upstream-version-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdpb-upstream-version-"));
 	const logPath = join(tempDir, "invocations.log");
 	try {
 		await writeFakeAgentBrowserBinary(tempDir, `
-if (__piabFakeArgs.includes("--version")) {
+if (__cdpbFakeArgs.includes("--version")) {
   process.stdout.write("agent-browser 0.33.20\\n");
   process.exit(0);
 }
-require("node:fs").appendFileSync(${JSON.stringify(logPath)}, JSON.stringify(__piabFakeArgs) + "\\n");
+require("node:fs").appendFileSync(${JSON.stringify(logPath)}, JSON.stringify(__cdpbFakeArgs) + "\\n");
 process.stdout.write(JSON.stringify({ success: true, data: { url: "https://example.com" } }));
 `);
 		await withPatchedEnv({
 			PATH: `${tempDir}${delimiter}${process.env.PATH ?? ""}`,
-			PI_AGENT_BROWSER_TEST_CUSTOM_VERSION: "1",
+			PI_CDP_BROWSER_TEST_CUSTOM_VERSION: "1",
 		}, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			const blocked = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["open", "https://example.com"] });

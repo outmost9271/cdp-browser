@@ -1,5 +1,5 @@
 /**
- * Purpose: Exercise the configured-source host-browser lifecycle path through a real tmux-driven Pi process.
+ * Purpose: Exercise the configured-source cdp-browser lifecycle path through a real tmux-driven Pi process.
  * Responsibilities: Create isolated Pi settings and a temporary package source, inject deterministic lifecycle sentinels, drive `/reload` plus restart with exact `--session-id`, assert managed browser-session continuity and persisted artifact survival, capture transcripts, and clean up side effects.
  * Scope: Maintainer regression harness invoked through `npm run verify -- lifecycle` and embedded in `npm run verify -- release`; normal unit/package verification remains in the standard npm scripts.
  * Usage: Run with `node scripts/verify-lifecycle.mjs`, `npm run verify -- lifecycle`, or `node scripts/verify-lifecycle.mjs --keep-artifacts --verbose`.
@@ -21,10 +21,10 @@ const execFile = promisify(execFileCallback);
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_LIFECYCLE_MODEL = "zai/glm-5.2";
 const EXPECTED_URL = "https://react.dev/";
-const SENTINEL_CUSTOM_TYPE = "piab-lifecycle-sentinel";
-const SENTINEL_COMMAND_PREFIX = "piab-lifecycle-sentinel";
-const SENTINEL_MARKER_START = "// PIAB_LIFECYCLE_SENTINEL_START";
-const SENTINEL_MARKER_END = "// PIAB_LIFECYCLE_SENTINEL_END";
+const SENTINEL_CUSTOM_TYPE = "cdpb-lifecycle-sentinel";
+const SENTINEL_COMMAND_PREFIX = "cdpb-lifecycle-sentinel";
+const SENTINEL_MARKER_START = "// PI_CDP_BROWSER_LIFECYCLE_SENTINEL_START";
+const SENTINEL_MARKER_END = "// PI_CDP_BROWSER_LIFECYCLE_SENTINEL_END";
 const PROMPT_SUBMIT_PAUSE_MS = 250;
 
 class UsageError extends Error {
@@ -61,7 +61,7 @@ Exit codes:
 }
 
 export function createLifecycleSessionId(pid = process.pid) {
-	return `piab-lifecycle-${pid}`;
+	return `cdpb-lifecycle-${pid}`;
 }
 
 export function buildPiLaunchArgs({ model, sessionId }) {
@@ -169,7 +169,7 @@ function isRecord(value) {
 
 export function agentBrowserResults(entries) {
 	return entries
-		.filter((entry) => entry?.type === "message" && entry.message?.role === "toolResult" && entry.message?.toolName === "agent_browser")
+		.filter((entry) => entry?.type === "message" && entry.message?.role === "toolResult" && entry.message?.toolName === "cdp_browser")
 		.map((entry) => entry.message);
 }
 
@@ -252,7 +252,7 @@ export function injectLifecycleSentinelSource(source, token) {
 	const snippet = `
 	${SENTINEL_MARKER_START}
 	pi.registerCommand(${JSON.stringify(lifecycleSentinelCommand(token))}, {
-		description: "Append the host-browser lifecycle sentinel token.",
+		description: "Append the cdp-browser lifecycle sentinel token.",
 		handler: async () => {
 			pi.appendEntry("${SENTINEL_CUSTOM_TYPE}", { token: ${JSON.stringify(token)} });
 		},
@@ -281,9 +281,9 @@ if (versionArgs.length === 1 && versionArgs[0] === "--version") {
   process.stdout.write(${JSON.stringify(TARGET_AGENT_BROWSER_VERSION_LABEL)});
   process.exit(0);
 }
-const stateDir = process.env.AGENT_BROWSER_PIAB_LIFECYCLE_FAKE_STATE_DIR;
+const stateDir = process.env.AGENT_BROWSER_PI_CDP_BROWSER_LIFECYCLE_FAKE_STATE_DIR;
 if (!stateDir) {
-  console.error("AGENT_BROWSER_PIAB_LIFECYCLE_FAKE_STATE_DIR is required");
+  console.error("AGENT_BROWSER_PI_CDP_BROWSER_LIFECYCLE_FAKE_STATE_DIR is required");
   process.exit(64);
 }
 const stdin = fs.readFileSync(0, "utf8");
@@ -427,7 +427,7 @@ async function launchPiInTmux(options) {
 		cwd,
 		"env",
 		`PI_CODING_AGENT_DIR=${agentDir}`,
-		`AGENT_BROWSER_PIAB_LIFECYCLE_FAKE_STATE_DIR=${fakeStateDir}`,
+		`AGENT_BROWSER_PI_CDP_BROWSER_LIFECYCLE_FAKE_STATE_DIR=${fakeStateDir}`,
 		`PATH=${fakeBinDir}${delimiter}${process.env.PATH ?? ""}`,
 		"pi",
 		...buildPiLaunchArgs({ model, sessionId }),
@@ -540,7 +540,7 @@ export async function waitForAgentBrowserResult({ describe, sessionFile, session
 		},
 	});
 	const { result } = report;
-	assert(predicate(result), `Unexpected agent_browser result for ${describe}: call ${result.toolCallId ?? "unknown"}; command ${result.details?.command ?? "missing"}; isError ${result.isError}; category ${result.details?.resultCategory ?? "missing"}/${result.details?.failureCategory ?? result.details?.successCategory ?? "missing"}.`);
+	assert(predicate(result), `Unexpected cdp_browser result for ${describe}: call ${result.toolCallId ?? "unknown"}; command ${result.details?.command ?? "missing"}; isError ${result.isError}; category ${result.details?.resultCategory ?? "missing"}/${result.details?.failureCategory ?? result.details?.successCategory ?? "missing"}.`);
 	return report;
 }
 
@@ -575,7 +575,7 @@ async function runPromptAndWaitForResult({ describe, prompt, sessionFile, timeou
 }
 
 function buildToolInputPrompt(params, extra = "") {
-	return `Use exactly one agent_browser tool call with input ${JSON.stringify(params)}${extra} Do not use bash. After the tool result, briefly report the result.`;
+	return `Use exactly one cdp_browser tool call with input ${JSON.stringify(params)}${extra} Do not use bash. After the tool result, briefly report the result.`;
 }
 
 function buildPrompt(args, extra = "") {
@@ -588,7 +588,7 @@ async function verifyLifecycle(options = {}) {
 	const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	const keepArtifacts = options.keepArtifacts ?? false;
 	const verbose = options.verbose ?? false;
-	const tempRoot = await mkdtemp(join(tmpdir(), "piab-lifecycle-"));
+	const tempRoot = await mkdtemp(join(tmpdir(), "cdpb-lifecycle-"));
 	const artifactsDir = join(tempRoot, "artifacts");
 	const agentDir = join(tempRoot, "agent");
 	const sessionDir = join(tempRoot, "sessions");

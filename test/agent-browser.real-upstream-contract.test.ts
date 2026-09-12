@@ -1,7 +1,7 @@
 /**
  * Purpose: Validate the pi wrapper against the real installed upstream agent-browser binary.
  * Responsibilities: Run opt-in deterministic runtime contract checks for inspection and skills (stateless JSON), fresh `open` plus implicit managed-session reuse, caller-owned local-daemon pass-through, nested batch-attachment isolation, cross-harness restore persistence, and symlinked managed-storage fail-closed behavior, a broad interaction and navigation matrix on localhost fixtures (including `batch` stdin, `pushstate`, `vitals`, `network route`, `cookies set --curl`), a `react tree` missing-renderer failure shape, `wait --download` artifact reporting versus on-disk presence, and a focused sessionless `plugin list` output-shape probe.
- * Scope: Integration-only tests gated by PI_AGENT_BROWSER_REAL_UPSTREAM=1; the default fast test loop must not require a browser or upstream binary.
+ * Scope: Integration-only tests gated by PI_CDP_BROWSER_REAL_UPSTREAM=1; the default fast test loop must not require a browser or upstream binary.
  * Usage: Run `npm run verify -- real-upstream` after installing the canonical target agent-browser version.
  * Invariants/Assumptions: The installed upstream version must match scripts/agent-browser-capability-baseline.mjs and all pages are served from a local fixture server.
  */
@@ -32,8 +32,8 @@ import {
 import { waitForTestPidExit } from "./helpers/extension-validation-fixtures.js";
 
 const execFileAsync = promisify(execFile);
-const REAL_UPSTREAM_ENABLED = process.env.PI_AGENT_BROWSER_REAL_UPSTREAM === "1";
-const REAL_UPSTREAM_SKIP_REASON = "Set PI_AGENT_BROWSER_REAL_UPSTREAM=1 to run against the installed upstream binary.";
+const REAL_UPSTREAM_ENABLED = process.env.PI_CDP_BROWSER_REAL_UPSTREAM === "1";
+const REAL_UPSTREAM_SKIP_REASON = "Set PI_CDP_BROWSER_REAL_UPSTREAM=1 to run against the installed upstream binary.";
 const SHAPES_FIXTURE_PATH = new URL("./fixtures/agent-browser-real-output-shapes.json", import.meta.url);
 
 interface RealOutputShapesFixture {
@@ -142,12 +142,12 @@ async function closeManagedSessionIfPresent(options: { cwd: string; sessionName?
 	await runAgentBrowserProcess({
 		args: ["--json", "--namespace", "", "--session", options.sessionName, "close"],
 		cwd: options.cwd,
-		env: { AGENT_BROWSER_SOCKET_DIR: process.env.PI_AGENT_BROWSER_SOCKET_DIR ?? getAgentBrowserSocketDir() },
+		env: { AGENT_BROWSER_SOCKET_DIR: process.env.PI_CDP_BROWSER_SOCKET_DIR ?? getAgentBrowserSocketDir() },
 	}).catch(() => undefined);
 }
 
 async function assertRealUpstreamUnrecordedDaemonReuseFailsClosed(): Promise<void> {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-orphan-daemon-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-orphan-daemon-"));
 	const socketDir = join(tempDir, "sockets");
 	let sessionName: string | undefined;
 	try {
@@ -158,7 +158,7 @@ async function assertRealUpstreamUnrecordedDaemonReuseFailsClosed(): Promise<voi
 			AGENT_BROWSER_SOCKET_DIR: socketDir,
 			HOME: tempDir,
 			USERPROFILE: tempDir,
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined,
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined,
 		}, async () => {
 			const firstHarness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(firstHarness.handlers, "session_start", { reason: "new" }, firstHarness.ctx);
@@ -187,7 +187,7 @@ async function assertRealUpstreamUnrecordedDaemonReuseFailsClosed(): Promise<voi
 
 async function assertRealUpstreamRestoreStorageSymlinkFailsClosed(): Promise<void> {
 	if (process.platform === "win32") return;
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-symlink-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-symlink-"));
 	const socketDir = join(tempDir, "sockets");
 	const targetDir = join(tempDir, "outside-state-target");
 	await initializeGitProject(tempDir);
@@ -201,7 +201,7 @@ async function assertRealUpstreamRestoreStorageSymlinkFailsClosed(): Promise<voi
 			AGENT_BROWSER_ENCRYPTION_KEY: undefined,
 			AGENT_BROWSER_SOCKET_DIR: socketDir,
 			HOME: tempDir,
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined,
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined,
 		}, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			const opened = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["open", "about:blank"], sessionMode: "fresh" });
@@ -221,7 +221,7 @@ async function assertRealUpstreamRestoreStorageSymlinkFailsClosed(): Promise<voi
 
 async function assertRealUpstreamNestedRestoreStorageSymlinkFailsClosed(): Promise<void> {
 	if (process.platform === "win32") return;
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-nested-symlink-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-nested-symlink-"));
 	const socketDir = join(tempDir, "sockets");
 	const outsideStateFile = join(tempDir, "outside-candidate.json");
 	const temporaryDirectory = join(tempDir, ".agent-browser", "sessions", ".tmp");
@@ -236,7 +236,7 @@ async function assertRealUpstreamNestedRestoreStorageSymlinkFailsClosed(): Promi
 			AGENT_BROWSER_ENCRYPTION_KEY: undefined,
 			AGENT_BROWSER_SOCKET_DIR: socketDir,
 			HOME: tempDir,
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined,
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined,
 		}, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			const opened = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["open", "about:blank"], sessionMode: "fresh" });
@@ -256,7 +256,7 @@ async function assertRealUpstreamNestedRestoreStorageSymlinkFailsClosed(): Promi
 
 async function assertRealUpstreamRelativeHomeFailsClosed(): Promise<void> {
 	if (process.platform === "win32") return;
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-relative-home-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-relative-home-"));
 	const socketDir = join(tempDir, "sockets");
 	let sessionName: string | undefined;
 	try {
@@ -266,7 +266,7 @@ async function assertRealUpstreamRelativeHomeFailsClosed(): Promise<void> {
 			AGENT_BROWSER_ENCRYPTION_KEY: undefined,
 			AGENT_BROWSER_SOCKET_DIR: socketDir,
 			HOME: "relative-home",
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined,
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined,
 		}, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			const opened = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["open", "about:blank"], sessionMode: "fresh" });
@@ -286,12 +286,12 @@ async function assertRealUpstreamRelativeHomeFailsClosed(): Promise<void> {
 
 async function assertRealUpstreamLocalDaemonPassesThrough(): Promise<void> {
 	if (process.platform === "win32") return;
-	const shortTempRoot = dirname(getAgentBrowserSocketDir() ?? join(tmpdir(), "piab"));
+	const shortTempRoot = dirname(getAgentBrowserSocketDir() ?? join(tmpdir(), "cdpb"));
 	const tempDir = await mkdtemp(join(shortTempRoot, "u-"));
 	const socketDir = join(tempDir, "sockets");
 	const configPath = join(tempDir, "empty.json");
 	const sessionName = `unsafe-${process.pid}`;
-	const safeSessionName = `piab-safe-${process.pid}`;
+	const safeSessionName = `cdpb-safe-${process.pid}`;
 	const upstreamEnv = {
 		...process.env,
 		AGENT_BROWSER_DEFAULT_TIMEOUT: "25000",
@@ -334,7 +334,7 @@ async function assertRealUpstreamLocalDaemonPassesThrough(): Promise<void> {
 			AGENT_BROWSER_DEFAULT_TIMEOUT: "25000",
 			AGENT_BROWSER_IDLE_TIMEOUT_MS: "900000",
 			HOME: tempDir,
-			PI_AGENT_BROWSER_SOCKET_DIR: socketDir,
+			PI_CDP_BROWSER_SOCKET_DIR: socketDir,
 		}, async () => {
 			const opened = await runAgentBrowserProcess({ args: ["--json", "--session", sessionName, "open", pathToFileURL(fixturePath).href], cwd: tempDir });
 			assert.equal(opened.exitCode, 0, opened.spawnError?.message ?? opened.stderr);
@@ -364,7 +364,7 @@ test("real upstream agent-browser contract suite matches navigation availability
 	await mkdir(socketDir, { mode: 0o700 });
 	const fixture = await startAgentBrowserContractFixtureServer();
 	try {
-		await withPatchedEnv({ HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"), PI_AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined, AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined, AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined }, async () => {
+		await withPatchedEnv({ HOME: dir, USERPROFILE: dir, PI_CODING_AGENT_DIR: join(dir, "pi"), PI_CDP_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_SOCKET_DIR: socketDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_NAMESPACE: undefined, AGENT_BROWSER_PROFILE: undefined, AGENT_BROWSER_RESTORE: undefined, AGENT_BROWSER_CDP: undefined, AGENT_BROWSER_AUTO_CONNECT: undefined }, async () => {
 			const version = (await runAgentBrowserProcess({ args: ["--version"], cwd: dir })).stdout.match(/agent-browser (\d+)\.(\d+)\./);
 			assert.ok(version);
 			if (Number(version[1]) === 0 && Number(version[2]) < 37) { t.skip("Native navigation availability and tab setup require 0.37 or newer."); return; }
@@ -409,7 +409,7 @@ test("real upstream agent-browser contract suite matches duplicate-name click mu
 	const socketDir = join(tempDir, "s");
 	const fixture = await startAgentBrowserContractFixtureServer();
 	try {
-		await withPatchedEnv({ HOME: tempDir, USERPROFILE: tempDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_SOCKET_DIR: socketDir, PI_AGENT_BROWSER_SOCKET_DIR: socketDir }, async () => {
+		await withPatchedEnv({ HOME: tempDir, USERPROFILE: tempDir, AGENT_BROWSER_CONFIG: undefined, AGENT_BROWSER_SOCKET_DIR: socketDir, PI_CDP_BROWSER_SOCKET_DIR: socketDir }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			try {
@@ -484,8 +484,8 @@ test("real upstream agent-browser contract suite matches cold URL reopen after q
 					AGENT_BROWSER_CONFIG: undefined,
 					AGENT_BROWSER_ENCRYPTION_KEY: process.platform === "win32" ? "a".repeat(64) : undefined,
 					AGENT_BROWSER_SOCKET_DIR: socketDir,
-					PI_AGENT_BROWSER_SOCKET_DIR: socketDir,
-					PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: undefined,
+					PI_CDP_BROWSER_SOCKET_DIR: socketDir,
+					PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: undefined,
 				}, async () => {
 					const url = `${fixture.baseUrl}/contract?cold=${storage ? "storage" : "empty"}`;
 					const branch: unknown[] = [];
@@ -575,7 +575,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 		const shapes = await readOutputShapesFixture();
 		assert.equal(shapes.targetVersion, CAPABILITY_BASELINE.targetVersion, "output-shape fixture must track the canonical target version");
 
-		const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-upstream-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-upstream-"));
 		const socketDir = join(tempDir, "sockets");
 		const downloadDir = join(tempDir, "Downloads");
 		await initializeGitProject(tempDir);
@@ -645,7 +645,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 					assert.equal(skillsGetFullDetails.sessionName, undefined);
 					assert.equal(skillsGetFullDetails.usedImplicitSession, undefined);
 					assert.deepEqual(skillsGetFullDetails.effectiveArgs, ["--json", "skills", "get", "core", "--full"]);
-					assert.match(skillsGetFull.content[0]?.text ?? "", /agent_browser/);
+					assert.match(skillsGetFull.content[0]?.text ?? "", /cdp_browser/);
 
 					const protectedVercelSkill = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["skills", "get", "protected-vercel-deployments", "--full"] });
 					const protectedVercelDetails = assertSuccessfulResult(protectedVercelSkill, shapes.commands.skillsGetFull, "skills get protected-vercel-deployments --full");
@@ -987,17 +987,17 @@ if (!REAL_UPSTREAM_ENABLED) {
 					await runCoreCommand(harness, ["stream", "disable"], shapes.commands.streamControl, managedSessionName, "stream disable");
 
 					const cookieFile = join(tempDir, "cookies.curl");
-					await writeFile(cookieFile, "Cookie: piab_session=abc; piab_theme=dark\n", "utf8");
+					await writeFile(cookieFile, "Cookie: cdpb_session=abc; cdpb_theme=dark\n", "utf8");
 					const cookiesCurl = await executeRegisteredTool(harness.tool, harness.ctx, {
 						args: ["cookies", "set", "--curl", cookieFile, "--url", contractUrl],
 					});
 					const cookiesCurlDetails = assertSuccessfulResult(cookiesCurl, shapes.commands.cookiesCurl, "cookies set --curl");
 					assert.equal((cookiesCurlDetails.data as { set?: boolean }).set, true);
 
-					const restoreMarker = "piab-real-upstream-restore";
+					const restoreMarker = "cdpb-real-upstream-restore";
 					const seedRestoreState = await executeRegisteredTool(harness.tool, harness.ctx, {
 						args: ["eval", "--stdin"],
-						stdin: `document.cookie = "piab_restore_cookie=${restoreMarker}; path=/"; localStorage.setItem("piab-restore-local", "${restoreMarker}"); sessionStorage.setItem("piab-restore-session", "${restoreMarker}"); true`,
+						stdin: `document.cookie = "cdpb_restore_cookie=${restoreMarker}; path=/"; localStorage.setItem("cdpb-restore-local", "${restoreMarker}"); sessionStorage.setItem("cdpb-restore-session", "${restoreMarker}"); true`,
 					});
 					assertSuccessfulResult(seedRestoreState, shapes.commands.eval, "seed managed restore state");
 
@@ -1040,7 +1040,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 					await new Promise((resolve) => setTimeout(resolve, 200));
 					const closedInfo = await execFileAsync("agent-browser", ["--json", "--namespace", "", "--session", managedSessionName ?? "", "session", "info"], {
 						cwd: tempDir,
-						env: { ...process.env, AGENT_BROWSER_NAMESPACE: "redirected", AGENT_BROWSER_SOCKET_DIR: process.env.PI_AGENT_BROWSER_SOCKET_DIR ?? getAgentBrowserSocketDir() ?? socketDir, HOME: tempDir },
+						env: { ...process.env, AGENT_BROWSER_NAMESPACE: "redirected", AGENT_BROWSER_SOCKET_DIR: process.env.PI_CDP_BROWSER_SOCKET_DIR ?? getAgentBrowserSocketDir() ?? socketDir, HOME: tempDir },
 					});
 					assert.equal((JSON.parse(closedInfo.stdout) as { data?: { active?: boolean } }).data?.active, false, "owned close must override a redirecting namespace environment");
 
@@ -1062,7 +1062,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 					assertSuccessfulResult(sameExtensionRestoredOpen, shapes.commands.open, "reopen restored managed session after close in same extension");
 					const sameExtensionRestoreState = await executeRegisteredTool(harness.tool, harness.ctx, {
 						args: ["eval", "--stdin"],
-						stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("piab_restore_cookie=${restoreMarker}"), local: localStorage.getItem("piab-restore-local"), session: sessionStorage.getItem("piab-restore-session") })`,
+						stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("cdpb_restore_cookie=${restoreMarker}"), local: localStorage.getItem("cdpb-restore-local"), session: sessionStorage.getItem("cdpb-restore-session") })`,
 					});
 					const sameExtensionRestoreDetails = assertSuccessfulResult(sameExtensionRestoreState, shapes.commands.eval, "read same-extension restored managed state");
 					const sameExtensionRestoredValue = JSON.parse(String((sameExtensionRestoreDetails.data as { result?: string }).result ?? "{}")) as { cookiePresent?: boolean; local?: string; session?: string };
@@ -1080,7 +1080,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 						assertSuccessfulResult(restoredOpen, shapes.commands.open, "open restored managed session");
 						const readRestoreState = await executeRegisteredTool(restoredHarness.tool, restoredHarness.ctx, {
 							args: ["eval", "--stdin"],
-							stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("piab_restore_cookie=${restoreMarker}"), local: localStorage.getItem("piab-restore-local"), session: sessionStorage.getItem("piab-restore-session") })`,
+							stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("cdpb_restore_cookie=${restoreMarker}"), local: localStorage.getItem("cdpb-restore-local"), session: sessionStorage.getItem("cdpb-restore-session") })`,
 						});
 						const restoredDetails = assertSuccessfulResult(readRestoreState, shapes.commands.eval, "read restored managed state");
 						restoredValueText = String((restoredDetails.data as { result?: string }).result);
@@ -1101,7 +1101,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 						assertSuccessfulResult(isolatedOpen, shapes.commands.open, "open distinct-transcript managed session");
 						const isolatedState = await executeRegisteredTool(isolatedHarness.tool, isolatedHarness.ctx, {
 							args: ["eval", "--stdin"],
-							stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("piab_restore_cookie=${restoreMarker}"), local: localStorage.getItem("piab-restore-local"), session: sessionStorage.getItem("piab-restore-session") })`,
+							stdin: `JSON.stringify({ cookiePresent: document.cookie.includes("cdpb_restore_cookie=${restoreMarker}"), local: localStorage.getItem("cdpb-restore-local"), session: sessionStorage.getItem("cdpb-restore-session") })`,
 						});
 						const isolatedDetails = assertSuccessfulResult(isolatedState, shapes.commands.eval, "read distinct-transcript managed state");
 						isolatedValueText = String((isolatedDetails.data as { result?: string }).result);
@@ -1175,7 +1175,7 @@ if (!REAL_UPSTREAM_ENABLED) {
 		const shapes = await readOutputShapesFixture();
 		assert.equal(shapes.targetVersion, CAPABILITY_BASELINE.targetVersion, "output-shape fixture must track the canonical target version");
 
-		const tempDir = await mkdtemp(join(tmpdir(), "host-browser-real-upstream-plugins-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-real-upstream-plugins-"));
 		try {
 			await withPatchedEnv({ HOME: tempDir, AGENT_BROWSER_PLUGINS: "[]" }, async () => {
 				const harness = createExtensionHarness({ cwd: tempDir });

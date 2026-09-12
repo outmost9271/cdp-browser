@@ -67,9 +67,9 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 			USERPROFILE: home,
 			AGENT_BROWSER_NAMESPACE: "",
 			AGENT_BROWSER_CONFIG: undefined,
-			PI_AGENT_BROWSER_SOCKET_DIR: join(root, "s"),
-			PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: options.restoreDisabled ? "0" : undefined,
-			PI_AGENT_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
+			PI_CDP_BROWSER_SOCKET_DIR: join(root, "s"),
+			PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: options.restoreDisabled ? "0" : undefined,
+			PI_CDP_BROWSER_TEST_CUSTOM_SESSION_INFO: "1",
 		}, async () => {
 			const branch: unknown[] = [];
 			const prefix = ["--namespace", "cold", ...(options.explicit ? ["--session", "caller"] : [])];

@@ -15,7 +15,8 @@ import { join, resolve } from "node:path";
 /** @typedef {{ name: string; policy?: BrowserDefaultProfilePolicy }} BrowserDefaultProfileConfig */
 /** @typedef {{ enabled?: boolean; preferredProvider?: WebSearchProvider; defaultSearchType?: ExaSearchType; braveApiKey?: string; exaApiKey?: string }} WebSearchConfig */
 /** @typedef {{ defaultProfile?: BrowserDefaultProfileConfig; executablePath?: string }} BrowserConfig */
-/** @typedef {{ version?: 1; webSearch?: WebSearchConfig; browser?: BrowserConfig }} AgentBrowserConfig */
+/** @typedef {{ endpoint?: string; timeoutMs?: number }} CdpConfig */
+/** @typedef {{ version?: 1; webSearch?: WebSearchConfig; browser?: BrowserConfig; cdp?: CdpConfig }} AgentBrowserConfig */
 /** @typedef {{ config: AgentBrowserConfig; path: string; scope: ConfigLayerScope }} ConfigLayer */
 /** @typedef {{ kind: CredentialSourceKind; provider?: WebSearchProvider; rawValue: string; scope: AgentBrowserConfigScope }} CredentialSource */
 /** @typedef {{ global: string; project: string; override?: string }} AgentBrowserConfigPaths */
@@ -25,11 +26,11 @@ import { join, resolve } from "node:path";
 
 const CONFIG_DIR_NAME = ".pi";
 
-export const AGENT_BROWSER_CONFIG_ENV = "PI_AGENT_BROWSER_CONFIG";
+export const AGENT_BROWSER_CONFIG_ENV = "PI_CDP_BROWSER_CONFIG";
 export const BRAVE_API_KEY_ENV = "BRAVE_API_KEY";
 export const EXA_API_KEY_ENV = "EXA_API_KEY";
-export const CONFIG_RELATIVE_PATH = /** @type {const} */ ([CONFIG_DIR_NAME, "config", "host-browser", "config.json"]);
-export const GLOBAL_CONFIG_RELATIVE_PATH = /** @type {const} */ ([CONFIG_DIR_NAME, "config", "host-browser", "config.json"]);
+export const CONFIG_RELATIVE_PATH = /** @type {const} */ ([CONFIG_DIR_NAME, "config", "cdp-browser", "config.json"]);
+export const GLOBAL_CONFIG_RELATIVE_PATH = /** @type {const} */ ([CONFIG_DIR_NAME, "config", "cdp-browser", "config.json"]);
 export const SECRET_COMMAND_TIMEOUT_MS = 15_000;
 
 /** @type {Readonly<Record<WebSearchProvider, WebSearchProviderDescriptor>>} */
@@ -138,6 +139,10 @@ export function mergeAgentBrowserConfig(base, override) {
 			...(base.browser ?? {}),
 			...(override.browser ?? {}),
 			defaultProfile: override.browser?.defaultProfile ?? base.browser?.defaultProfile,
+		},
+		cdp: {
+			...(base.cdp ?? {}),
+			...(override.cdp ?? {}),
 		},
 		webSearch: {
 			...(base.webSearch ?? {}),
@@ -314,9 +319,31 @@ export function validateAgentBrowserConfig(value, path, errors, warnings) {
 		}
 	}
 
+	if (value.cdp !== undefined) {
+		if (!isRecord(value.cdp)) {
+			errors.push(`${path}.cdp must be an object.`);
+		} else {
+			/** @type {NonNullable<AgentBrowserConfig["cdp"]>} */
+			const cdp = {};
+			const endpoint = validateString(value.cdp.endpoint, `${path}.cdp.endpoint`, errors)?.trim();
+			if (endpoint) {
+				cdp.endpoint = endpoint;
+			}
+			const timeoutMs = value.cdp.timeoutMs;
+			if (timeoutMs !== undefined) {
+				if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+					errors.push(`${path}.cdp.timeoutMs must be a positive integer when present.`);
+				} else {
+					cdp.timeoutMs = timeoutMs;
+				}
+			}
+			if (Object.keys(cdp).length > 0) config.cdp = cdp;
+		}
+	}
+
 	for (const key of Object.keys(value)) {
-		if (!["version", "webSearch", "browser"].includes(key)) {
-			warnings.push(`${path}.${key} is not a recognized host-browser config field and was ignored.`);
+		if (!["version", "webSearch", "browser", "cdp"].includes(key)) {
+			warnings.push(`${path}.${key} is not a recognized cdp-browser config field and was ignored.`);
 		}
 	}
 	return config;

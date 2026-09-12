@@ -1,4 +1,4 @@
-/** Target/suite runner for host-browser platform smoke. */
+/** Target/suite runner for cdp-browser platform smoke. */
 
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -254,7 +254,7 @@ export function createLeaseWarmupFailureResult(config, targetName, warmupResult,
 	return { ok: false, suiteDir, assertions };
 }
 
-export function buildPlatformBuildCommand(targetName, packageName = "host-browser", nodeValidationMajor = 22) {
+export function buildPlatformBuildCommand(targetName, packageName = "cdp-browser", nodeValidationMajor = 22) {
 	if (platformFor(targetName) === "powershell") {
 		return `powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\platform-smoke\\platform-build-windows.ps1 -PackageName ${psSingleQuote(packageName)} -NodeValidationMajor ${nodeValidationMajor}`;
 	}

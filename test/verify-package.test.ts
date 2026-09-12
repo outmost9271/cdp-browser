@@ -131,17 +131,17 @@ test("collectVerificationFailures reports each repo and packed invariant breach"
 	assert.match(failures[3] ?? "", /Forbidden packed file present/);
 });
 
-test("evaluatePiSmokeResult requires exactly one packaged agent_browser source and allows optional companion tools", () => {
+test("evaluatePiSmokeResult requires exactly one packaged cdp_browser source and allows optional companion tools", () => {
 	assert.deepEqual(
 		evaluatePiSmokeResult({
 			packageDir: "/tmp/pkg/package",
 			tools: [
 				{
-					name: "agent_browser",
+					name: "cdp_browser",
 					sourceInfo: { path: "/tmp/pkg/package/dist/extensions/agent-browser/index.js" },
 				},
 				{
-					name: "agent_browser_web_search",
+					name: "cdp_browser_web_search",
 					sourceInfo: { path: "/tmp/pkg/package/dist/extensions/agent-browser/index.js" },
 				},
 			],
@@ -159,20 +159,20 @@ test("evaluatePiSmokeResult requires exactly one packaged agent_browser source a
 	assert.match(
 		evaluatePiSmokeResult({
 			packageDir: "/tmp/pkg/package",
-			tools: [{ name: "agent_browser", sourceInfo: { path: "/repo/extensions/agent-browser/index.ts" } }],
+			tools: [{ name: "cdp_browser", sourceInfo: { path: "/repo/extensions/agent-browser/index.ts" } }],
 		})[0] ?? "",
 		/expected a source inside packed package/,
 	);
 	assert.match(
 		evaluatePiSmokeResult({
 			packageDir: "/tmp/pkg/package",
-			tools: [{ name: "agent_browser" }],
+			tools: [{ name: "cdp_browser" }],
 		})[0] ?? "",
 		/source path metadata/,
 	);
 });
 
-test("executePackagedAgentBrowserSmoke invokes the packaged agent_browser tool with deterministic version args", async () => {
+test("executePackagedAgentBrowserSmoke invokes the packaged cdp_browser tool with deterministic version args", async () => {
 	const calls: Array<{ ctx: unknown; params: { args: string[] }; toolCallId: string }> = [];
 	const context = { cwd: "/tmp/pkg/package" };
 	const report = await executePackagedAgentBrowserSmoke({
@@ -180,7 +180,7 @@ test("executePackagedAgentBrowserSmoke invokes the packaged agent_browser tool w
 		session: {
 			createReplacedSessionContext: () => context,
 			getToolDefinition: (name: string) =>
-				name === "agent_browser"
+				name === "cdp_browser"
 					? {
 							execute: async (toolCallId, params, _signal, onUpdate, ctx) => {
 								onUpdate?.({ content: [{ type: "text", text: "Running agent-browser --version" }] });
@@ -231,7 +231,7 @@ test("executePackagedAgentBrowserSmoke reports packaged invocation failures clea
 	});
 
 	const failures = report.failures.join("\n");
-	assert.match(failures, /Packaged agent_browser invocation failed/);
+	assert.match(failures, /Packaged cdp_browser invocation failed/);
 	assert.match(failures, /--version/);
 	assert.match(failures, /boom/);
 });
@@ -315,7 +315,7 @@ test("evaluatePackResult uses the shared publish contract", async () => {
 		missingRepoFiles: [],
 		packResult: {
 			entryCount: publishContract.requiredPackedFiles.length,
-			filename: "host-browser-0.2.12.tgz",
+			filename: "cdp-browser-0.2.12.tgz",
 			files: publishContract.requiredPackedFiles.map((path) => ({ path })),
 			size: 123,
 			unpackedSize: 456,
@@ -347,11 +347,11 @@ test("evaluatePackResult rejects forbidden directory prefixes", () => {
 });
 
 test("verifyPackageRelease lets prepare create a missing dist directory", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-package-build-owner-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-package-build-owner-"));
 	try {
 		await writeFile(join(tempDir, "LICENSE"), "fixture\n", "utf8");
 		await writeFile(join(tempDir, "build.mjs"), 'import { mkdirSync, writeFileSync } from "node:fs"; mkdirSync("dist", { recursive: true }); writeFileSync("dist/index.js", "export {};\\n");\n', "utf8");
-		await writeFile(join(tempDir, "package.json"), `${JSON.stringify({ name: "host-browser-package-build-owner-fixture", version: "1.0.0", type: "module", files: ["dist"], scripts: { prepare: "node build.mjs" } }, null, 2)}\n`, "utf8");
+		await writeFile(join(tempDir, "package.json"), `${JSON.stringify({ name: "cdp-browser-package-build-owner-fixture", version: "1.0.0", type: "module", files: ["dist"], scripts: { prepare: "node build.mjs" } }, null, 2)}\n`, "utf8");
 
 		await assert.rejects(access(join(tempDir, "dist")));
 		const report = await verifyPackageRelease({ cwd: tempDir });
@@ -370,7 +370,7 @@ test("packToTemporaryPackageDir writes a tarball even under npm publish dry-run 
 	try {
 		packed = await packToTemporaryPackageDir();
 		await access(join(packed.packageDir, "package.json"));
-		assert.match(packed.packResult.filename, /^host-browser-.*\.tgz$/);
+		assert.match(packed.packResult.filename, /^cdp-browser-.*\.tgz$/);
 	} finally {
 		if (previousDryRun === undefined) {
 			delete process.env.npm_config_dry_run;

@@ -24,7 +24,7 @@ const LARGE_OUTPUT_PREVIEW_MAX_LINE_CHARS = 240;
 
 const LARGE_OUTPUT_FAILURE_COMMAND_MAX_CHARS = 240;
 
-const LARGE_OUTPUT_FILE_PREFIX = "host-browser-output";
+const LARGE_OUTPUT_FILE_PREFIX = "cdp-browser-output";
 
 function shouldCompactLargeOutput(text: string): boolean {
 	return text.length > LARGE_OUTPUT_INLINE_MAX_CHARS || countLines(text) > LARGE_OUTPUT_INLINE_MAX_LINES;

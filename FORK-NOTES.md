@@ -1,48 +1,54 @@
 # Fork notes
 
-This repository is a maintenance fork of
-[fitchmultz/pi-agent-browser-native](https://github.com/fitchmultz/pi-agent-browser-native),
-based on upstream `v0.6.10`.
+`cdp-browser` is a remote-only fork of
+[fitchmultz/pi-agent-browser-native](https://github.com/fitchmultz/pi-agent-browser-native)
+(based on upstream `v0.6.10`), maintained by [outmost9271](https://github.com/outmost9271).
 
-## Changes
+## Goals
 
-### Renamed to `host-browser`
+- Drive a **remote** Chrome over CDP only; never launch a local browser.
+- Bundle the upstream `agent-browser` CLI so runtime does not depend on `PATH`,
+  Docker, or a system-wide install.
+- Stay fully isolated from the sibling `host-browser` / `pi-agent-browser-native`
+  installation (tool name, env prefix, artifacts, daemon namespace/socket).
 
-The fork was renamed from `pi-agent-browser-native` to `host-browser` so the name reflects the
-local (on-host) browser and no longer reads as an upstream `pi-agent` mirror:
+## Changes from upstream
 
-- GitHub repository: `outmost9271/host-browser`
-- `package.json` `name`: `host-browser`
-- package bins: `host-browser-config`, `host-browser-doctor`
-- package config paths: `.pi/config/host-browser/config.json` (global and project)
-- local state prefixes: `host-browser-*` / `.host-browser-*`
+### Vendored upstream CLI
 
-Stable internal identifiers intentionally kept: the `agent_browser` tool name, `AGENT_BROWSER_*`
-environment variables, `PI_AGENT_BROWSER_CONFIG`, `PI_AGENT_BROWSER_ALLOW_DIRECT_BASH`,
-`PIAB_SCRIPT_NODE`, `piab-script-*` session names, and the `-piab.<n>` release-tag suffix.
+`vendor/agent-browser/agent-browser-linux-x64` (agent-browser 0.37.1) is shipped
+with the package plus `vendor/agent-browser/manifest.json` (source URL, size,
+SHA256). All CLI invocations resolve the bundled binary by packaged path in
+`extensions/agent-browser/lib/agent-browser-binary.ts`.
 
-### Resolve a real Node runtime for the script sandbox worker
+- The process layer accepts an explicit `cliPath`; orchestration code resolves the
+  vendored binary and passes it down.
+- `PI_CDP_BROWSER_BINARY` may override the path (tests, advanced setups).
+- Auxiliary calls (version probe, daemon inspection, session state) use the same
+  vendored path through `tryResolveAgentBrowserBinary()`.
 
-Upstream `script` mode starts its sandbox worker with `spawn(process.execPath, ...)`. When the
-host Pi is a Node single executable application (SEA), `process.execPath` points at the Pi binary
-instead of a Node runtime, so the worker never signals `ready` and every `script` call runs until
-it times out.
+### Remote CDP endpoint injection
 
-This fork resolves the worker runtime before spawning:
+New `extensions/agent-browser/lib/cdp-config.ts` resolves the endpoint from, in
+order: per-call argv (`--cdp` / `connect`), project config
+(`<cwd>/.pi/config/cdp-browser/config.json`), global config
+(`~/.pi/config/cdp-browser/config.json`), with `PI_CDP_BROWSER_CDP_ENDPOINT` as an
+explicit process override. An injection hook in `browser-run/index.ts` prepends
+`--cdp <endpoint>` to browser-backed calls. Missing configuration fails the tool
+with `validation-error`; no local fallback exists.
 
-1. `PIAB_SCRIPT_NODE` when it points at an executable file;
-2. `process.execPath` when its basename already is `node`/`nodejs` (no behavior change for
-   regular Node hosts);
-3. `/pi/node/tool/fnm/aliases/default/bin/node`, then `/usr/local/bin/node`, then `/usr/bin/node`;
-4. fallback to `process.execPath`.
+### Renamed for isolation
 
-The runtime change is limited to `extensions/agent-browser/lib/input-modes/script.ts`.
+- Tool: `cdp_browser` (web-search companion keeps `cdp_browser_web_search`).
+- Config paths: `.pi/config/cdp-browser/config.json` (global and project).
+- Env prefix: `PI_CDP_BROWSER_*`; session prefixes `cdpb-*`; socket dir `/tmp/cdpb*`.
+- Package name: `cdp-browser`; binaries: `cdp-browser-config`, `cdp-browser-doctor`.
 
-## Installing this fork
+### Retained from the previous fork
 
-```bash
-pi install git:github.com/outmost9271/host-browser@v0.6.10-piab.2
-```
+The script-mode sandbox worker resolves a real Node runtime before spawning
+(`PI_CDP_BROWSER_SCRIPT_NODE`, fnm alias, `/usr/local/bin/node`, `/usr/bin/node`,
+then `process.execPath`), fixing the Node SEA host case.
 
 ## License
 

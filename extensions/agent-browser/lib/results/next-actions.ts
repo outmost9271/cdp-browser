@@ -21,7 +21,7 @@ export interface AgentBrowserNextAction {
 	};
 	reason: string;
 	safety?: string;
-	tool: "agent_browser";
+	tool: "cdp_browser";
 }
 
 export function withOptionalNamespaceArgs(namespace: string | undefined, args: string[]): string[] {
@@ -72,7 +72,7 @@ export function buildNextToolAction(options: {
 		},
 		reason: options.reason,
 		...(options.safety ? { safety: options.safety } : {}),
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	};
 }
 

@@ -36,7 +36,7 @@ test("buildToolPresentation renders agent-browser skills as native-tool guidance
 	const text = (getPresentation.content[0] as { text: string }).text;
 	assert.match(text, /Pi native-tool note/);
 	assert.match(text, /# Core/);
-	assert.match(text, /agent_browser \{ "args": \["snapshot","-i"\] \}/);
+	assert.match(text, /cdp_browser \{ "args": \["snapshot","-i"\] \}/);
 	assert.doesNotMatch(text, /allowed-tools: Bash|```bash|^\[/m);
 
 	const stringSkillPresentation = await buildToolPresentation({
@@ -45,7 +45,7 @@ test("buildToolPresentation renders agent-browser skills as native-tool guidance
 		envelope: { success: true, data: "# Core\n\n```bash\nagent-browser snapshot -i\n```" },
 	});
 	assert.match((stringSkillPresentation.content[0] as { text: string }).text, /Pi native-tool note/);
-	assert.match((stringSkillPresentation.content[0] as { text: string }).text, /agent_browser \{ "args": \["snapshot","-i"\] \}/);
+	assert.match((stringSkillPresentation.content[0] as { text: string }).text, /cdp_browser \{ "args": \["snapshot","-i"\] \}/);
 
 	const pathPresentation = await buildToolPresentation({
 		commandInfo: { command: "skills", subcommand: "path" },
@@ -76,7 +76,7 @@ test("buildToolPresentation compacts large full skill payloads while preserving 
 	const text = (presentation.content[0] as { text: string }).text;
 	assert.match(text, /Full output path:/);
 	assert.match(text, /Pi native-tool note/);
-	assert.match(text, /agent_browser \{ "args": \["snapshot","-i"\] \}/);
+	assert.match(text, /cdp_browser \{ "args": \["snapshot","-i"\] \}/);
 	const fullOutput = await readFile(String(presentation.fullOutputPath), "utf8");
 	assert.match(fullOutput, /Skill reference row 260/);
 	await rm(String(presentation.fullOutputPath), { force: true });
@@ -106,9 +106,9 @@ test("buildToolPresentation adapts quoted and heredoc skill examples to native t
 		},
 	});
 	const text = (presentation.content[0] as { text: string }).text;
-	assert.match(text, /agent_browser \{ "args": \["open","https:\/\/example\.com\/a b\?q=hello world","--profile","Default Profile"\] \}/);
-	assert.match(text, /agent_browser \{ "args": \["eval","--stdin"\], "stdin": "document\.title" \}/);
-	assert.match(text, /agent_browser \{ "args": \["eval","--stdin"\], "stdin": "document\.body\.innerText" \}/);
+	assert.match(text, /cdp_browser \{ "args": \["open","https:\/\/example\.com\/a b\?q=hello world","--profile","Default Profile"\] \}/);
+	assert.match(text, /cdp_browser \{ "args": \["eval","--stdin"\], "stdin": "document\.title" \}/);
+	assert.match(text, /cdp_browser \{ "args": \["eval","--stdin"\], "stdin": "document\.body\.innerText" \}/);
 	assert.doesNotMatch(text, /<<JS|<<-EOF|\nJS\n|\n\tEOF\n/);
 });
 
@@ -131,8 +131,8 @@ test("buildToolPresentation drops shell comments from adapted skill command args
 		},
 	});
 	const text = (presentation.content[0] as { text: string }).text;
-	assert.match(text, /agent_browser \{ "args": \["open","https:\/\/example\.com\/?"\] \}/);
-	assert.match(text, /agent_browser \{ "args": \["snapshot","-i"\] \}/);
+	assert.match(text, /cdp_browser \{ "args": \["open","https:\/\/example\.com\/?"\] \}/);
+	assert.match(text, /cdp_browser \{ "args": \["snapshot","-i"\] \}/);
 	assert.doesNotMatch(text, /"#"/);
 	assert.doesNotMatch(text, /"1\."|"2\."/);
 });
@@ -257,7 +257,7 @@ test("buildToolPresentation suggests grouped getter commands for common unknown 
 		params: { args: ["--session", "work", "get", "title"] },
 		reason: "Use `get title` to read the current page title.",
 		safety: "Read-only getter command; safe to retry when you intended to inspect page state.",
-		tool: "agent_browser",
+		tool: "cdp_browser",
 	});
 
 	const urlFailure = await buildToolPresentation({
@@ -308,7 +308,7 @@ test("buildToolPresentation explains unsupported keyboard press commands", async
 test("buildToolPresentation explains browser profile config failures with diagnostics next actions", async () => {
 	for (const errorText of [
 		"No Chrome user data directory found. Cannot resolve profile name.",
-		'Chrome profile "host-browser-nonexistent-dogfood-profile" not found. Available profiles:\n  Default (user)\nIf you meant a directory path, use a full path (e.g., /path/to/profile).',
+		'Chrome profile "cdp-browser-nonexistent-dogfood-profile" not found. Available profiles:\n  Default (user)\nIf you meant a directory path, use a full path (e.g., /path/to/profile).',
 	]) {
 		const presentation = await buildToolPresentation({
 			args: ["--profile", "Default", "open", "https://example.com"],

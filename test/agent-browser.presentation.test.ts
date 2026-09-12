@@ -14,7 +14,7 @@ import test from "node:test";
 
 import { buildToolPresentation } from "../extensions/agent-browser/lib/results/presentation.js";
 test("buildToolPresentation rejects a pre-existing artifact that the command did not update", async () => {
-	const cwd = await mkdtemp(join(tmpdir(), "piab-stale-artifact-"));
+	const cwd = await mkdtemp(join(tmpdir(), "cdpb-stale-artifact-"));
 	const artifactPath = join(cwd, "screenshot.png");
 	try {
 		await writeFile(artifactPath, "old screenshot");
@@ -36,7 +36,7 @@ test("buildToolPresentation rejects a pre-existing artifact that the command did
 });
 
 test("buildToolPresentation rejects future-dated artifacts outside the command window", async () => {
-	const cwd = await mkdtemp(join(tmpdir(), "piab-future-artifact-"));
+	const cwd = await mkdtemp(join(tmpdir(), "cdpb-future-artifact-"));
 	const artifactPath = join(cwd, "screenshot.png");
 	try {
 		const now = Date.now();
@@ -57,7 +57,7 @@ test("buildToolPresentation rejects future-dated artifacts outside the command w
 });
 
 test("buildToolPresentation tolerates coarse filesystem mtimes near command start", async () => {
-	const cwd = await mkdtemp(join(tmpdir(), "piab-coarse-artifact-"));
+	const cwd = await mkdtemp(join(tmpdir(), "cdpb-coarse-artifact-"));
 	const artifactPath = join(cwd, "screenshot.png");
 	try {
 		const now = Date.now();
@@ -78,7 +78,7 @@ test("buildToolPresentation tolerates coarse filesystem mtimes near command star
 });
 
 test("buildToolPresentation accepts a completed download that wait began observing after the file arrived", async () => {
-	const cwd = await mkdtemp(join(tmpdir(), "piab-wait-download-artifact-"));
+	const cwd = await mkdtemp(join(tmpdir(), "cdpb-wait-download-artifact-"));
 	const artifactPath = join(cwd, "download.txt");
 	try {
 		await writeFile(artifactPath, "completed download");

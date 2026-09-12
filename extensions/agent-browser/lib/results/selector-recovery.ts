@@ -251,7 +251,7 @@ export function buildVisibleRefFallbackNextActions(options: { diagnostic: Visibl
 		safety: ambiguous
 			? "Several current refs share the same exact role/name. Inspect the snapshot and use only the ref that clearly matches the intended target."
 			: "Use only while this current snapshot still represents the page; refresh refs first if the page changed.",
-		tool: "agent_browser" as const,
+		tool: "cdp_browser" as const,
 	}] : []);
 }
 
@@ -313,14 +313,14 @@ export function buildRichInputRecoveryNextActions(options: { diagnostic: RichInp
 				params: { args: withOptionalSessionArgs(options.sessionName, candidate.focusArgs) },
 				reason: candidate.reason,
 				safety,
-				tool: "agent_browser" as const,
+				tool: "cdp_browser" as const,
 			},
 			{
 				id: clickId,
 				params: { args: withOptionalSessionArgs(options.sessionName, candidate.clickArgs) },
 				reason: `Click ${candidate.ref} to focus the editable ${candidate.role} before keyboard insertion when focus alone is insufficient.`,
 				safety: `${safety} A click may run normal focus/click handlers, but this action does not press Enter or auto-submit.`,
-				tool: "agent_browser" as const,
+				tool: "cdp_browser" as const,
 			},
 		];
 	});

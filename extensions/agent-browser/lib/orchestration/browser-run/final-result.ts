@@ -88,7 +88,7 @@ export function buildMissingBinaryMessage(): string {
 	return [
 		"agent-browser is required but was not found on PATH.",
 		"This project does not bundle agent-browser.",
-		"Run `host-browser-doctor` for package/PATH diagnostics, then install agent-browser using the upstream docs:",
+		"Run `cdp-browser-doctor` for package/PATH diagnostics, then install agent-browser using the upstream docs:",
 		"- https://agent-browser.dev/",
 		"- https://github.com/vercel-labs/agent-browser",
 	].join("\n");
@@ -99,7 +99,7 @@ const SEMANTIC_ACTION_CANDIDATE_ACTION_IDS = new Set(["try-button-name-candidate
 export function formatSemanticActionCandidateText(actions: AgentBrowserNextAction[]): string | undefined {
 	const candidateActions = actions.filter((action) => SEMANTIC_ACTION_CANDIDATE_ACTION_IDS.has(action.id) && action.params?.args);
 	if (candidateActions.length === 0) return undefined;
-	return ["Agent-browser candidate fallbacks:", ...candidateActions.map((action) => `- ${action.id}: agent_browser ${JSON.stringify({ args: action.params?.args })} — ${action.reason}`)].join("\n");
+	return ["Agent-browser candidate fallbacks:", ...candidateActions.map((action) => `- ${action.id}: cdp_browser ${JSON.stringify({ args: action.params?.args })} — ${action.reason}`)].join("\n");
 }
 
 export function buildSemanticActionCandidateActions(compiled: CompiledAgentBrowserSemanticAction): AgentBrowserNextAction[] {
@@ -112,7 +112,7 @@ export function buildSemanticActionCandidateActions(compiled: CompiledAgentBrows
 	const buildRoleCandidate = (role: string, id: string, reason: string): AgentBrowserNextAction => {
 		const args = [...sessionPrefix, "find", "role", role, compiled.action];
 		args.push("--name", value);
-		return { id, params: { args: redactInvocationArgs(args) }, reason, safety: "Candidate locator fallback only; inspect the page if multiple elements could match the same accessible name.", tool: "agent_browser" as const };
+		return { id, params: { args: redactInvocationArgs(args) }, reason, safety: "Candidate locator fallback only; inspect the page if multiple elements could match the same accessible name.", tool: "cdp_browser" as const };
 	};
 	if (locator === "text" && compiled.action === "click") {
 		return [
@@ -219,7 +219,7 @@ export function formatElectronTargetLines(targets: ElectronCdpTarget[], limit = 
 }
 
 const ELECTRON_PROFILE_ISOLATION_NOTE = "Profile note: electron.launch starts an isolated temporary profile; it does not reuse the app's normal signed-in profile or attach to an already-running authenticated app.";
-const ELECTRON_EXISTING_AUTH_GUIDANCE = "For already-authenticated desktop app content, do not stop here: if host tools are allowed and the app is not running, launch the normal app with --remote-debugging-port=<port>, verify the port, then run agent_browser connect <port>; if it is already running without a debug port, ask before relaunching it.";
+const ELECTRON_EXISTING_AUTH_GUIDANCE = "For already-authenticated desktop app content, do not stop here: if host tools are allowed and the app is not running, launch the normal app with --remote-debugging-port=<port>, verify the port, then run cdp_browser connect <port>; if it is already running without a debug port, ask before relaunching it.";
 
 export function formatElectronLaunchText(options: { handoff?: FinalResultInput["electronHandoff"]; record: ElectronLaunchRecord; targets: ElectronCdpTarget[]; upstreamText: string }): string {
 	const lines = [`Electron launch: ${options.record.appName} attached as ${options.record.sessionName ?? "managed session"} (launchId ${options.record.launchId}, port ${options.record.port}).`, `Identifiers: launchId ${options.record.launchId} for electron.status/electron.cleanup/electron.probe; sessionName ${options.record.sessionName ?? "not attached"} for browser snapshot/tab commands.`, ELECTRON_PROFILE_ISOLATION_NOTE, ELECTRON_EXISTING_AUTH_GUIDANCE, ...formatElectronTargetLines(options.targets)];
@@ -308,7 +308,7 @@ function buildTimeoutPartialProgressNextActions(options: FinalResultInput): Agen
 			},
 			reason: `Verify the current URL, then inspect the page after timeout${stepIndex === undefined ? "" : ` before resuming from incomplete step ${stepIndex}`}.`,
 			safety: "Fail-fast read-only recovery: snapshot runs only after get url succeeds, satisfying the wrapper page-target guard without trusting the planned URL.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		}];
 	}
 	if (retry) {
@@ -321,7 +321,7 @@ function buildTimeoutPartialProgressNextActions(options: FinalResultInput): Agen
 				? `Retry the first incomplete timed-out step${stepIndex === undefined ? "" : ` ${stepIndex}`} in a fresh browser session because the timed-out fresh session was not proven live.`
 				: `Retry the first incomplete timed-out step${stepIndex === undefined ? "" : ` ${stepIndex}`} against the current browser session.`,
 			safety: "Only read-only or idempotent timeout steps get executable retry args; inspect current page/artifact state before using the action.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		}];
 	}
 	if (!options.timeoutPartialProgress || freshSessionAbandoned || !options.executionPlan.sessionName) return [];
@@ -330,7 +330,7 @@ function buildTimeoutPartialProgressNextActions(options: FinalResultInput): Agen
 		params: { args: withOptionalSessionArgs(options.executionPlan.sessionName, ["snapshot", "-i"]) },
 		reason: `Inspect the current page after timeout before deciding how to resume${stepIndex === undefined ? "" : ` from incomplete step ${stepIndex}`}.`,
 		safety: "Read details.timeoutPartialProgress first. Do not blindly retry mutating steps such as clicks, fills, key presses, selects, or checks; split the remaining flow into shorter batches around the next navigation or DOM mutation boundary.",
-		tool: "agent_browser" as const,
+		tool: "cdp_browser" as const,
 	}];
 }
 
@@ -342,21 +342,21 @@ function buildDialogTimeoutNextActions(options: { command?: string; sessionName?
 			params: { args: withOptionalSessionArgs(options.sessionName, ["dialog", "status"]) },
 			reason: "Check whether a blocking JavaScript dialog is pending after the timed-out interaction.",
 			safety: "Read-only dialog status; this wrapper bounds dialog commands so recovery attempts do not wait for the full default watchdog.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		},
 		{
 			id: "dismiss-dialog-after-timeout",
 			params: { args: withOptionalSessionArgs(options.sessionName, ["dialog", "dismiss"]) },
 			reason: "Dismiss a pending alert/confirm/prompt when the workflow can safely abandon the dialog.",
 			safety: "Only run when dismissing/canceling the dialog is acceptable for the user flow.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		},
 		{
 			id: "recover-fresh-session-after-dialog-timeout",
 			params: { args: ["open", "about:blank"], sessionMode: "fresh" as const },
 			reason: "Start a clean browser session if the current session remains blocked behind a JavaScript dialog.",
 			safety: "Replace about:blank with the intended recovery URL; this abandons the blocked managed session.",
-			tool: "agent_browser" as const,
+			tool: "cdp_browser" as const,
 		},
 	];
 }
@@ -403,7 +403,7 @@ function buildResultNextActions(options: FinalResultInput): AgentBrowserNextActi
 		appendUnique(buildTimeoutPartialProgressNextActions(options));
 		appendUnique(buildDialogTimeoutNextActions({ command: options.executionPlan.commandInfo.command, sessionName: options.executionPlan.sessionName }));
 	}
-	if (options.categoryDetails.failureCategory === "stale-ref" && options.redactedCompiledSemanticAction && isCompiledSemanticActionFindCommand(options.compiledSemanticAction)) append([{ id: "retry-semantic-action-after-stale-ref", params: { args: options.redactedCompiledSemanticAction.args }, reason: "Retry the same semantic target via its compiled find command after the upstream stale-ref failure proves the prior action did not execute.", safety: "Use only for the same intended target; direct stale @refs still require a fresh snapshot or stable locator before retrying.", tool: "agent_browser" as const }]);
+	if (options.categoryDetails.failureCategory === "stale-ref" && options.redactedCompiledSemanticAction && isCompiledSemanticActionFindCommand(options.compiledSemanticAction)) append([{ id: "retry-semantic-action-after-stale-ref", params: { args: options.redactedCompiledSemanticAction.args }, reason: "Retry the same semantic target via its compiled find command after the upstream stale-ref failure proves the prior action did not execute.", safety: "Use only for the same intended target; direct stale @refs still require a fresh snapshot or stable locator before retrying.", tool: "cdp_browser" as const }]);
 	if (options.electronLaunchRecord) append(buildAgentBrowserNextActions({ electron: { launchId: options.electronLaunchRecord.launchId, sessionName: options.electronLaunchRecord.sessionName, status: options.electronLaunchRecord.cleanupState }, failureCategory: options.categoryDetails.failureCategory, resultCategory: options.categoryDetails.resultCategory, successCategory: options.categoryDetails.successCategory }));
 	return nextActions.length > 0 ? nextActions : undefined;
 }

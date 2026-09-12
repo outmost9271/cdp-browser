@@ -42,7 +42,7 @@ if (tokens[0] === 'batch') {
   process.exitCode = 1;
 } else process.stdout.write(JSON.stringify({ success: true, data: data(tokens) }));`);
 	try {
-		await withPatchedEnv({ PATH: `${root}${delimiter}${process.env.PATH ?? ""}`, PI_AGENT_BROWSER_TEST_CUSTOM_VERSION: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${root}${delimiter}${process.env.PATH ?? ""}`, PI_CDP_BROWSER_TEST_CUSTOM_VERSION: "1" }, async () => {
 			const harness = createExtensionHarness({ cwd: root });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 			try { await run(root, harness, log); }

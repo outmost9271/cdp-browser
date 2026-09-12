@@ -51,23 +51,23 @@ test("agentBrowserExtension names its tools in every prompt guideline", () => {
 	const harness = createExtensionHarness({ cwd: process.cwd(), prompt: "Inspect a page." });
 	assert.ok(harness.tool.promptGuidelines.length > 0);
 	for (const guideline of harness.tool.promptGuidelines) {
-		assert.match(guideline, /agent_browser/, guideline);
+		assert.match(guideline, /cdp_browser/, guideline);
 	}
 	assert.match(harness.tool.promptGuidelines.find((guideline) => guideline.includes("one input mode")) ?? "", /\bscript\b/);
-	const webSearchTool = harness.getTool("agent_browser_web_search");
+	const webSearchTool = harness.getTool("cdp_browser_web_search");
 	if (webSearchTool) {
 		for (const guideline of webSearchTool.promptGuidelines) {
-			assert.match(guideline, /agent_browser_web_search/, guideline);
+			assert.match(guideline, /cdp_browser_web_search/, guideline);
 		}
 	}
 });
 
 test("agentBrowserExtension keeps concise browser guidance plus installed doc pointers in tool metadata", async () => {
-	const isolatedHome = await mkdtemp(join(tmpdir(), "host-browser-guidance-test-"));
-	await withPatchedEnv({ BRAVE_API_KEY: "demo-key", EXA_API_KEY: undefined, HOME: isolatedHome, PI_AGENT_BROWSER_CONFIG: undefined }, async () => {
+	const isolatedHome = await mkdtemp(join(tmpdir(), "cdp-browser-guidance-test-"));
+	await withPatchedEnv({ BRAVE_API_KEY: "demo-key", EXA_API_KEY: undefined, HOME: isolatedHome, PI_CDP_BROWSER_CONFIG: undefined }, async () => {
 		const harness = createExtensionHarness({ cwd: process.cwd() });
 		assert.deepEqual([...harness.handlers.keys()].sort(), ["before_agent_start", "session_shutdown", "session_start", "session_tree", "tool_call", "tool_result"]);
-		assert.equal(harness.tool.name, "agent_browser");
+		assert.equal(harness.tool.name, "cdp_browser");
 		assert.match(harness.tool.description, /authenticated\/profile-based browser work/);
 		assert.match(harness.tool.promptSnippet, /real web workflows/);
 		const parameterSchema = harness.tool.parameters as { description?: string; properties?: { args?: { description?: string }; stdin?: { description?: string } } };
@@ -92,10 +92,10 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 			toolContractPath: join(process.cwd(), "docs", "TOOL_CONTRACT.md"),
 		});
 		const guidelineText = harness.tool.promptGuidelines.join("\n");
-		const webSearchTool = harness.getTool("agent_browser_web_search");
+		const webSearchTool = harness.getTool("cdp_browser_web_search");
 		assert.ok(webSearchTool, "web search tool should register from BRAVE_API_KEY");
 		assert.equal(webSearchTool.promptGuidelines.includes(WEB_SEARCH_PROMPT_GUIDELINE), true);
-		assert.equal(harness.tool.promptGuidelines.includes("Prefer agent_browser_web_search for facts; agent_browser for pages."), true);
+		assert.equal(harness.tool.promptGuidelines.includes("Prefer cdp_browser_web_search for facts; cdp_browser for pages."), true);
 		const requiredGuidelines = [
 			docsGuideline,
 			...RUNTIME_PROMPT_GUIDELINES,
@@ -108,8 +108,8 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 				`missing concise runtime guideline: ${guideline}`,
 			);
 		}
-		assert.match(guidelineText, /Use agent_browser with one input mode/);
-		assert.match(guidelineText, /For agent_browser, use open → snapshot -i/);
+		assert.match(guidelineText, /Use cdp_browser with one input mode/);
+		assert.match(guidelineText, /For cdp_browser, use open → snapshot -i/);
 		assert.match(guidelineText, /ordinary requested non-destructive submissions may proceed/);
 		assert.match(guidelineText, /require explicit authorization for purchases, production-control, destructive\/irreversible, or account\/security\/privacy changes/);
 		assert.equal(
@@ -135,7 +135,7 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 		assert.match(harness.tool.description, /Input choice:/);
 		assert.match(guidelineText, /ffmpeg before recording/);
 		assert.match(guidelineText, /Dashboards: verify scroll/);
-		assert.match(guidelineText, /When agent_browser details\.nextActions exists/);
+		assert.match(guidelineText, /When cdp_browser details\.nextActions exists/);
 		assert.equal(harness.tool.promptGuidelines.includes(SHARED_BROWSER_PLAYBOOK_GUIDELINES[12]), false);
 		assert.equal(harness.tool.promptGuidelines.includes(QUICK_START_GUIDELINES[0]), false);
 		assert.equal(
@@ -192,7 +192,7 @@ test("built extension prompt doc pointers resolve to package-root docs", { skip:
 	};
 	(extension.default as (api: typeof pi) => void)(pi);
 
-	const guideline = tools.find((tool) => tool.name === "agent_browser")?.promptGuidelines.find((line) => line.includes("COMMAND_REFERENCE.md"));
+	const guideline = tools.find((tool) => tool.name === "cdp_browser")?.promptGuidelines.find((line) => line.includes("COMMAND_REFERENCE.md"));
 	assert.ok(guideline);
 	assert.doesNotMatch(guideline, /\/dist\/docs\//);
 	for (const docsPath of [resolve("README.md"), resolve("docs/COMMAND_REFERENCE.md"), resolve("docs/TOOL_CONTRACT.md")]) {
@@ -202,8 +202,8 @@ test("built extension prompt doc pointers resolve to package-root docs", { skip:
 });
 
 test("agentBrowserExtension includes configured browser executable guidance", async () => {
-	const isolatedHome = await mkdtemp(join(tmpdir(), "host-browser-executable-guidance-test-"));
-	const configPath = join(isolatedHome, ".pi", "config", "host-browser", "config.json");
+	const isolatedHome = await mkdtemp(join(tmpdir(), "cdp-browser-executable-guidance-test-"));
+	const configPath = join(isolatedHome, ".pi", "config", "cdp-browser", "config.json");
 	await mkdir(dirname(configPath), { recursive: true });
 	await writeFile(configPath, JSON.stringify({
 		version: 1,
@@ -211,7 +211,7 @@ test("agentBrowserExtension includes configured browser executable guidance", as
 			executablePath: "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
 		},
 	}, null, 2), "utf8");
-	await withPatchedEnv({ HOME: isolatedHome, PI_AGENT_BROWSER_CONFIG: undefined }, async () => {
+	await withPatchedEnv({ HOME: isolatedHome, PI_CDP_BROWSER_CONFIG: undefined }, async () => {
 		const harness = createExtensionHarness({ cwd: process.cwd() });
 		const guidelineText = harness.tool.promptGuidelines.join("\n");
 		assert.match(guidelineText, /browser\.executablePath/);
@@ -221,12 +221,12 @@ test("agentBrowserExtension includes configured browser executable guidance", as
 });
 
 test("agentBrowserExtension uses project browser launch guidance when project config shadows global", async () => {
-	const root = await mkdtemp(join(tmpdir(), "host-browser-project-shadow-guidance-test-"));
+	const root = await mkdtemp(join(tmpdir(), "cdp-browser-project-shadow-guidance-test-"));
 	try {
 		const cwd = join(root, "repo");
 		const isolatedHome = join(root, "home");
-		const globalConfigPath = join(isolatedHome, ".pi", "config", "host-browser", "config.json");
-		const projectConfigPath = join(cwd, ".pi", "config", "host-browser", "config.json");
+		const globalConfigPath = join(isolatedHome, ".pi", "config", "cdp-browser", "config.json");
+		const projectConfigPath = join(cwd, ".pi", "config", "cdp-browser", "config.json");
 		await mkdir(dirname(globalConfigPath), { recursive: true });
 		await mkdir(dirname(projectConfigPath), { recursive: true });
 		await writeFile(globalConfigPath, JSON.stringify({
@@ -246,7 +246,7 @@ test("agentBrowserExtension uses project browser launch guidance when project co
 		const previousCwd = process.cwd();
 		process.chdir(cwd);
 		try {
-			await withPatchedEnv({ HOME: isolatedHome, PI_AGENT_BROWSER_CONFIG: undefined }, async () => {
+			await withPatchedEnv({ HOME: isolatedHome, PI_CDP_BROWSER_CONFIG: undefined }, async () => {
 				const harness = createExtensionHarness({ cwd });
 				const staticGuidelineText = harness.tool.promptGuidelines.join("\n");
 				assert.doesNotMatch(staticGuidelineText, /Project Profile/);
@@ -270,11 +270,11 @@ test("agentBrowserExtension uses project browser launch guidance when project co
 });
 
 test("agentBrowserExtension includes project-local browser launch guidance", async () => {
-	const root = await mkdtemp(join(tmpdir(), "host-browser-project-guidance-test-"));
+	const root = await mkdtemp(join(tmpdir(), "cdp-browser-project-guidance-test-"));
 	try {
 		const cwd = join(root, "repo");
 		const isolatedHome = join(root, "home");
-		const configPath = join(cwd, ".pi", "config", "host-browser", "config.json");
+		const configPath = join(cwd, ".pi", "config", "cdp-browser", "config.json");
 		await mkdir(dirname(configPath), { recursive: true });
 		await mkdir(isolatedHome, { recursive: true });
 		await writeFile(configPath, JSON.stringify({
@@ -287,7 +287,7 @@ test("agentBrowserExtension includes project-local browser launch guidance", asy
 		const previousCwd = process.cwd();
 		process.chdir(cwd);
 		try {
-			await withPatchedEnv({ HOME: isolatedHome, PI_AGENT_BROWSER_CONFIG: undefined }, async () => {
+			await withPatchedEnv({ HOME: isolatedHome, PI_CDP_BROWSER_CONFIG: undefined }, async () => {
 				const harness = createExtensionHarness({ cwd });
 				const guidelineText = harness.tool.promptGuidelines.join("\n");
 				assert.doesNotMatch(guidelineText, /Project Profile/);
@@ -332,7 +332,7 @@ test("agentBrowserExtension rejects unsupported public schema fields", () => {
 });
 
 test("agentBrowserExtension rejects unsupported extra press/key args before upstream spawn", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-press-validation-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-press-validation-"));
 	try {
 		const harness = createExtensionHarness({ cwd: tempDir });
 		await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
@@ -354,7 +354,7 @@ test("agentBrowserExtension rejects unsupported extra press/key args before upst
 });
 
 test("agentBrowserExtension rejects duplicate explicit artifact destinations inside one batch", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-duplicate-artifact-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-duplicate-artifact-"));
 	try {
 		assert.equal(
 			canonicalizeExplicitArtifactDestination(tempDir, "capture.png", "darwin"),
@@ -483,7 +483,7 @@ test("agentBrowserExtension rejects duplicate explicit artifact destinations ins
 
 test("agentBrowserExtension handles bare wait commands through artifact preflight", { concurrency: false }, async () => {
 	assert.equal(getExplicitArtifactDestination(["wait"]), undefined);
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-bare-wait-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-bare-wait-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -512,7 +512,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { waited: true }
 });
 
 test("agentBrowserExtension reports no-op scroll diagnostics with recovery next actions", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-noop-scroll-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-noop-scroll-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "scroll-state.json");
 	const basePath = process.env.PATH ?? "";
@@ -608,7 +608,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`,
 });
 
 test("agentBrowserExtension rejects unsupported text= scroll targets with executable native recovery", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-scroll-text-recovery-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-scroll-text-recovery-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -658,7 +658,7 @@ else process.stdout.write(JSON.stringify({ success: true, data: { title: "Modal"
 });
 
 test("agentBrowserExtension bounds dialog recovery commands and exposes recovery actions", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-dialog-timeout-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-dialog-timeout-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -673,7 +673,7 @@ if (args.includes("dialog") || (args.includes("eval") && stdin.includes("confirm
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_AGENT_BROWSER_DIALOG_PROCESS_TIMEOUT_MS: "50", PI_AGENT_BROWSER_DIALOG_TRIGGER_PROCESS_TIMEOUT_MS: "60" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${basePath}`, PI_CDP_BROWSER_DIALOG_PROCESS_TIMEOUT_MS: "50", PI_CDP_BROWSER_DIALOG_TRIGGER_PROCESS_TIMEOUT_MS: "60" }, async () => {
 			const harness = createExtensionHarness({ cwd: tempDir });
 			await runExtensionEvent(harness.handlers, "session_start", { reason: "new" }, harness.ctx);
 
@@ -703,7 +703,7 @@ if (args.includes("dialog") || (args.includes("eval") && stdin.includes("confirm
 });
 
 test("agentBrowserExtension scrolls explicit CSS containers before falling back to page scroll", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-container-scroll-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-container-scroll-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -753,7 +753,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension handles scroll to end before upstream page scroll", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-page-scroll-end-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-page-scroll-end-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -802,7 +802,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension scrolls the document directly before upstream wheel fallback", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-page-scroll-direction-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-page-scroll-direction-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -860,7 +860,7 @@ process.stdin.on("end", () => {
 });
 
 test("agentBrowserExtension filters snapshot refs with wrapper search and role flags", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-snapshot-filter-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-snapshot-filter-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -906,7 +906,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { ok: true } }));`,
 });
 
 test("agentBrowserExtension surfaces rendered text missing from the accessibility snapshot", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-snapshot-rendered-search-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-snapshot-rendered-search-"));
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
 		tempDir,
@@ -957,7 +957,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { ok: true } }));`,
 });
 
 test("agentBrowserExtension reports wrapper snapshot diffs against previous refs", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-snapshot-diff-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-snapshot-diff-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1000,7 +1000,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { ok: true } }));`,
 });
 
 test("agentBrowserExtension reports wrapper snapshot viewport metadata", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-snapshot-viewport-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-snapshot-viewport-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1044,7 +1044,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { ok: true } }));`,
 });
 
 test("agentBrowserExtension filters network requests to the current page origin", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-network-filter-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-network-filter-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1094,7 +1094,7 @@ process.stdout.write(JSON.stringify({ success: true, data: { ok: true } }));`,
 });
 
 test("agentBrowserExtension reports focused combobox diagnostics with option-opening next actions", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-combobox-focus-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-combobox-focus-"));
 	const statePath = join(tempDir, "combobox-state.json");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -1183,7 +1183,7 @@ process.stdout.write(JSON.stringify({ success: true, data: command === "eval" ? 
 });
 
 test("agentBrowserExtension preserves combobox diagnostics after semanticAction visible-ref resolution", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-combobox-visible-ref-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-combobox-visible-ref-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "combobox-visible-ref-state.json");
 	const basePath = process.env.PATH ?? "";
@@ -1322,7 +1322,7 @@ test("mergeBrowserRunArtifactManifest preserves restart lifecycle order across a
 });
 
 test("mergeSessionArtifactManifest retains the active restart when the recent window is one", { concurrency: false }, async () => {
-	await withPatchedEnv({ PI_AGENT_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES: "1" }, async () => {
+	await withPatchedEnv({ PI_CDP_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES: "1" }, async () => {
 		const manifest = mergeSessionArtifactManifest({
 			entries: [
 				{ command: "record", createdAtMs: 1, kind: "video", path: "a-previous.webm", retentionState: "live", session: "shared", storageScope: "explicit-path", subcommand: "restart-previous" },
@@ -1335,7 +1335,7 @@ test("mergeSessionArtifactManifest retains the active restart when the recent wi
 });
 
 test("agentBrowserExtension keeps a direct restart pending through outer manifest merge and replay", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-restart-manifest-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-restart-manifest-"));
 	const nodeBinDir = dirname(process.execPath);
 	await writeFakeAgentBrowserBinary(tempDir, `const fs = require("node:fs");
 const args = process.argv.slice(2);
@@ -1372,7 +1372,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 			const replayHarness = createExtensionHarness({
 				branch: [
 					...harness.appendedEntries.map((entry) => ({ type: "custom", ...entry })),
-					{ type: "message", message: { details: restarted.details, isError: restarted.isError, toolName: "agent_browser" } },
+					{ type: "message", message: { details: restarted.details, isError: restarted.isError, toolName: "cdp_browser" } },
 				],
 				cwd: tempDir,
 			});
@@ -1398,7 +1398,7 @@ test("agentBrowserExtension makes close --all exclusive within its namespace", {
 		{ label: "fresh-ambient", named: true, callerOwned: false, override: undefined, batch: false, ambient: "Review Space", fresh: true },
 		{ label: "current-default-ambient", named: false, callerOwned: false, override: undefined, batch: false, ambient: "Review Space", fresh: false },
 	]) {
-		const tempDir = await mkdtemp(join(tmpdir(), "piab-close-all-queue-"));
+		const tempDir = await mkdtemp(join(tmpdir(), "cdpb-close-all-queue-"));
 		const logPath = join(tempDir, "events.log");
 		const openGate = join(tempDir, "release-open");
 		const waitGate = join(tempDir, "release-wait");
@@ -1464,7 +1464,7 @@ process.stdout.write(JSON.stringify(command === "batch"
 					});
 					pending.push(open);
 					const openStarted = await waitForEvent("open-start");
-					assert.match(openStarted.sessionName, /^piab-/);
+					assert.match(openStarted.sessionName, /^cdpb-/);
 					assert.equal(openStarted.namespace, scenario.named ? "review-space" : "");
 					const namespace = scenario.override ?? (scenario.named ? "review-space" : "");
 					const matchingPrefix = namespace || scenario.ambient ? ["--namespace", namespace] : [];
@@ -1502,7 +1502,7 @@ process.stdout.write(JSON.stringify(command === "batch"
 					const otherNamespace = await executeRegisteredTool(harness.tool, harness.ctx, { args: ["--namespace", "unrelated", "--session", "other-session", "tab", "list"] });
 					assert.equal(otherNamespace.isError, false, JSON.stringify(otherNamespace));
 					const whileClosed = (await readEvents()).slice(atCloseStart);
-					assert.equal(whileClosed.some((entry) => entry.sessionName === "same-namespace" || entry.sessionName.startsWith("piab-")), false, `${scenario.label}: ${JSON.stringify(whileClosed)}`);
+					assert.equal(whileClosed.some((entry) => entry.sessionName === "same-namespace" || entry.sessionName.startsWith("cdpb-")), false, `${scenario.label}: ${JSON.stringify(whileClosed)}`);
 					await writeFile(closeGate, "go");
 					const [closeResult, callerResult, overlapResult] = await Promise.all([closeAll, overlappingCaller, overlappingManaged]);
 					assert.equal(closeResult.isError, false, JSON.stringify(closeResult));
@@ -1534,7 +1534,7 @@ process.stdout.write(JSON.stringify(command === "batch"
 });
 
 test("agentBrowserExtension warns after record start when ffmpeg is missing", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-recording-ffmpeg-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-recording-ffmpeg-"));
 	const noRecordingMarker = join(tempDir, "no-recording");
 	const nodeBinDir = dirname(process.execPath);
 	const missingFfmpegPath = process.platform === "android" ? join(tempDir, "node-only") : nodeBinDir;
@@ -1602,7 +1602,7 @@ if (firstCallFailure) process.exit(1);`,
 	);
 
 	try {
-		await withPatchedEnv({ PATH: `${tempDir}:${missingFfmpegPath}`, PI_AGENT_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES: "1" }, async () => {
+		await withPatchedEnv({ PATH: `${tempDir}:${missingFfmpegPath}`, PI_CDP_BROWSER_SESSION_ARTIFACT_MANIFEST_MAX_ENTRIES: "1" }, async () => {
 			const firstCallHarness = createExtensionHarness({ cwd: tempDir, prompt: "Test failed post-close launch ownership.", sessionFile: join(tempDir, "first-call-session.jsonl") });
 			const failedFirstCall = await executeRegisteredTool(firstCallHarness.tool, firstCallHarness.ctx, {
 				args: ["batch"],
@@ -1820,7 +1820,7 @@ if (firstCallFailure) process.exit(1);`,
 			assert.equal((combinedStartClose.details?.managedSessionOutcome as { activeAfter?: boolean; status?: string } | undefined)?.activeAfter, false);
 			assert.equal((combinedStartClose.details?.managedSessionOutcome as { activeAfter?: boolean; status?: string } | undefined)?.status, "closed");
 			const replayHarness = createExtensionHarness({
-				branch: [activeBeforeCombined, combinedStartClose].map((result) => ({ type: "message", message: { details: result.details, isError: result.isError, toolName: "agent_browser" } })),
+				branch: [activeBeforeCombined, combinedStartClose].map((result) => ({ type: "message", message: { details: result.details, isError: result.isError, toolName: "cdp_browser" } })),
 				cwd: tempDir,
 			});
 			await runExtensionEvent(replayHarness.handlers, "session_start", { reason: "resume" }, replayHarness.ctx);
@@ -1924,7 +1924,7 @@ if (firstCallFailure) process.exit(1);`,
 });
 
 test("agentBrowserExtension retires recording reservations by namespace plus session", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-recording-namespace-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-recording-namespace-"));
 	const nodeBinDir = dirname(process.execPath);
 	await writeFakeAgentBrowserBinary(tempDir, `const args = process.argv.slice(2);
 const valueFlags = new Set(["--namespace", "--session"]);
@@ -1969,7 +1969,7 @@ process.stdout.write(JSON.stringify({ success: true, data }));`);
 });
 
 test("agentBrowserExtension persists cross-branch recording close tombstones across reload", { concurrency: false }, async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-recording-tombstone-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-recording-tombstone-"));
 	const nodeBinDir = dirname(process.execPath);
 	await writeFakeAgentBrowserBinary(tempDir, `const args = process.argv.slice(2);
 const valueFlags = new Set(["--session"]);
@@ -2023,8 +2023,8 @@ test("agentBrowserExtension renders long TUI output compactly without changing m
 	const harness = createExtensionHarness({ cwd: process.cwd(), prompt: "Inspect a page." });
 	const renderCall = harness.tool.renderCall;
 	const renderResult = harness.tool.renderResult;
-	assert.ok(renderCall, "expected agent_browser to register custom call rendering");
-	assert.ok(renderResult, "expected agent_browser to register custom result rendering");
+	assert.ok(renderCall, "expected cdp_browser to register custom call rendering");
+	assert.ok(renderResult, "expected cdp_browser to register custom result rendering");
 
 	const params: AgentBrowserToolParams = {
 		args: ["eval", "--stdin"],
@@ -2032,7 +2032,7 @@ test("agentBrowserExtension renders long TUI output compactly without changing m
 		stdin: "document.body.innerText",
 	};
 	const callText = renderCall(params, PLAIN_RENDER_THEME, createRenderContext({ args: params })).render(200).join("\n");
-	assert.match(callText, /<toolTitle>\*\*agent_browser\*\*<\/toolTitle>/);
+	assert.match(callText, /<toolTitle>\*\*cdp_browser\*\*<\/toolTitle>/);
 	assert.match(callText, /<accent>eval --stdin<\/accent>/);
 	assert.match(callText, /sessionMode=fresh/);
 	assert.match(callText, /\+ stdin/);
@@ -2191,7 +2191,7 @@ test("agentBrowserExtension renders long TUI output compactly without changing m
 });
 
 test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless the prompt, env, or package dev cwd explicitly allows it", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-bash-policy-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-bash-policy-"));
 	const defaultHarness = createExtensionHarness({ cwd: tempDir, prompt: "Open a page and summarize it." });
 	for (const command of [
 		"agent-browser open https://example.com",
@@ -2213,7 +2213,7 @@ test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless 
 			defaultHarness.ctx,
 		);
 		assert.equal(blocked?.block, true, command);
-		assert.match(blocked?.reason ?? "", /Use the native agent_browser tool instead of bash/i);
+		assert.match(blocked?.reason ?? "", /Use the native cdp_browser tool instead of bash/i);
 	}
 
 	const inspectionAllowed = await runExtensionEventResults(
@@ -2249,7 +2249,7 @@ test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless 
 	);
 	assert.deepEqual(debugAllowed, []);
 
-	await withPatchedEnv({ PI_AGENT_BROWSER_ALLOW_DIRECT_BASH: "1" }, async () => {
+	await withPatchedEnv({ PI_CDP_BROWSER_ALLOW_DIRECT_BASH: "1" }, async () => {
 		const envAllowed = await runExtensionEventResults(
 			defaultHarness.handlers,
 			"tool_call",
@@ -2259,8 +2259,8 @@ test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless 
 		assert.deepEqual(envAllowed, []);
 	});
 
-	const packageDevDir = await mkdtemp(join(tmpdir(), "host-browser-package-dev-"));
-	await writeFile(join(packageDevDir, "package.json"), JSON.stringify({ name: "host-browser" }), "utf8");
+	const packageDevDir = await mkdtemp(join(tmpdir(), "cdp-browser-package-dev-"));
+	await writeFile(join(packageDevDir, "package.json"), JSON.stringify({ name: "cdp-browser" }), "utf8");
 	const packageDevHarness = createExtensionHarness({ cwd: packageDevDir, prompt: "Open a page and summarize it." });
 	const packageDevAllowed = await runExtensionEventResults(
 		packageDevHarness.handlers,
@@ -2275,7 +2275,7 @@ test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless 
 });
 
 test("agentBrowserExtension keeps the page verified after a failed eval by probing the live URL", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-eval-reverify-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-eval-reverify-"));
 	const logPath = join(tempDir, "invocations.log");
 	const basePath = process.env.PATH ?? "";
 	await writeFakeAgentBrowserBinary(
@@ -2333,7 +2333,7 @@ process.stdout.write(JSON.stringify(out));`,
 });
 
 test("agentBrowserExtension skips the title probe when the live URL already has an observed title", async () => {
-	const tempDir = await mkdtemp(join(tmpdir(), "host-browser-title-reuse-"));
+	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-title-reuse-"));
 	const logPath = join(tempDir, "invocations.log");
 	const statePath = join(tempDir, "nav-state.json");
 	const basePath = process.env.PATH ?? "";

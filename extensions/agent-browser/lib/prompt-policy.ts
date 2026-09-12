@@ -22,7 +22,7 @@ const LEGACY_BASH_ALLOW_PATTERNS = [
 	/\b(?:use|via|through|with)\s+bash\b/i,
 	/\bnpx\s+agent-browser\b/i,
 	/\bagent-browser\s+--(?:help|version)\b/i,
-	/\bdebug(?:ging)?\b.*\b(?:agent[_ -]?browser|agent_browser|browser integration)\b/i,
+	/\bdebug(?:ging)?\b.*\b(?:agent[_ -]?browser|cdp_browser|browser integration)\b/i,
 ];
 
 const PROMPT_ARTIFACT_PATH_PATTERN = /(?:^|[\s"'`(:])((?:\/[^\s"'`),;]+|[A-Za-z]:[\\/][^\s"'`),;]+|\.{1,2}[\\/][^\s"'`),;]+|[^\s"'`()[\],;:\\/]+(?:[\\/][^\s"'`()[\],;\\/]+)+|[^\s"'`()[\],;:\\/]+)\.(?:png|jpe?g|webp|gif|webm|mp4|har|pdf|trace|json))(?=[\s"'`),;.!?]|$)/gi;

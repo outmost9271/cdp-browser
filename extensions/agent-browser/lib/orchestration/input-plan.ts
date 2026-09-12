@@ -364,7 +364,7 @@ export function buildValidationFailureResult(input: ResolvedAgentBrowserInvalidI
 	details: Record<string, unknown>;
 	isError: true;
 } {
-	const validationError = input.validationError ?? "Invalid agent_browser input.";
+	const validationError = input.validationError ?? "Invalid cdp_browser input.";
 	return {
 		content: [{ type: "text", text: validationError }],
 		details: {

@@ -140,7 +140,7 @@ export function formatAgentBrowserRenderCall(args: unknown, theme: Theme, expand
 	const invocationPreview = scriptSource === undefined
 		? formatInvocationPreview(rawArgs)
 		: formatScriptSourceForDisplay(scriptSource, expanded);
-	let text = theme.fg("toolTitle", theme.bold("agent_browser"));
+	let text = theme.fg("toolTitle", theme.bold("cdp_browser"));
 	if (mode) {
 		text += ` ${theme.fg("accent", mode)}`;
 		if (scriptSource !== undefined && expanded) {
@@ -236,7 +236,7 @@ function appendModelVisibleFailureCategoryNotice(content: AgentBrowserToolConten
 }
 
 export function buildAgentBrowserToolResultPatch(event: ToolResultEvent): AgentBrowserToolResultPatch | undefined {
-	if (event.toolName !== "agent_browser") return undefined;
+	if (event.toolName !== "cdp_browser") return undefined;
 	const preservesParseableJson = agentBrowserToolResultRequestedJson(event) && agentBrowserToolResultHasParseableJsonContent(event.content);
 	const notice = preservesParseableJson ? undefined : formatModelVisibleFailureCategoryNotice(event.details);
 	const content = notice ? appendModelVisibleFailureCategoryNotice(event.content, notice) : undefined;

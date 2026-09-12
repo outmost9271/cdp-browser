@@ -1,5 +1,5 @@
 // Opt-in: real Pi AgentSession + native agent-browser. Uses only caller-owned test data.
-// Native Unix REQUIRES a short, absolute, caller-owned PI_AGENT_BROWSER_SOCKET_DIR
+// Native Unix REQUIRES a short, absolute, caller-owned PI_CDP_BROWSER_SOCKET_DIR
 // (mode 0700). With full UUIDs the default macOS path can be 109 bytes, exceeding 103;
 // lib/process.ts:getAgentBrowserSocketPathValidationError enforces that existing limit.
 // Shorten the private root, never the UUID or namespace mapping.
@@ -57,11 +57,11 @@ async function create(name, reopenFile, cwd = output) {
 	await loader.reload();
 	assert.deepEqual(loader.getExtensions().errors, []);
 	const runtime = await ModelRuntime.create({ authPath: path.join(agentDir, "no-auth.json"), modelsPath: null, modelsStorePath: path.join(agentDir, "models.json"), refreshOnCreate: false });
-	const { session } = await createAgentSession({ cwd, agentDir, resourceLoader: loader, settingsManager: settings, sessionManager: sm, modelRuntime: runtime, model, tools: ["agent_browser"] });
+	const { session } = await createAgentSession({ cwd, agentDir, resourceLoader: loader, settingsManager: settings, sessionManager: sm, modelRuntime: runtime, model, tools: ["cdp_browser"] });
 	await session.bindExtensions({ onError: (event) => log(`${name}:extension-error`, { error: String(event.error), event: event.event }) });
 	let nextArgs;
 	session.agent.streamFunction = () => {
-		const message = { role: "assistant", api: model.api, provider: model.provider, model: model.id, content: nextArgs ? [{ type: "toolCall", id: `check-${++serial}`, name: "agent_browser", arguments: nextArgs }] : [{ type: "text", text: "Offline check completed." }], stopReason: nextArgs ? "toolUse" : "stop", timestamp: Date.now(), usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
+		const message = { role: "assistant", api: model.api, provider: model.provider, model: model.id, content: nextArgs ? [{ type: "toolCall", id: `check-${++serial}`, name: "cdp_browser", arguments: nextArgs }] : [{ type: "text", text: "Offline check completed." }], stopReason: nextArgs ? "toolUse" : "stop", timestamp: Date.now(), usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
 		nextArgs = undefined;
 		const stream = new AssistantMessageEventStream();
 		stream.push({ type: "start", partial: message });
@@ -87,7 +87,7 @@ async function create(name, reopenFile, cwd = output) {
 	async function probe(destination) {
 		const controller = new AbortController();
 		controller.abort();
-		const tool = session.agent.state.tools.find((entry) => entry.name === "agent_browser");
+		const tool = session.agent.state.tools.find((entry) => entry.name === "cdp_browser");
 		const result = await tool.execute(`abort-${++serial}`, { args: [...explicit(), "screenshot", destination] }, controller.signal, () => {}).catch((error) => ({ thrown: { name: error.name, message: error.message } }));
 		log(`${name}:destination-probe`, { destination, result });
 		return result;
@@ -259,7 +259,7 @@ async function tree() {
 async function managed() {
 	assert.equal(process.env.PROBE_ALLOW_MANAGED, "1", "Managed cases require an exclusive host slot or own Ubuntu container");
 	delete process.env.AGENT_BROWSER_EXECUTABLE_PATH;
-	if (mode === "managed-optout") process.env.PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE = "0";
+	if (mode === "managed-optout") process.env.PI_CDP_BROWSER_MANAGED_SESSION_RESTORE = "0";
 	const cwd = path.join(output, "cwd");
 	fs.mkdirSync(cwd, { recursive: true });
 	if (mode !== "managed-nongit") execFileSync("git", ["init", "--quiet", cwd]);

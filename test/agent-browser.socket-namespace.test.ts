@@ -15,7 +15,7 @@ import { getAgentBrowserSocketDir, getAgentBrowserSocketDirValidationError, runA
 
 // Run only inside the disposable Linux user/mount namespace described in docs/RELEASE.md.
 test("native namespace accepts an unmapped filesystem root for private sockets", {
-	skip: process.env.PI_AGENT_BROWSER_SOCKET_NAMESPACE !== "1",
+	skip: process.env.PI_CDP_BROWSER_SOCKET_NAMESPACE !== "1",
 	timeout: 20_000,
 }, async (t) => {
 	assert.equal(process.platform, "linux");
@@ -28,7 +28,7 @@ test("native namespace accepts an unmapped filesystem root for private sockets",
 	assert.equal(root.mode & 0o7777, 0o755);
 	assert.equal(temporary.uid, uid);
 	assert.equal(temporary.mode & 0o7777, 0o700);
-	assert.equal(process.env.PI_AGENT_BROWSER_SOCKET_DIR, undefined);
+	assert.equal(process.env.PI_CDP_BROWSER_SOCKET_DIR, undefined);
 	t.diagnostic(JSON.stringify({ rootUid: root.uid, rootMode: "755", uid, tmpMode: "700" }));
 
 	const socketDir = getAgentBrowserSocketDir()!;
@@ -70,7 +70,7 @@ test("native namespace accepts an unmapped filesystem root for private sockets",
 	await mkdir(home, { mode: 0o700 });
 	await mkdir(cwd, { mode: 0o700 });
 	await mkdir(join(cwd, ".git"), { mode: 0o700 });
-	const sessionName = "piab-root-anchor";
+	const sessionName = "cdpb-root-anchor";
 	const context = buildOwnedManagedSessionRestoreContext({
 		args: ["--session", sessionName, "session", "info"],
 		cwd,

@@ -36,11 +36,11 @@ function initializeGitProject(cwd: string): void {
 	execFileSync("git", ["init", "-q", cwd], { stdio: "ignore" });
 }
 
-const isolatedHome = mkdtempSync(join(tmpdir(), "piab-restore-suite-home-"));
-const isolatedProject = mkdtempSync(join(tmpdir(), "piab-restore-suite-project-"));
+const isolatedHome = mkdtempSync(join(tmpdir(), "cdpb-restore-suite-home-"));
+const isolatedProject = mkdtempSync(join(tmpdir(), "cdpb-restore-suite-project-"));
 initializeGitProject(isolatedProject);
 const managedSessionRestoreState = new ManagedSessionRestoreState();
-const defaultManagedSession = "piab-work-abc12345-deadbeef";
+const defaultManagedSession = "cdpb-work-abc12345-deadbeef";
 const posixFixturePlatform: NodeJS.Platform = process.platform === "android" ? "android" : "linux";
 const clearManagedSessionRestoreDisabled = (sessionName?: string, namespace?: string) => managedSessionRestoreState.clear(sessionName, namespace);
 const isManagedSessionRestoreDisabled = (sessionName?: string, namespace?: string) => managedSessionRestoreState.isDisabled(sessionName, namespace);
@@ -71,42 +71,42 @@ test.after(() => {
 test("managed restore sticky state is isolated per extension instance", () => {
 	const first = new ManagedSessionRestoreState();
 	const second = new ManagedSessionRestoreState();
-	first.disable("piab-session", "Team");
-	assert.equal(first.isDisabled("piab-session", "team"), true);
-	assert.equal(second.isDisabled("piab-session", "TEAM"), false);
-	first.clear("piab-session", "team");
-	assert.equal(first.isDisabled("piab-session", "team"), false);
+	first.disable("cdpb-session", "Team");
+	assert.equal(first.isDisabled("cdpb-session", "team"), true);
+	assert.equal(second.isDisabled("cdpb-session", "TEAM"), false);
+	first.clear("cdpb-session", "team");
+	assert.equal(first.isDisabled("cdpb-session", "team"), false);
 });
 
 	test("replace tolerates an absent branch restore identity list (undefined from a pre-upgrade runtime)", () => {
 		const state = new ManagedSessionRestoreState();
-		state.disable("piab-stale", "team");
+		state.disable("cdpb-stale", "team");
 		// The version-skew path (new index.js restoring against an old cached runtime.js)
 		// yields `undefined` for managedSessionRestoreDisabledIdentities. Must not throw.
 		state.replace(undefined, { preserveDaemonRestoreKeys: true });
-		assert.equal(state.isDisabled("piab-stale", "team"), false);
-		assert.equal(state.hasDaemonRestoreKey("piab-stale", "team"), false);
+		assert.equal(state.isDisabled("cdpb-stale", "team"), false);
+		assert.equal(state.hasDaemonRestoreKey("cdpb-stale", "team"), false);
 	});
 
 test("branch restore can preserve current-process daemon provenance without persisting it across reload", () => {
 	const state = new ManagedSessionRestoreState();
-	state.recordDaemonRestoreKey("piab-current", "team", null);
-	state.recordDaemonRestoreKey("piab-off-branch", undefined, "caller-key");
-	state.replace([{ namespace: "team", sessionName: "piab-current" }], { preserveDaemonRestoreKeys: true });
-	assert.equal(state.isDisabled("piab-current", "team"), true);
-	assert.equal(state.hasDaemonRestoreKey("piab-current", "team"), true);
-	assert.equal(state.getDaemonRestoreKey("piab-current", "team"), null);
-	assert.equal(state.getDaemonRestoreKey("piab-off-branch"), "caller-key");
+	state.recordDaemonRestoreKey("cdpb-current", "team", null);
+	state.recordDaemonRestoreKey("cdpb-off-branch", undefined, "caller-key");
+	state.replace([{ namespace: "team", sessionName: "cdpb-current" }], { preserveDaemonRestoreKeys: true });
+	assert.equal(state.isDisabled("cdpb-current", "team"), true);
+	assert.equal(state.hasDaemonRestoreKey("cdpb-current", "team"), true);
+	assert.equal(state.getDaemonRestoreKey("cdpb-current", "team"), null);
+	assert.equal(state.getDaemonRestoreKey("cdpb-off-branch"), "caller-key");
 
-	state.replace([{ namespace: "team", sessionName: "piab-current" }]);
-	assert.equal(state.hasDaemonRestoreKey("piab-current", "team"), false);
-	assert.equal(state.hasDaemonRestoreKey("piab-off-branch"), false);
+	state.replace([{ namespace: "team", sessionName: "cdpb-current" }]);
+	assert.equal(state.hasDaemonRestoreKey("cdpb-current", "team"), false);
+	assert.equal(state.hasDaemonRestoreKey("cdpb-off-branch"), false);
 });
 
 test("owned managed subprocesses pin canonical and default namespaces", async () => {
 	const restoreState = new ManagedSessionRestoreState();
 	const base = {
-		args: ["--session", "piab-managed", "session", "info"],
+		args: ["--session", "cdpb-managed", "session", "info"],
 		cwd: "/tmp/project",
 		restoreState,
 	};
@@ -114,14 +114,14 @@ test("owned managed subprocesses pin canonical and default namespaces", async ()
 	assert.equal(isOwnedManagedSessionTarget(base.args), false);
 	assert.deepEqual(getOwnedManagedSessionNamespaceEnv({ ...base, ownedManagedSession: true }), { AGENT_BROWSER_NAMESPACE: "" });
 	const context = resolveOwnedManagedSessionContext({
-		managedSessionName: "piab-managed",
+		managedSessionName: "cdpb-managed",
 		namespace: "Team Name",
 		restoreState,
 	});
 	await withOwnedManagedSessionContext(context, async () => {
 		assert.deepEqual(getOwnedManagedSessionNamespaceEnv({ ...base, parentEnv: { AGENT_BROWSER_NAMESPACE: "other" } }), { AGENT_BROWSER_NAMESPACE: "team-name" });
 		assert.equal(isOwnedManagedSessionTarget(base.args), true);
-		assert.deepEqual(getOwnedManagedSessionNamespaceEnv({ ...base, args: ["--namespace", "team-name", "--session", "piab-managed", "session", "info"] }), {
+		assert.deepEqual(getOwnedManagedSessionNamespaceEnv({ ...base, args: ["--namespace", "team-name", "--session", "cdpb-managed", "session", "info"] }), {
 			AGENT_BROWSER_NAMESPACE: "team-name",
 		});
 		for (const namespace of ["", "other"]) {
@@ -131,7 +131,7 @@ test("owned managed subprocesses pin canonical and default namespaces", async ()
 		}
 		assert.equal(isOwnedManagedSessionTarget(["--session", "caller-owned", "snapshot"]), false);
 	});
-	await withOwnedManagedSessionContext({ restoreState, sessionName: "piab-managed" }, async () => {
+	await withOwnedManagedSessionContext({ restoreState, sessionName: "cdpb-managed" }, async () => {
 		assert.equal(isOwnedManagedSessionTarget(["--namespace", "", ...base.args]), true);
 		assert.deepEqual(getOwnedManagedSessionNamespaceEnv({ ...base, parentEnv: { AGENT_BROWSER_NAMESPACE: "other" } }), { AGENT_BROWSER_NAMESPACE: "" });
 	});
@@ -139,12 +139,12 @@ test("owned managed subprocesses pin canonical and default namespaces", async ()
 
 test("restore env resolution is pure and suppression commits only for a spawned owned main call", () => {
 	const restoreState = new ManagedSessionRestoreState();
-	const sessionName = "piab-managed";
+	const sessionName = "cdpb-managed";
 	const options = {
 		args: ["--session", sessionName, "open", "https://example.com"],
 		cwd: "/tmp/project",
 		ownedManagedSession: true,
-		parentEnv: { HOME: isolatedHome, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+		parentEnv: { HOME: isolatedHome, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 		restoreState,
 	};
 	assert.deepEqual(getManagedSessionRestoreEnv(options), {});
@@ -155,15 +155,15 @@ test("restore env resolution is pure and suppression commits only for a spawned 
 
 test("createManagedSessionRestoreKey is transcript- and checkout-generation-stable", () => {
 	clearManagedSessionRestoreDisabled();
-	const root = mkdtempSync(join(tmpdir(), "piab-restore-key-"));
+	const root = mkdtempSync(join(tmpdir(), "cdpb-restore-key-"));
 	const cwd = join(root, "project");
 	const alias = join(root, "project-link");
 	try {
 		mkdirSync(cwd);
 		initializeGitProject(cwd);
-		const firstScope = "piab-project-session-a-deadbeef";
+		const firstScope = "cdpb-project-session-a-deadbeef";
 		const rotatedSession = `${firstScope}-fresh-0123456789`;
-		const secondScope = "piab-project-session-b-deadbeef";
+		const secondScope = "cdpb-project-session-b-deadbeef";
 		assert.equal(getManagedSessionRestoreScope(rotatedSession), firstScope);
 		assert.equal(createManagedSessionRestoreKey(cwd, firstScope), createManagedSessionRestoreKey(cwd, getManagedSessionRestoreScope(rotatedSession)));
 		assert.equal(createManagedSessionRestoreKey(cwd, firstScope), createManagedSessionRestoreKey(`${cwd}/`, firstScope));
@@ -172,11 +172,11 @@ test("createManagedSessionRestoreKey is transcript- and checkout-generation-stab
 			symlinkSync(cwd, alias, "dir");
 			assert.equal(createManagedSessionRestoreKey(cwd), createManagedSessionRestoreKey(alias));
 		}
-		assert.match(createManagedSessionRestoreKey(cwd), /^piab-r2-[a-f0-9]{32}$/);
+		assert.match(createManagedSessionRestoreKey(cwd), /^cdpb-r2-[a-f0-9]{32}$/);
 		assert.notEqual(createManagedSessionRestoreKey(cwd), createManagedSessionRestoreKey(`${cwd}-other`));
 		assert.notEqual(
-			createManagedSessionRestoreKey("/tmp/piab-collision-20970"),
-			createManagedSessionRestoreKey("/tmp/piab-collision-22987"),
+			createManagedSessionRestoreKey("/tmp/cdpb-collision-20970"),
+			createManagedSessionRestoreKey("/tmp/cdpb-collision-22987"),
 		);
 		const originalKey = createManagedSessionRestoreKey(cwd);
 		const copied = join(root, "copied-project");
@@ -194,28 +194,28 @@ test("createManagedSessionRestoreKey is transcript- and checkout-generation-stab
 });
 
 test("Android restore identity stays stable without hard links or reliable birth time", { skip: process.platform === "win32" }, () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-android-restore-key-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-android-restore-key-"));
 	try {
 		initializeGitProject(cwd);
 		const first = createManagedSessionRestoreKey(cwd, "android-scope", "android");
 		writeFileSync(join(cwd, ".git", "mutable-entry"), "changes directory ctime");
 		assert.equal(createManagedSessionRestoreKey(cwd, "android-scope", "android"), first);
-		assert.equal(statSync(join(cwd, ".git", "host-browser-project-generation-v1.json")).mode & 0o777, 0o600);
+		assert.equal(statSync(join(cwd, ".git", "cdp-browser-project-generation-v1.json")).mode & 0o777, 0o600);
 	} finally {
 		rmSync(cwd, { recursive: true, force: true });
 	}
 });
 
 test("linked-worktree copies and retargeted git pointers get distinct restore keys", () => {
-	const root = mkdtempSync(join(tmpdir(), "piab-linked-worktree-key-"));
+	const root = mkdtempSync(join(tmpdir(), "cdpb-linked-worktree-key-"));
 	const source = join(root, "source");
 	const linked = join(root, "linked");
 	const otherLinked = join(root, "other-linked");
 	const copied = join(root, "copied");
 	try {
 		initializeGitProject(source);
-		execFileSync("git", ["-C", source, "config", "user.email", "piab@example.invalid"]);
-		execFileSync("git", ["-C", source, "config", "user.name", "piab"]);
+		execFileSync("git", ["-C", source, "config", "user.email", "cdpb@example.invalid"]);
+		execFileSync("git", ["-C", source, "config", "user.name", "cdpb"]);
 		execFileSync("git", ["-C", source, "commit", "--allow-empty", "-qm", "initial"]);
 		execFileSync("git", ["-C", source, "worktree", "add", "--detach", "-q", linked]);
 		execFileSync("git", ["-C", source, "worktree", "add", "--detach", "-q", otherLinked]);
@@ -231,7 +231,7 @@ test("linked-worktree copies and retargeted git pointers get distinct restore ke
 });
 
 test("checkout-generation marker creation converges across processes", async () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-marker-race-project-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-marker-race-project-"));
 	try {
 		initializeGitProject(cwd);
 		const moduleUrl = new URL("../extensions/agent-browser/lib/managed-session-restore.ts", import.meta.url).href;
@@ -251,23 +251,23 @@ test("checkout-generation marker creation converges across processes", async () 
 			keys.push(result.getStdout());
 		}
 		assert.equal(keys[0], keys[1]);
-		assert.match(keys[0] ?? "", /^piab-r2-/);
-		if (process.platform !== "win32") assert.equal(statSync(join(cwd, ".git", "host-browser-project-generation-v1.json")).mode & 0o777, 0o600);
+		assert.match(keys[0] ?? "", /^cdpb-r2-/);
+		if (process.platform !== "win32") assert.equal(statSync(join(cwd, ".git", "cdp-browser-project-generation-v1.json")).mode & 0o777, 0o600);
 	} finally {
 		rmSync(cwd, { recursive: true, force: true });
 	}
 });
 
 test("managed restore rejects a tampered checkout-generation marker", () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-marker-project-"));
-	const home = mkdtempSync(join(tmpdir(), "piab-marker-home-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-marker-project-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-marker-home-"));
 	try {
 		initializeGitProject(cwd);
-		assert.match(createManagedSessionRestoreKey(cwd), /^piab-r2-/);
-		const marker = join(cwd, ".git", "host-browser-project-generation-v1.json");
+		assert.match(createManagedSessionRestoreKey(cwd), /^cdpb-r2-/);
+		const marker = join(cwd, ".git", "cdp-browser-project-generation-v1.json");
 		chmodSync(marker, 0o644);
 		assert.deepEqual(getManagedSessionRestoreEnv({
-			args: ["--session", "piab-marker", "open", "https://example.com"],
+			args: ["--session", "cdpb-marker", "open", "https://example.com"],
 			cwd,
 			ownedManagedSession: true,
 			parentEnv: { HOME: home },
@@ -281,9 +281,9 @@ test("managed restore rejects a tampered checkout-generation marker", () => {
 
 test("getManagedSessionRestoreEnv isolates ownership and blocks incompatible launch mutations", () => {
 	clearManagedSessionRestoreDisabled();
-	const cwd = mkdtempSync(join(tmpdir(), "piab-restore-cwd-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-restore-cwd-"));
 	initializeGitProject(cwd);
-	const home = mkdtempSync(join(tmpdir(), "piab-restore-home-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-restore-home-"));
 	const session = defaultManagedSession;
 	const restore = (args: string[], parentEnv: NodeJS.ProcessEnv = {}, stdin?: string) => getAndCommitManagedSessionRestoreEnv({
 		args,
@@ -312,7 +312,7 @@ test("getManagedSessionRestoreEnv isolates ownership and blocks incompatible lau
 		assert.equal(isManagedSessionRestoreDisabled(session), false);
 		assert.deepEqual(
 			getAndCommitManagedSessionRestoreEnv({
-				args: ["--json", "--session", "piab-caller-owned", "open", "https://app.example.com"],
+				args: ["--json", "--session", "cdpb-caller-owned", "open", "https://app.example.com"],
 				cwd,
 				parentEnv: { HOME: home },
 			}),
@@ -416,9 +416,9 @@ test("getManagedSessionRestoreEnv isolates ownership and blocks incompatible lau
 			getAndCommitManagedSessionRestoreEnv({
 				args: ["--json", "--session", session, "open", "https://app.example.com"],
 				cwd,
-				env: { PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "1" },
+				env: { PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "1" },
 				ownedManagedSession: true,
-				parentEnv: { HOME: home, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+				parentEnv: { HOME: home, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 				restoreState: managedSessionRestoreState,
 			}),
 			expectedRestoreEnv(cwd),
@@ -440,7 +440,7 @@ test("getManagedSessionRestoreEnv isolates ownership and blocks incompatible lau
 		assert.deepEqual(
 			restore(
 				["--json", "--session", session, "open", "https://app.example.com"],
-				{ PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+				{ PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 			),
 			{},
 		);
@@ -530,7 +530,7 @@ test("spawn-time suppression commit sticky-disables restore after an incompatibl
 test("owned managed session context enables restore for matching helper probes only", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	assert.equal(
 		resolveOwnedManagedSessionContext({
 			currentManagedSessionName: managed,
@@ -626,7 +626,7 @@ test("owned managed session context enables restore for matching helper probes o
 	});
 	restoreState.clear();
 	const optedOut = buildOwnedManagedSessionRestoreContext({
-		...options, managedSessionName: managed, namespace: "Team Name", env: { PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+		...options, managedSessionName: managed, namespace: "Team Name", env: { PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 	});
 	await withOwnedManagedSessionContext(optedOut, async () => {
 		commitManagedSessionRestoreSuppression({ ...options, ownedManagedSession: true });
@@ -640,7 +640,7 @@ test("owned managed session context enables restore for matching helper probes o
 test("main-plan restore policy suppresses helpers without sticky-disabling on preflight-only plans", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	const owned = buildOwnedManagedSessionRestoreContext({
 		args: ["--json", "--session", managed, "--profile", "Default", "click", "xpath=//button"],
 		cwd,
@@ -702,7 +702,7 @@ test("main-plan restore policy suppresses helpers without sticky-disabling on pr
 test("wrapper-injected ChatGPT user agent remains compatible with managed restore", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	const plan = buildExecutionPlan(["open", "https://chatgpt.com"], {
 		freshSessionName: `${managed}-fresh-test`,
 		managedSessionActive: false,
@@ -736,10 +736,10 @@ test("wrapper-injected ChatGPT user agent remains compatible with managed restor
 
 test("passive agent-browser config preserves automatic restore while explicit overrides suppress it", () => {
 	clearManagedSessionRestoreDisabled();
-	const cwd = mkdtempSync(join(tmpdir(), "piab-config-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-config-"));
 	initializeGitProject(cwd);
-	const home = mkdtempSync(join(tmpdir(), "piab-home-"));
-	const managed = "piab-work-abc12345-deadbeef";
+	const home = mkdtempSync(join(tmpdir(), "cdpb-home-"));
+	const managed = "cdpb-work-abc12345-deadbeef";
 	try {
 		writeFileSync(join(cwd, "agent-browser.json"), "{}");
 		assert.deepEqual(
@@ -816,7 +816,7 @@ test("passive agent-browser config preserves automatic restore while explicit ov
 });
 
 test("managed restore rejects relative HOME and USERPROFILE paths", () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-relative-home-cwd-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-relative-home-cwd-"));
 	try {
 		assert.equal(agentBrowserConfigBlocksManagedRestore({ HOME: "relative-home" }), true);
 		assert.equal(ensureManagedSessionRestoreStorageIsSecure({ HOME: "relative-home" }, posixFixturePlatform), false);
@@ -827,9 +827,9 @@ test("managed restore rejects relative HOME and USERPROFILE paths", () => {
 });
 
 test("Windows passive config discovery follows USERPROFILE without blocking pinned restore", () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-windows-config-cwd-"));
-	const gitBashHome = mkdtempSync(join(tmpdir(), "piab-windows-git-home-"));
-	const userProfile = mkdtempSync(join(tmpdir(), "piab-windows-user-profile-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-windows-config-cwd-"));
+	const gitBashHome = mkdtempSync(join(tmpdir(), "cdpb-windows-git-home-"));
+	const userProfile = mkdtempSync(join(tmpdir(), "cdpb-windows-user-profile-"));
 	try {
 		mkdirSync(join(userProfile, ".agent-browser"));
 		writeFileSync(join(userProfile, ".agent-browser", "config.json"), "{}");
@@ -850,11 +850,11 @@ test("managed restore requires a 64-character hex encryption key on Windows", ()
 
 test("managed restore validates encryption keys and secures its POSIX state directory", { skip: process.platform === "win32" }, async () => {
 	clearManagedSessionRestoreDisabled();
-	const cwd = mkdtempSync(join(tmpdir(), "piab-cwd-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-cwd-"));
 	initializeGitProject(cwd);
-	const home = mkdtempSync(join(tmpdir(), "piab-home-"));
-	const insecureHome = mkdtempSync(join(tmpdir(), "piab-insecure-home-"));
-	const managed = "piab-work-abc12345-deadbeef";
+	const home = mkdtempSync(join(tmpdir(), "cdpb-home-"));
+	const insecureHome = mkdtempSync(join(tmpdir(), "cdpb-insecure-home-"));
+	const managed = "cdpb-work-abc12345-deadbeef";
 	const validKey = "a".repeat(64);
 	try {
 		mkdirSync(join(insecureHome, ".agent-browser"), { mode: 0o755 });
@@ -883,7 +883,7 @@ test("managed restore validates encryption keys and secures its POSIX state dire
 				restoreState: managedSessionRestoreState,
 				parentEnv: { AGENT_BROWSER_ENCRYPTION_KEY: validKey, HOME: home },
 			}).AGENT_BROWSER_RESTORE ?? "",
-			/^piab-r2-/,
+			/^cdpb-r2-/,
 		);
 		assert.equal(statSync(join(home, ".agent-browser")).mode & 0o077, 0);
 		assert.equal(statSync(join(home, ".agent-browser", "sessions")).mode & 0o077, 0);
@@ -921,7 +921,7 @@ test("managed restore validates encryption keys and secures its POSIX state dire
 });
 
 test("managed restore pins a trusted canonical HOME and rejects writable ancestry", { skip: process.platform === "win32" }, async () => {
-	const root = mkdtempSync(join(tmpdir(), "piab-home-anchor-"));
+	const root = mkdtempSync(join(tmpdir(), "cdpb-home-anchor-"));
 	const home = join(root, "home");
 	const alternate = join(root, "alternate");
 	const link = join(root, "home-link");
@@ -930,15 +930,15 @@ test("managed restore pins a trusted canonical HOME and rejects writable ancestr
 		mkdirSync(alternate, { mode: 0o700 });
 		symlinkSync(home, link, "dir");
 		const context = buildOwnedManagedSessionRestoreContext({
-			args: ["--session", "piab-home-anchor", "open", "https://example.com"],
+			args: ["--session", "cdpb-home-anchor", "open", "https://example.com"],
 			cwd: isolatedProject,
-			managedSessionName: "piab-home-anchor",
+			managedSessionName: "cdpb-home-anchor",
 			parentEnv: { HOME: link },
 			restoreState: new ManagedSessionRestoreState(),
 		});
 		assert.equal(context?.restoreDecision, "enabled");
 		await withOwnedManagedSessionContext(context, async () => {
-			const options = { args: ["--session", "piab-home-anchor", "open", "https://example.com"], cwd: isolatedProject };
+			const options = { args: ["--session", "cdpb-home-anchor", "open", "https://example.com"], cwd: isolatedProject };
 			const restoreEnv = getManagedSessionRestoreEnv(options);
 			assert.equal(getManagedSessionRestoreProtectedEnv(options, restoreEnv).HOME, realpathSync(home));
 			rmSync(link);
@@ -956,11 +956,11 @@ test("managed restore pins a trusted canonical HOME and rejects writable ancestr
 });
 
 test("managed restore fails closed outside a durable Git checkout generation", () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-non-git-"));
-	const home = mkdtempSync(join(tmpdir(), "piab-non-git-home-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-non-git-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-non-git-home-"));
 	try {
 		assert.deepEqual(getManagedSessionRestoreEnv({
-			args: ["--session", "piab-non-git", "open", "https://example.com"],
+			args: ["--session", "cdpb-non-git", "open", "https://example.com"],
 			cwd,
 			ownedManagedSession: true,
 			parentEnv: { HOME: home },
@@ -973,13 +973,13 @@ test("managed restore fails closed outside a durable Git checkout generation", (
 });
 
 test("managed restore rejects writable checkout ancestry", { skip: process.platform === "win32" }, () => {
-	const cwd = mkdtempSync(join(tmpdir(), "piab-writable-checkout-"));
-	const home = mkdtempSync(join(tmpdir(), "piab-writable-checkout-home-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-writable-checkout-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-writable-checkout-home-"));
 	try {
 		initializeGitProject(cwd);
 		chmodSync(cwd, 0o777);
 		assert.deepEqual(getManagedSessionRestoreEnv({
-			args: ["--session", "piab-writable-checkout", "open", "https://example.com"],
+			args: ["--session", "cdpb-writable-checkout", "open", "https://example.com"],
 			cwd,
 			ownedManagedSession: true,
 			parentEnv: { HOME: home },
@@ -992,13 +992,13 @@ test("managed restore rejects writable checkout ancestry", { skip: process.platf
 });
 
 test("managed restore rejects symlinks and files along POSIX restore state paths", { skip: process.platform === "win32" }, () => {
-	const symlinkHome = mkdtempSync(join(tmpdir(), "piab-home-link-"));
-	const sessionsSymlinkHome = mkdtempSync(join(tmpdir(), "piab-sessions-link-"));
-	const namespaceSymlinkHome = mkdtempSync(join(tmpdir(), "piab-namespace-link-"));
-	const stateFileSymlinkHome = mkdtempSync(join(tmpdir(), "piab-state-file-link-"));
-	const temporaryFileSymlinkHome = mkdtempSync(join(tmpdir(), "piab-state-tmp-link-"));
-	const fileHome = mkdtempSync(join(tmpdir(), "piab-home-file-"));
-	const target = mkdtempSync(join(tmpdir(), "piab-state-target-"));
+	const symlinkHome = mkdtempSync(join(tmpdir(), "cdpb-home-link-"));
+	const sessionsSymlinkHome = mkdtempSync(join(tmpdir(), "cdpb-sessions-link-"));
+	const namespaceSymlinkHome = mkdtempSync(join(tmpdir(), "cdpb-namespace-link-"));
+	const stateFileSymlinkHome = mkdtempSync(join(tmpdir(), "cdpb-state-file-link-"));
+	const temporaryFileSymlinkHome = mkdtempSync(join(tmpdir(), "cdpb-state-tmp-link-"));
+	const fileHome = mkdtempSync(join(tmpdir(), "cdpb-home-file-"));
+	const target = mkdtempSync(join(tmpdir(), "cdpb-state-target-"));
 	try {
 		symlinkSync(target, join(symlinkHome, ".agent-browser"), "dir");
 		assert.equal(ensureManagedSessionRestoreStorageIsSecure({ HOME: symlinkHome }), false);
@@ -1007,7 +1007,7 @@ test("managed restore rejects symlinks and files along POSIX restore state paths
 		symlinkSync(target, join(sessionsSymlinkHome, ".agent-browser", "sessions"), "dir");
 		assert.equal(ensureManagedSessionRestoreStorageIsSecure({ HOME: sessionsSymlinkHome }), false);
 		assert.deepEqual(getManagedSessionRestoreEnv({
-			args: ["--session", "piab-managed", "open", "https://example.com"],
+			args: ["--session", "cdpb-managed", "open", "https://example.com"],
 			cwd: sessionsSymlinkHome,
 			ownedManagedSession: true,
 			parentEnv: { HOME: sessionsSymlinkHome },
@@ -1022,7 +1022,7 @@ test("managed restore rejects symlinks and files along POSIX restore state paths
 		assert.equal(ensureManagedSessionRestoreStorageIsSecure({ HOME: stateFileSymlinkHome }), true);
 		const outsideStateFile = join(target, "outside.json");
 		writeFileSync(outsideStateFile, "unchanged");
-		symlinkSync(outsideStateFile, join(stateFileSymlinkHome, ".agent-browser", "sessions", "piab-r-unsafe.json"), "file");
+		symlinkSync(outsideStateFile, join(stateFileSymlinkHome, ".agent-browser", "sessions", "cdpb-r-unsafe.json"), "file");
 		assert.equal(ensureManagedSessionRestoreStorageIsSecure({ HOME: stateFileSymlinkHome }), false);
 		assert.equal(readFileSync(outsideStateFile, "utf8"), "unchanged");
 
@@ -1049,7 +1049,7 @@ test("managed restore rejects symlinks and files along POSIX restore state paths
 
 test("owned snapshot pruning persists close-proven paths and leaves unrecorded matching state untouched", () => {
 	const cwd = isolatedProject;
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-home-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-home-"));
 	const sessions = join(home, ".agent-browser", "sessions");
 	const namespaceSessions = join(home, ".agent-browser", "namespaces", "team", "state", "sessions");
 	const key = createManagedSessionRestoreKey(cwd);
@@ -1075,7 +1075,7 @@ test("owned snapshot pruning persists close-proven paths and leaves unrecorded m
 			}), index === 2 ? 1 : 0);
 		}
 		assert.equal(existsSync(join(sessions, `${key}-old.json`)), false);
-		const manifest = readdirSync(sessions).find((name) => name.startsWith(".host-browser-owned-snapshots-v2-"));
+		const manifest = readdirSync(sessions).find((name) => name.startsWith(".cdp-browser-owned-snapshots-v2-"));
 		assert.ok(manifest);
 		const manifestDirectory = join(sessions, manifest);
 		assert.equal(statSync(manifestDirectory).mode & 0o077, 0);
@@ -1105,8 +1105,8 @@ test("owned snapshot pruning persists close-proven paths and leaves unrecorded m
 });
 
 test("owned snapshot pruning leaves independent checkout generations untouched", () => {
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-independent-home-"));
-	const otherProject = mkdtempSync(join(tmpdir(), "piab-prune-independent-project-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-independent-home-"));
+	const otherProject = mkdtempSync(join(tmpdir(), "cdpb-prune-independent-project-"));
 	initializeGitProject(otherProject);
 	const sessions = join(home, ".agent-browser", "sessions");
 	const currentKey = createManagedSessionRestoreKey(isolatedProject);
@@ -1123,7 +1123,7 @@ test("owned snapshot pruning leaves independent checkout generations untouched",
 
 		assert.equal(pruneOwnedManagedSessionRestoreSnapshots({ cwd: isolatedProject, restoreKey: currentKey, parentEnv: { HOME: home }, platform: posixFixturePlatform, statePath: currentPath }), 0);
 		assert.equal(existsSync(otherPath), true);
-		assert.equal(existsSync(join(sessions, `.host-browser-owned-snapshots-v2-${otherKey}`)), true);
+		assert.equal(existsSync(join(sessions, `.cdp-browser-owned-snapshots-v2-${otherKey}`)), true);
 		assert.equal(existsSync(currentPath), true);
 	} finally {
 		rmSync(home, { recursive: true, force: true });
@@ -1132,8 +1132,8 @@ test("owned snapshot pruning leaves independent checkout generations untouched",
 });
 
 test("owned snapshot lineage follows a checkout rename", () => {
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-rename-home-"));
-	const project = mkdtempSync(join(tmpdir(), "piab-prune-rename-project-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-rename-home-"));
+	const project = mkdtempSync(join(tmpdir(), "cdpb-prune-rename-project-"));
 	const renamedProject = `${project}-renamed`;
 	initializeGitProject(project);
 	const sessions = join(home, ".agent-browser", "sessions");
@@ -1160,8 +1160,8 @@ test("owned snapshot lineage follows a checkout rename", () => {
 });
 
 test("owned snapshot pruning expires stale generations from the same checkout path", () => {
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-reused-home-"));
-	const reusedProject = mkdtempSync(join(tmpdir(), "piab-prune-reused-project-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-reused-home-"));
+	const reusedProject = mkdtempSync(join(tmpdir(), "cdpb-prune-reused-project-"));
 	initializeGitProject(reusedProject);
 	const sessions = join(home, ".agent-browser", "sessions");
 	const retiredKey = createManagedSessionRestoreKey(reusedProject);
@@ -1184,7 +1184,7 @@ test("owned snapshot pruning expires stale generations from the same checkout pa
 		assert.equal(pruneOwnedManagedSessionRestoreSnapshots({ cwd: reusedProject, restoreKey: currentKey, parentEnv: { HOME: home }, platform: posixFixturePlatform, statePath: currentPath }), 1);
 		assert.equal(existsSync(retiredPath), false);
 		assert.equal(existsSync(unrecordedPath), true);
-		assert.equal(existsSync(join(sessions, `.host-browser-owned-snapshots-v2-${retiredKey}`)), false);
+		assert.equal(existsSync(join(sessions, `.cdp-browser-owned-snapshots-v2-${retiredKey}`)), false);
 		assert.equal(existsSync(currentPath), true);
 	} finally {
 		rmSync(home, { recursive: true, force: true });
@@ -1194,7 +1194,7 @@ test("owned snapshot pruning expires stale generations from the same checkout pa
 
 test("owned snapshot manifest self-heals malformed records without claiming unrecorded files", () => {
 	const cwd = isolatedProject;
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-recovery-home-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-recovery-home-"));
 	const sessions = join(home, ".agent-browser", "sessions");
 	const key = createManagedSessionRestoreKey(cwd);
 	try {
@@ -1206,7 +1206,7 @@ test("owned snapshot manifest self-heals malformed records without claiming unre
 		for (const path of [oldPath, middlePath, newPath]) writeFileSync(path, "{}");
 
 		assert.equal(pruneOwnedManagedSessionRestoreSnapshots({ cwd, restoreKey: key, parentEnv: { HOME: home }, platform: posixFixturePlatform, statePath: oldPath }), 0);
-		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".host-browser-owned-snapshots-v2-"));
+		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".cdp-browser-owned-snapshots-v2-"));
 		assert.ok(manifestName);
 		const manifestDirectory = join(sessions, manifestName);
 		const firstRecordPath = join(manifestDirectory, readdirSync(manifestDirectory).find((name) => name.endsWith(".json")) as string);
@@ -1232,7 +1232,7 @@ test("owned snapshot manifest self-heals malformed records without claiming unre
 
 test("owned snapshot manifest converges concurrent process writers without a blocking lock", async () => {
 	const cwd = isolatedProject;
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-concurrency-home-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-concurrency-home-"));
 	const sessions = join(home, ".agent-browser", "sessions");
 	const key = createManagedSessionRestoreKey(cwd);
 	const parentEnv = process.platform === "win32"
@@ -1244,7 +1244,7 @@ test("owned snapshot manifest converges concurrent process writers without a blo
 		const paths = ["first", "second", "third"].map((suffix) => join(sessions, `${key}-${suffix}.json`));
 		for (const path of paths) writeFileSync(path, "{}");
 		assert.equal(pruneOwnedManagedSessionRestoreSnapshots({ cwd, restoreKey: key, parentEnv, statePath: paths[0] }), 0);
-		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".host-browser-owned-snapshots-v2-"));
+		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".cdp-browser-owned-snapshots-v2-"));
 		assert.ok(manifestName);
 		const manifestPath = join(sessions, manifestName);
 		const moduleUrl = new URL("../extensions/agent-browser/lib/managed-session-restore.ts", import.meta.url).href;
@@ -1270,7 +1270,7 @@ test("owned snapshot manifest converges concurrent process writers without a blo
 
 test("owned snapshot retention converges concurrent young closes to the newest 256", async () => {
 	const cwd = isolatedProject;
-	const home = mkdtempSync(join(tmpdir(), "piab-prune-cap-home-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-prune-cap-home-"));
 	const sessions = join(home, ".agent-browser", "sessions");
 	const key = createManagedSessionRestoreKey(cwd);
 	try {
@@ -1298,7 +1298,7 @@ test("owned snapshot retention converges concurrent young closes to the newest 2
 		assert.equal(existsSync(paths[0] as string), false);
 		assert.equal(existsSync(paths[1] as string), false);
 		assert.equal(existsSync(paths.at(-1) as string), true);
-		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".host-browser-owned-snapshots-v2-"));
+		const manifestName = readdirSync(sessions).find((name) => name.startsWith(".cdp-browser-owned-snapshots-v2-"));
 		assert.ok(manifestName);
 		assert.equal(readdirSync(join(sessions, manifestName)).filter((name) => name.endsWith(".json")).length, 256);
 	} finally {
@@ -1309,7 +1309,7 @@ test("owned snapshot retention converges concurrent young closes to the newest 2
 test("plan-suppressed owned main spawn sticky-disables even when process argv is rewritten", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	const owned = buildOwnedManagedSessionRestoreContext({
 		args: ["--json", "--session", managed, "--profile", "Default", "click", "@e1"],
 		cwd,
@@ -1335,13 +1335,13 @@ test("plan-suppressed owned main spawn sticky-disables even when process argv is
 
 test("restoreManagedSessionStateFromBranch resets sibling state and reapplies branch sticky disable", () => {
 	markManagedSessionRestoreDisabled("sibling-session");
-	const managed = "piab-project-abc12345-deadbeef";
+	const managed = "cdpb-project-abc12345-deadbeef";
 	const restoredState = restoreManagedSessionStateFromBranch(
 		[
 			{
 				type: "message",
 				message: {
-					toolName: "agent_browser",
+					toolName: "cdp_browser",
 					details: {
 						args: ["--session", managed, "--profile", "Default", "open", "https://app.example.com"],
 						sessionName: managed,
@@ -1361,10 +1361,10 @@ test("restoreManagedSessionStateFromBranch resets sibling state and reapplies br
 
 test("managed restore opt-out avoids state-directory permission changes and disables the spawned identity", { skip: process.platform === "win32" }, () => {
 	clearManagedSessionRestoreDisabled();
-	const cwd = mkdtempSync(join(tmpdir(), "piab-optout-cwd-"));
-	const home = mkdtempSync(join(tmpdir(), "piab-optout-home-"));
+	const cwd = mkdtempSync(join(tmpdir(), "cdpb-optout-cwd-"));
+	const home = mkdtempSync(join(tmpdir(), "cdpb-optout-home-"));
 	const root = join(home, ".agent-browser");
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	try {
 		initializeGitProject(cwd);
 		mkdirSync(root, { mode: 0o750 });
@@ -1375,12 +1375,12 @@ test("managed restore opt-out avoids state-directory permission changes and disa
 				cwd,
 				ownedManagedSession: true,
 				restoreState: managedSessionRestoreState,
-				parentEnv: { HOME: home, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+				parentEnv: { HOME: home, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 			}),
 			{},
 		);
 		assert.equal(statSync(root).mode & 0o077, 0o050);
-		assert.equal(existsSync(join(cwd, ".git", "host-browser-project-generation-v1.json")), false);
+		assert.equal(existsSync(join(cwd, ".git", "cdp-browser-project-generation-v1.json")), false);
 		assert.equal(isManagedSessionRestoreDisabled(managed), true);
 	} finally {
 		rmSync(cwd, { recursive: true, force: true });
@@ -1391,14 +1391,14 @@ test("managed restore opt-out avoids state-directory permission changes and disa
 test("incompatible launches sticky-disable even when managed restore is opted out", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	assert.deepEqual(
 		getAndCommitManagedSessionRestoreEnv({
 			args: ["--json", "--session", managed, "--profile", "Default", "open", "https://app.example.com"],
 			cwd,
 			ownedManagedSession: true,
 			restoreState: managedSessionRestoreState,
-			parentEnv: { HOME: isolatedHome, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+			parentEnv: { HOME: isolatedHome, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 		}),
 		{},
 	);
@@ -1427,7 +1427,7 @@ test("incompatible launches sticky-disable even when managed restore is opted ou
 				cwd,
 				ownedManagedSession: true,
 				restoreState: managedSessionRestoreState,
-				parentEnv: { HOME: isolatedHome, PI_AGENT_BROWSER_MANAGED_SESSION_RESTORE: "0" },
+				parentEnv: { HOME: isolatedHome, PI_CDP_BROWSER_MANAGED_SESSION_RESTORE: "0" },
 			}),
 			{},
 		);
@@ -1438,7 +1438,7 @@ test("incompatible launches sticky-disable even when managed restore is opted ou
 test("owned managed session ALS context is isolated across concurrent calls", async () => {
 	clearManagedSessionRestoreDisabled();
 	const cwd = isolatedProject;
-	const managed = "piab-work-abc12345-deadbeef";
+	const managed = "cdpb-work-abc12345-deadbeef";
 	const key = createManagedSessionRestoreKey(cwd, getManagedSessionRestoreScope(managed));
 	let ownedProbeSawRestore = false;
 	let foreignProbeSawRestore = false;

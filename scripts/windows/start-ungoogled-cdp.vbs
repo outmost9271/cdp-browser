@@ -39,7 +39,7 @@ Option Explicit
 Const CDP_PORT = 9222             ' local DevTools/CDP port
 Const FORWARD_PORT = 9223         ' LAN-facing port (used only when gost.exe is present)
 Const FORWARDER_EXE = "gost.exe"  ' optional port forwarder next to this script
-Const WINDOW_STYLE = 0            ' 0 = hidden browser window, 1 = normal
+Const WINDOW_STYLE = 0            ' 0 = hide the launched console window (browser windows still show), 1 = normal
 Const STARTUP_WAIT_MS = 30000     ' max wait for the debug port owner
 Const POLL_INTERVAL_MS = 3000     ' Chromium liveness poll interval
 ' ---------------------------------------------------------------------------

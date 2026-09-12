@@ -97,6 +97,8 @@ Notes:
   `ws://<windows-ip>:<FORWARD_PORT>/devtools/browser/<id>` instead.
 - CDP has no authentication and grants full control of the browser profile.
   Restrict the port with a firewall rule or tunnel when the network is shared.
+- `WINDOW_STYLE = 0` in the script only hides the console window it launches;
+  the Chromium window itself still appears normally.
 
 ## Differences from upstream pi-agent-browser-native
 

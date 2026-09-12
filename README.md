@@ -55,6 +55,25 @@ Security: the CDP port has no authentication. Prefer an SSH tunnel (`ssh -N -L 9
 
 Typical flow: `open` → `snapshot -i` → act on current `@refs` → re-snapshot after navigation. Use `connect http://host:9222` once, verify with `get url`, then keep using the same session.
 
+## Remote Windows Chromium helper
+
+`scripts/windows/start-ungoogled-cdp.vbs` launches a Windows
+ungoogled-chromium (or any Chromium build) from its own folder with a remote
+CDP endpoint enabled. Copy it next to `chrome.exe`, review the `CDP_PORT` /
+`CDP_ADDRESS` constants at the top, then run it.
+
+Key points:
+
+- It keeps a dedicated `UserData` folder; Chrome 136+ ignores
+  `--remote-debugging-port` when the default profile directory is used.
+- Fully quit existing `chrome.exe` processes for that profile before running it,
+  otherwise the new flags are ignored by the already-running instance.
+- The endpoint is reachable as `http://<windows-ip>:<CDP_PORT>`; verify with
+  `curl http://<windows-ip>:9222/json/version` and use that URL as the
+  `cdp.endpoint` in the config above.
+- CDP has no authentication and grants full control of the browser profile.
+  Restrict the port with a firewall rule or tunnel when the network is shared.
+
 ## Differences from upstream pi-agent-browser-native
 
 - Tool name is `cdp_browser` (not `agent_browser`), so both packages can coexist.

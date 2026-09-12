@@ -57,20 +57,44 @@ Typical flow: `open` → `snapshot -i` → act on current `@refs` → re-snapsho
 
 ## Remote Windows Chromium helper
 
-`scripts/windows/start-ungoogled-cdp.vbs` launches a Windows
-ungoogled-chromium (or any Chromium build) from its own folder with a remote
-CDP endpoint enabled. Copy it next to `chrome.exe`, review the `CDP_PORT` /
-`CDP_ADDRESS` constants at the top, then run it.
+`scripts/windows/start-ungoogled-cdp.vbs` starts a Windows Chromium build
+(ungoogled-chromium and friends) from its own folder with a local CDP endpoint,
+and — when `gost.exe` is present next to it — also exposes that endpoint to the
+LAN for a configured lifetime:
 
-Key points:
+```
+LAN  0.0.0.0:9223 (gost, optional)  ->  127.0.0.1:9222 (Chromium DevTools)
+```
 
-- It keeps a dedicated `UserData` folder; Chrome 136+ ignores
-  `--remote-debugging-port` when the default profile directory is used.
-- Fully quit existing `chrome.exe` processes for that profile before running it,
-  otherwise the new flags are ignored by the already-running instance.
-- The endpoint is reachable as `http://<windows-ip>:<CDP_PORT>`; verify with
-  `curl http://<windows-ip>:9222/json/version` and use that URL as the
-  `cdp.endpoint` in the config above.
+Setup:
+
+1. Copy the script next to `chrome.exe` (it uses `<script dir>\UserData` as the
+   dedicated profile) and run it.
+2. For LAN access, download **gost v3.3.0** (single static binary, no runtime
+   dependencies) from <https://github.com/go-gost/gost/releases>:
+   `gost_3.3.0_windows_amd64.zip`,
+   SHA256 `cc8ac946f86994a3aed47ef1f838cfb6b7649d9245c91fcb9899654b33d61170`.
+   Unzip `gost.exe` next to the script. Ports live in the `CDP_PORT` /
+   `FORWARD_PORT` constants at the top of the script.
+
+The script owns the full lifecycle: it starts Chromium, waits for the debug
+port owner, starts the hidden `gost.exe` forwarder, then keeps watching that
+browser process and terminates the forwarder as soon as the browser fully
+exits. Without `gost.exe` it still works, but only `127.0.0.1:9222` is
+reachable.
+
+Notes:
+
+- Current Chromium builds always bind DevTools to `127.0.0.1`
+  (`--remote-debugging-address` is ignored) — that is why the forwarder exists.
+- Keep `--user-data-dir` dedicated; Chrome 136+ ignores
+  `--remote-debugging-port` with the default profile directory.
+- Fully quit every `chrome.exe` of that profile before starting; an already
+  running instance keeps its old command line and never opens the debug port.
+- Verify from the LAN with `curl http://<windows-ip>:9223/json/version` and use
+  that URL as `cdp.endpoint`. If Chrome advertises `ws://127.0.0.1:...` in the
+  version payload, pass the explicit
+  `ws://<windows-ip>:<FORWARD_PORT>/devtools/browser/<id>` instead.
 - CDP has no authentication and grants full control of the browser profile.
   Restrict the port with a firewall rule or tunnel when the network is shared.
 

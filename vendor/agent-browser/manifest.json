@@ -1,0 +1,12 @@
+{
+  "name": "agent-browser",
+  "version": "0.37.1",
+  "source": "https://github.com/vercel-labs/agent-browser/releases/download/v0.37.1/agent-browser-linux-x64",
+  "platform": "linux",
+  "arch": "x64",
+  "libc": "glibc",
+  "file": "agent-browser-linux-x64",
+  "size": 14253840,
+  "sha256": "f8e5f9294bd0da70dda61854f12004fd61c668cd682bfb600cdf6d0df73dea69",
+  "vendoredAt": "2026-09-12"
+}

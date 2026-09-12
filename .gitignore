@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.DS_Store
+.pi/
+*.tgz
+
+# Local verification and platform-smoke state
+.artifacts/
+.crabbox/
+.debug/
+.dogfood/
+.platform-smoke-runs/
+
+# CueLoop local/runtime state (do not commit)
+.cueloop/

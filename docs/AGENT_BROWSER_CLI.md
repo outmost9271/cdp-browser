@@ -125,7 +125,7 @@ Global options go **before** the command word. Exact upstream spelling matters.
 | `--namespace <name>` | Isolate daemon sockets and restore state |
 | `--profile <name>` | Chrome profile to launch (only meaningful for a local launch; this fork is remote-only) |
 | `--auto-connect` | Attach to a running debug-enabled browser |
-| `--headed` / `--headless` | Launch visibility, where upstream supports it |
+| `--headed` | Ask upstream to show the browser window where it can launch one |
 | `--executable-path <path>` | Chromium-compatible executable for a launch |
 | `--user-agent <value>` | Custom user agent |
 | `--device <name>` | Device emulation |
@@ -138,8 +138,8 @@ Global options go **before** the command word. Exact upstream spelling matters.
 | `--allowed-domains <list>` | Restrict navigation domains |
 | `-p`, `--provider <name>` | Provider-backed browser |
 | `--json` | Structured output where supported |
-| `--timeout <ms>` | Upstream command timeout |
-| `--bail` | Batch fail-fast (exact token only) |
+
+`--timeout` is command-scoped (`wait --timeout`, `read --timeout`, `webmcp invoke --timeout`), not a global option. `--bail` belongs to `batch` and must appear immediately after the command word.
 
 Use one endpoint-selection mode per session. Do not stack `--cdp`, `connect`, `--auto-connect`, and `-p` and expect predictable behavior.
 
@@ -229,7 +229,7 @@ Notes:
 agent-browser --cdp 9222 find role button click --name "Sign in"
 agent-browser --cdp 9222 find text "Continue" click
 agent-browser --cdp 9222 find label "Email" fill "user@example.com"
-agent-browser --cdp 9222 find placeholder "Search" type "agent-browser"
+agent-browser --cdp 9222 find placeholder "Search" fill "agent-browser"
 agent-browser --cdp 9222 find testid "submit" click
 ```
 
@@ -389,7 +389,8 @@ agent-browser --cdp 9222 state save /tmp/state.json
 agent-browser --cdp 9222 state load /tmp/state.json
 agent-browser --cdp 9222 state list
 agent-browser --cdp 9222 cookies set --curl cookies.txt
-agent-browser --cdp 9222 storage local get <key>
+agent-browser --cdp 9222 storage local
+agent-browser --cdp 9222 storage session
 agent-browser --cdp 9222 auth save <name> --password-stdin
 agent-browser --cdp 9222 profiles
 ```
@@ -411,7 +412,7 @@ agent-browser --cdp 9222 errors
 agent-browser --cdp 9222 console --clear
 agent-browser --cdp 9222 a11y
 agent-browser --cdp 9222 vitals
-agent-browser --cdp 9222 react tree --enable react-devtools
+agent-browser --cdp 9222 --enable react-devtools react tree
 ```
 
 HAR files can contain authorization headers and response bodies. Do not share them unredacted.

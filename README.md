@@ -18,7 +18,7 @@ Bundled binary: `vendor/agent-browser/agent-browser-linux-x64` (agent-browser 0.
 ## Install
 
 ```bash
-pi install git:github.com/outmost9271/cdp-browser@v0.2.0
+pi install git:github.com/outmost9271/cdp-browser@v0.2.1
 ```
 
 Fully quit and restart Pi after installing or upgrading.
@@ -46,6 +46,17 @@ The skill is discovered from the package's `skills/` directory. It routes betwee
 - `skills/cdp-browser/references/cli-direct-use.md`
 - `skills/cdp-browser/references/error-catalog.md`
 - `docs/AGENT_BROWSER_CLI.md`
+
+If a project enables this package through an explicit resource filter (`autoload: false`), list the skill path as well, otherwise a global `skills: []` entry keeps it disabled:
+
+```json
+{
+  "source": "git:github.com/outmost9271/cdp-browser@v0.2.1",
+  "autoload": false,
+  "extensions": ["+dist/extensions/agent-browser/index.js"],
+  "skills": ["+skills/cdp-browser"]
+}
+```
 
 ## Configure the remote endpoint
 

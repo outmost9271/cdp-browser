@@ -1,6 +1,6 @@
 {
   "name": "cdp-browser",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Pi extension that drives a remote Chrome browser over CDP with a bundled agent-browser CLI (no local browser, no PATH dependency)",
   "type": "module",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",

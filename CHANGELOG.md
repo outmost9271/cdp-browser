@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 - 2026-10-27
+
+### Fixed
+
+- Correct the direct CLI guide: `--headless` is not a global flag, `--timeout` is command-scoped, `--bail` belongs to `batch`, `find` supports `fill` rather than `type`, `--enable` is global, and storage reads use the generic form.
+- Document that a project-level `autoload: false` filter must include `skills: ["+skills/cdp-browser"]` when the global package entry disables skills.
+
 ## 0.2.0 - 2026-10-27
 
 ### Added

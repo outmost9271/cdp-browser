@@ -18,7 +18,7 @@ Bundled binary: `vendor/agent-browser/agent-browser-linux-x64` (agent-browser 0.
 ## Install
 
 ```bash
-pi install git:github.com/outmost9271/cdp-browser@v0.1.0
+pi install git:github.com/outmost9271/cdp-browser@v0.1.1
 ```
 
 Fully quit and restart Pi after installing or upgrading.
@@ -41,6 +41,8 @@ Resolution order (highest priority first):
 ```
 
 Accepted endpoint forms: `http://host:port`, `ws://host:port/devtools/browser/<id>`, or a bare port. Browser-backed calls without any endpoint fail with `validation-error` instead of starting a local browser.
+
+The tool's always-on prompt guidance explains that browser control uses CDP. If the endpoint IP is not local to the Pi host, treat the browser as remote: browser-side `localhost`, files, and desktop must not be assumed to belong to the Pi host. Proxies and tunnels can obscure the browser's actual host, so even a loopback endpoint does not prove that the browser runs locally. This guidance does not change endpoint routing or artifact storage behavior.
 
 Security: the CDP port has no authentication. Prefer an SSH tunnel (`ssh -N -L 9222:127.0.0.1:9222 user@remote`) and configure `http://127.0.0.1:9222`; never expose the port to untrusted networks.
 

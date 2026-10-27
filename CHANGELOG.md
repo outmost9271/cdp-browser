@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.1 - 2026-10-27
+
+### Changed
+
+- Add always-on `cdp_browser` prompt guidance explaining CDP control and remote browser host boundaries: a non-local endpoint IP must not be treated as the Pi host's browser, localhost, filesystem, or desktop. Note that proxies and tunnels can obscure the actual browser host.
+- Document the host distinction without changing endpoint routing or artifact storage behavior.
+
+### Tests
+
+- Cover the guidance with and without companion web search, in registered tool metadata, and in the compiled extension; retain a bounded prompt budget.
+- Verified build, typecheck, 19 focused tests, command-reference baseline, package contents, and the actual Pi system prompt through RPC without model or browser calls.
+- Full-suite and live-browser/platform checks were not run for this prompt-only change. The existing playbook-doc check remains blocked because this fork's README omits the upstream generated block markers.
+
+## Upstream history
+
+The entries below are inherited from `pi-agent-browser-native` and use its version numbers.
+
 ## 0.6.10 - 2026-09-08
 
 ### Fixed

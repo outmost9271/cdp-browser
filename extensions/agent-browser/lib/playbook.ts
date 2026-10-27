@@ -91,6 +91,7 @@ export const WRAPPER_TAB_RECOVERY_BEHAVIOR = [
 
 /** Tier A: always-on tool promptGuidelines (keep small; Tier B lives in SHARED_BROWSER_PLAYBOOK_GUIDELINES and docs). */
 export const RUNTIME_PROMPT_GUIDELINES = [
+	"cdp_browser controls a browser via CDP. If the endpoint IP is not local to the Pi host, treat the browser as remote; do not assume shared localhost, files, or desktop. Proxies/tunnels can obscure the actual browser host.",
 	"Use cdp_browser with one input mode: script, args, semanticAction, job, qa, sourceLookup/networkSourceLookup, or electron. stdin: batch/eval/auth/wrapper batch only; electron rejects it; never pass --json.",
 	"For cdp_browser, use open → snapshot -i → @refs; re-snapshot after changes. In authenticated unattended/auto-approved employee flows, ordinary requested non-destructive submissions may proceed. Honor explicit stops; require explicit authorization for purchases, production-control, destructive/irreversible, or account/security/privacy changes.",
 	"Use cdp_browser sessionMode=fresh for launch flags. Use requested/configured profiles only; run profiles/doctor on failure. --allowed-domains cannot restore; macOS profile copies may omit encrypted cookies. Verify auth; use a user-approved headed login if needed. Profile content is model-visible.",

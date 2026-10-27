@@ -27,6 +27,7 @@ import {
 	QUICK_START_GUIDELINES,
 	RUNTIME_PROMPT_GUIDELINES,
 	buildInstalledDocsGuideline,
+	buildToolPromptGuidelines,
 	SHARED_BROWSER_PLAYBOOK_GUIDELINES,
 	TOOL_PROMPT_GUIDELINES_SUFFIX,
 	WRAPPER_TAB_RECOVERY_BEHAVIOR,
@@ -59,6 +60,18 @@ test("agentBrowserExtension names its tools in every prompt guideline", () => {
 		for (const guideline of webSearchTool.promptGuidelines) {
 			assert.match(guideline, /cdp_browser_web_search/, guideline);
 		}
+	}
+});
+
+test("browser prompt guidance explains remote CDP host boundaries with or without web search", () => {
+	for (const includeWebSearch of [false, true]) {
+		const guidelines = buildToolPromptGuidelines({ includeWebSearch });
+		const remoteGuideline = guidelines.find((line) => line.includes("controls a browser via CDP"));
+		assert.ok(remoteGuideline, `missing remote CDP guidance with includeWebSearch=${includeWebSearch}`);
+		assert.match(remoteGuideline, /endpoint IP is not local to the Pi host/);
+		assert.match(remoteGuideline, /treat the browser as remote/);
+		assert.match(remoteGuideline, /do not assume shared localhost, files, or desktop/);
+		assert.match(remoteGuideline, /Proxies\/tunnels can obscure the actual browser host/);
 	}
 });
 
@@ -108,6 +121,8 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 				`missing concise runtime guideline: ${guideline}`,
 			);
 		}
+		assert.match(guidelineText, /cdp_browser controls a browser via CDP/);
+		assert.match(guidelineText, /endpoint IP is not local to the Pi host/);
 		assert.match(guidelineText, /Use cdp_browser with one input mode/);
 		assert.match(guidelineText, /For cdp_browser, use open → snapshot -i/);
 		assert.match(guidelineText, /ordinary requested non-destructive submissions may proceed/);
@@ -153,7 +168,7 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 		assert.ok(harness.tool.promptGuidelines.length <= 10, "promptGuidelines should stay bounded");
 		const normalizedGuidelineText = guidelineText.split(process.cwd()).join("<cwd>");
 		assert.ok(
-			normalizedGuidelineText.length < 1_850,
+			normalizedGuidelineText.length < 2_100,
 			"promptGuidelines should point to docs instead of carrying the full command reference/playbook",
 		);
 		assert.equal(
@@ -192,7 +207,9 @@ test("built extension prompt doc pointers resolve to package-root docs", { skip:
 	};
 	(extension.default as (api: typeof pi) => void)(pi);
 
-	const guideline = tools.find((tool) => tool.name === "cdp_browser")?.promptGuidelines.find((line) => line.includes("COMMAND_REFERENCE.md"));
+	const browserTool = tools.find((tool) => tool.name === "cdp_browser");
+	assert.ok(browserTool?.promptGuidelines.some((line) => line.includes("controls a browser via CDP")), "compiled tool must retain remote CDP guidance");
+	const guideline = browserTool?.promptGuidelines.find((line) => line.includes("COMMAND_REFERENCE.md"));
 	assert.ok(guideline);
 	assert.doesNotMatch(guideline, /\/dist\/docs\//);
 	for (const docsPath of [resolve("README.md"), resolve("docs/COMMAND_REFERENCE.md"), resolve("docs/TOOL_CONTRACT.md")]) {

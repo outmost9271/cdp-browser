@@ -35,7 +35,7 @@ Why:
 ### Direct subprocess execution
 
 The extension should:
-- resolve `agent-browser` from `PATH`
+- resolve the packaged `agent-browser` binary (vendored under `vendor/agent-browser/`) rather than depending on a system-wide install or `PATH` lookup; `PI_CDP_BROWSER_BINARY` remains the only override
 - invoke it with native Node `spawn` on POSIX and `cross-spawn` on Windows. The latter handles Windows `PATH`/`PATHEXT`, `.cmd` shims and argument escaping without PowerShell or wrapper-owned command reordering. Caller commands and helper probes retain empty operands, literal doublequotes, command/subcommand adjacency and explicit default `--namespace ""`; the selected shim still owns upstream architecture selection. Keep piped stdin/stdout/stderr and terminate the full Windows shell/agent-browser process tree with `taskkill /T /F` on timeout or abort before falling back to the direct child signal. Missing commands use the spawner's `ENOENT`, not a parsed shell-error string
 - inject `--json`
 - complete each upstream invocation when the direct `agent-browser` child exits even if Node delays `"close"`: piped stdio can stay referenced by longer-lived descendant processes, so `runAgentBrowserProcess` watches `exit` and `close` together, leaves stdio intact during a short post-`exit` grace so normal `close` can still win, destroys streams only when the post-`exit` fallback fires, and prefers `close` codes then wrapper timeout (`124`) over signal-shaped `exit` codes (`watchSpawnedChildCompletion` / `resolveSpawnedChildExitCode` in `extensions/agent-browser/lib/process.ts`) so the tool cannot hang after the CLI process has already terminated
@@ -51,6 +51,17 @@ The extension should:
 - accept an optional native `electron` object (mutually exclusive with `script`, `args`, `semanticAction`, `job`, `qa`, `sourceLookup`, and `networkSourceLookup` on the same call) for bounded desktop Electron lifecycle: `list` scans the host for install candidates, `launch` creates a wrapper-owned isolated profile plus OS-chosen remote-debugging port, then attaches through upstream `connect` with `sessionMode: "fresh"`, cancellation prevents host spawn or interrupts readiness polling with process/profile cleanup, and `status` / `cleanup` / `probe` operate only on wrapper-tracked launches; host-side spawn and CDP discovery live in `extensions/agent-browser/lib/electron/discovery.ts`, `launch.ts`, and `cleanup.ts`, while compilation, transcript restore for `launchId` records, handoff probes, and merged `details.electron*` fields live under `extensions/agent-browser/lib/orchestration/electron-host/` and `extensions/agent-browser/lib/orchestration/browser-run/` (see [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#electron))
 - when a compiled `find` semantic action fails as `stale-ref`, optionally append a `retry-semantic-action-after-stale-ref` entry to `details.nextActions` after the usual `refresh-interactive-refs` snapshot step so agents can re-issue the same compiled `find` argv only when the failure implies the interaction did not run; `select` shorthands with stale `@refs` get refresh guidance only (contract in [`TOOL_CONTRACT.md`](TOOL_CONTRACT.md#semanticaction))
 - when the same compiled path fails as `selector-not-found` for the bounded locator/action pairs documented there, optionally append `try-*-candidate` entries to `details.nextActions` and mirror them in visible text as `Agent-browser candidate fallbacks` so agents can retry role/name `find` variants without hand-rebuilding argv (`select` misses are intentionally excluded)
+
+### Direct CLI exposure
+
+The packaged binary is also a supported direct-use surface:
+
+- At session start, `extensions/agent-browser/lib/agent-browser-path.ts` creates a private shim directory (`<tmp>/cdp-browser-cli-<platform>-<sha256-prefix>`, mode `0700`) containing a POSIX `agent-browser` shim and, on Windows, `agent-browser.cmd` as well.
+- The shim forwards argv unchanged to the resolved binary. It injects no endpoint, session, JSON, timeout, or compatibility defaults.
+- The directory is prepended to `process.env.PATH`. Pi's bash tool rebuilds its child environment from `process.env` per command, so no bash tool replacement is needed and other extensions that wrap bash remain compatible.
+- Installation is idempotent and failure-tolerant: a missing binary or unusable temp root returns a structured status without breaking tool registration or bash.
+- Direct calls deliberately bypass wrapper endpoint injection, managed sessions, ref preflight, result classification, artifact verification, and `nextActions`. The system prompt and the `cdp-browser` skill state this boundary and require explicit `--cdp` plus a separate `--session` for CLI use.
+- The package ships a Pi skill (`skills/cdp-browser/`) and [`AGENT_BROWSER_CLI.md`](AGENT_BROWSER_CLI.md) so agents can choose between the tool and CLI and avoid parameter-shape mistakes. Direct bash calls are no longer blocked.
 
 ### One-shot script isolation
 

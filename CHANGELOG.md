@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0 - 2026-10-27
+
+### Added
+
+- Expose the bundled binary on the Pi bash `PATH` as `agent-browser` through a private, idempotent shim directory. The shim forwards argv unchanged; it adds no endpoint, JSON, or session defaults.
+- Ship a Pi skill, `cdp-browser`, with detailed references for tool parameter shapes, direct CLI use, and error recovery.
+- Ship `docs/AGENT_BROWSER_CLI.md` covering PATH exposure, global options, command families, batch input, sessions, artifacts, state/auth, network diagnostics, common errors, and tool-to-CLI mapping.
+- Register the skill through `pi.skills` so installing the package makes it discoverable.
+
+### Changed
+
+- Direct `agent-browser` bash calls are no longer blocked. The system prompt now prefers the native tool for structured results while documenting that the CLI is a supported direct surface.
+- Add regression coverage for shim creation, PATH precedence, executable mode, skill and documentation packaging, and prompt guidance.
+
+### Validation
+
+- Build, typecheck, focused unit tests, and a real CLI smoke (`agent-browser --version`) against the packaged binary.
+
 ## 0.1.1 - 2026-10-27
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "cdp-browser",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Pi extension that drives a remote Chrome browser over CDP with a bundled agent-browser CLI (no local browser, no PATH dependency)",
   "type": "module",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",
@@ -33,6 +33,7 @@
   },
   "files": [
     "dist",
+    "skills",
     "vendor",
     "platform-smoke.config.mjs",
     "scripts/config.mjs",
@@ -47,6 +48,7 @@
     "CHANGELOG.md",
     "LICENSE",
     "docs/ARCHITECTURE.md",
+    "docs/AGENT_BROWSER_CLI.md",
     "docs/COMMAND_REFERENCE.md",
     "docs/ELECTRON.md",
     "docs/RELEASE.md",
@@ -58,6 +60,9 @@
   "pi": {
     "extensions": [
       "./dist/extensions/agent-browser/index.js"
+    ],
+    "skills": [
+      "./skills"
     ]
   },
   "peerDependencies": {

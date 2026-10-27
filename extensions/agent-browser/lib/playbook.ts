@@ -2,14 +2,15 @@ import { LAUNCH_SCOPED_FLAG_LABEL } from "./launch-scoped-flags.js";
 
 
 export const PROJECT_RULE_PROMPT =
-	"Project rule: when browser automation is needed, prefer the native `cdp_browser` tool. Do not run direct `agent-browser` bash commands unless the user explicitly asks for a bash-oriented workflow or browser-integration debugging.";
+	"Browser automation rule: prefer the native `cdp_browser` tool because it injects the configured CDP endpoint, returns structured JSON results, tracks sessions, and adds recovery guidance. The bundled `agent-browser` CLI is also available on PATH for direct bash use; when calling it directly, pass `--cdp <endpoint>` explicitly, prefer `--json` for parseable output, and use a distinct `--session` so direct calls do not collide with tool-managed sessions.";
 
 export const TOOL_PROMPT_GUIDELINES_PREFIX = [
 	"Use cdp_browser for real browser or live web content.",
 ] as const;
 
-export function buildInstalledDocsGuideline(paths: { readmePath: string; commandReferencePath: string; toolContractPath: string }): string {
-	return `For detailed cdp_browser docs, read targeted sections: ${paths.readmePath} (setup), ${paths.commandReferencePath} (commands), ${paths.toolContractPath} (result/details). Do not load the full command reference unless needed.`;
+export function buildInstalledDocsGuideline(paths: { readmePath: string; commandReferencePath: string; cliReferencePath?: string; toolContractPath: string }): string {
+	const cliReferencePath = paths.cliReferencePath ?? paths.commandReferencePath;
+	return `For detailed cdp_browser docs, read targeted sections: ${paths.readmePath} (setup), ${cliReferencePath} (direct CLI and parameter shapes), ${paths.commandReferencePath} (full commands), ${paths.toolContractPath} (result/details). Do not load the full command reference unless needed.`;
 }
 
 export const QUICK_START_GUIDELINES = [
@@ -91,7 +92,7 @@ export const WRAPPER_TAB_RECOVERY_BEHAVIOR = [
 
 /** Tier A: always-on tool promptGuidelines (keep small; Tier B lives in SHARED_BROWSER_PLAYBOOK_GUIDELINES and docs). */
 export const RUNTIME_PROMPT_GUIDELINES = [
-	"cdp_browser controls a browser via CDP. If the endpoint IP is not local to the Pi host, treat the browser as remote; do not assume shared localhost, files, or desktop. Proxies/tunnels can obscure the actual browser host.",
+	"cdp_browser controls a browser via CDP. If the endpoint IP is not local to the Pi host, treat the browser as remote; do not assume shared localhost, files, or desktop. Proxies/tunnels can obscure the actual browser host. The bundled `agent-browser` CLI is also on PATH: direct bash use bypasses endpoint injection, session tracking, and result shaping, so pass --cdp explicitly and use a separate --session.",
 	"Use cdp_browser with one input mode: script, args, semanticAction, job, qa, sourceLookup/networkSourceLookup, or electron. stdin: batch/eval/auth/wrapper batch only; electron rejects it; never pass --json.",
 	"For cdp_browser, use open → snapshot -i → @refs; re-snapshot after changes. In authenticated unattended/auto-approved employee flows, ordinary requested non-destructive submissions may proceed. Honor explicit stops; require explicit authorization for purchases, production-control, destructive/irreversible, or account/security/privacy changes.",
 	"Use cdp_browser sessionMode=fresh for launch flags. Use requested/configured profiles only; run profiles/doctor on failure. --allowed-domains cannot restore; macOS profile copies may omit encrypted cookies. Verify auth; use a user-approved headed login if needed. Profile content is model-visible.",

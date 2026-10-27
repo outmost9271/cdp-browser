@@ -90,11 +90,8 @@ import {
 	type ActiveRecordingReservation,
 } from "./lib/recording-reservations.js";
 import { createAgentBrowserWebSearchTool } from "./lib/web-search.js";
-import {
-	isDirectAgentBrowserBashAllowed,
-	isHarmlessAgentBrowserInspectionCommand,
-	looksLikeDirectAgentBrowserBash,
-} from "./lib/bash-guard.js";
+import { looksLikeDirectAgentBrowserBash } from "./lib/bash-guard.js";
+import { ensureAgentBrowserCliOnPath, type AgentBrowserCliSetup } from "./lib/agent-browser-path.js";
 import {
 	AgentBrowserResultComponent,
 	buildAgentBrowserToolResultPatch,
@@ -911,12 +908,13 @@ function findPackageRoot(startDir: string): string {
 	}
 }
 
-function getInstalledDocsPaths(): { readmePath: string; commandReferencePath: string; toolContractPath: string } {
+function getInstalledDocsPaths(): { readmePath: string; commandReferencePath: string; toolContractPath: string; cliReferencePath: string } {
 	const packageRoot = findPackageRoot(dirname(fileURLToPath(import.meta.url)));
 	return {
 		readmePath: join(packageRoot, "README.md"),
 		commandReferencePath: join(packageRoot, "docs", "COMMAND_REFERENCE.md"),
 		toolContractPath: join(packageRoot, "docs", "TOOL_CONTRACT.md"),
+		cliReferencePath: join(packageRoot, "docs", "AGENT_BROWSER_CLI.md"),
 	};
 }
 
@@ -942,6 +940,12 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 		includeWebSearch: webSearchToolAvailable,
 		docs: getInstalledDocsPaths(),
 	});
+	let agentBrowserCliSetup: AgentBrowserCliSetup | undefined;
+	const ensureAgentBrowserCli = async (): Promise<AgentBrowserCliSetup> => {
+		if (agentBrowserCliSetup?.available) return agentBrowserCliSetup;
+		agentBrowserCliSetup = await ensureAgentBrowserCliOnPath();
+		return agentBrowserCliSetup;
+	};
 	const implicitSessionIdleTimeoutMs = String(getImplicitSessionIdleTimeoutMs());
 	const implicitSessionCloseTimeoutMs = getImplicitSessionCloseTimeoutMs();
 	let webSearchToolRegistered = false;
@@ -1353,6 +1357,7 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
+		await ensureAgentBrowserCli();
 		restoreBranchBackedState(ctx, { resetRuntimeOwnership: true });
 		electronChildProcesses = new Map<string, ChildProcess>();
 		registerWebSearchToolIfAvailable(loadAgentBrowserConfigSync({
@@ -1469,19 +1474,12 @@ export default function agentBrowserExtension(pi: ExtensionAPI) {
 		};
 	});
 
-	pi.on("tool_call", async (event, ctx) => {
-		const promptPolicy = buildPromptPolicy(getLatestUserPrompt(ctx.sessionManager.getBranch()));
-		if (
-			isBashToolCallEvent(event) &&
-			!promptPolicy.allowLegacyAgentBrowserBash &&
-			looksLikeDirectAgentBrowserBash(event.input.command) &&
-			!isHarmlessAgentBrowserInspectionCommand(event.input.command) &&
-			!(await isDirectAgentBrowserBashAllowed(ctx.cwd))
-		) {
-			return {
-				block: true,
-				reason: "Use the native cdp_browser tool instead of bash for agent-browser in this environment.",
-			};
+	pi.on("tool_call", async (event) => {
+		// The CLI is a supported direct-use surface. Keep PATH installation lazy and
+		// idempotent for sessions that start before the extension factory finishes
+		// loading, without blocking bash calls.
+		if (isBashToolCallEvent(event) && looksLikeDirectAgentBrowserBash(event.input.command)) {
+			await ensureAgentBrowserCli();
 		}
 	});
 

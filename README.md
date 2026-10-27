@@ -18,10 +18,34 @@ Bundled binary: `vendor/agent-browser/agent-browser-linux-x64` (agent-browser 0.
 ## Install
 
 ```bash
-pi install git:github.com/outmost9271/cdp-browser@v0.1.1
+pi install git:github.com/outmost9271/cdp-browser@v0.2.0
 ```
 
 Fully quit and restart Pi after installing or upgrading.
+
+## Direct `agent-browser` CLI and bundled skill
+
+The package performs three jobs:
+
+1. registers the native `cdp_browser` tool;
+2. puts the bundled binary on the Pi bash `PATH` as `agent-browser`;
+3. ships a Pi skill, `cdp-browser`, with parameter, CLI, and error references.
+
+```bash
+command -v agent-browser
+agent-browser --version
+agent-browser --cdp http://127.0.0.1:9222 open https://example.com
+```
+
+The PATH entry is a small shim in a private temporary directory (mode `0700`) that forwards argv to `vendor/agent-browser/...` unchanged. It adds no endpoint, session, or JSON defaults. Direct CLI use bypasses the wrapper, so pass `--cdp` explicitly, use a distinct `--session`, and prefer the native tool when you want structured results and recovery guidance.
+
+The skill is discovered from the package's `skills/` directory. It routes between tool modes (`args`, `job`, `qa`, `semanticAction`, `script`, `electron`) and documents the exact field shapes and common failures. Detailed references:
+
+- `skills/cdp-browser/SKILL.md`
+- `skills/cdp-browser/references/tool-parameters.md`
+- `skills/cdp-browser/references/cli-direct-use.md`
+- `skills/cdp-browser/references/error-catalog.md`
+- `docs/AGENT_BROWSER_CLI.md`
 
 ## Configure the remote endpoint
 

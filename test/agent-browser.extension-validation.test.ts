@@ -102,6 +102,7 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 		const docsGuideline = buildInstalledDocsGuideline({
 			readmePath: join(process.cwd(), "README.md"),
 			commandReferencePath: join(process.cwd(), "docs", "COMMAND_REFERENCE.md"),
+			cliReferencePath: join(process.cwd(), "docs", "AGENT_BROWSER_CLI.md"),
 			toolContractPath: join(process.cwd(), "docs", "TOOL_CONTRACT.md"),
 		});
 		const guidelineText = harness.tool.promptGuidelines.join("\n");
@@ -168,7 +169,7 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 		assert.ok(harness.tool.promptGuidelines.length <= 10, "promptGuidelines should stay bounded");
 		const normalizedGuidelineText = guidelineText.split(process.cwd()).join("<cwd>");
 		assert.ok(
-			normalizedGuidelineText.length < 2_100,
+			normalizedGuidelineText.length < 2_500,
 			"promptGuidelines should point to docs instead of carrying the full command reference/playbook",
 		);
 		assert.equal(
@@ -192,7 +193,8 @@ test("agentBrowserExtension keeps concise browser guidance plus installed doc po
 		);
 		assert.equal(typeof browserTurn?.systemPrompt, "string");
 		assert.equal(browserTurn?.systemPrompt.includes("Base system prompt"), true);
-		assert.equal(browserTurn?.systemPrompt.includes("Project rule: when browser automation is needed"), true);
+		assert.equal(browserTurn?.systemPrompt.includes("Browser automation rule: prefer the native `cdp_browser` tool"), true);
+		assert.equal(browserTurn?.systemPrompt.includes("The bundled `agent-browser` CLI is also available on PATH"), true);
 		assert.equal(browserTurn?.systemPrompt.includes("Quick start:"), false);
 		assert.equal(browserTurn?.systemPrompt.includes("Browser operating playbook:"), false);
 	});
@@ -2207,7 +2209,7 @@ test("agentBrowserExtension renders long TUI output compactly without changing m
 	assert.match(fallbackText, /<success>summary ok<\/success>/);
 });
 
-test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless the prompt, env, or package dev cwd explicitly allows it", async () => {
+test("agentBrowserExtension allows direct agent-browser bash instead of forcing the native tool", async () => {
 	const tempDir = await mkdtemp(join(tmpdir(), "cdp-browser-bash-policy-"));
 	const defaultHarness = createExtensionHarness({ cwd: tempDir, prompt: "Open a page and summarize it." });
 	for (const command of [
@@ -2229,8 +2231,7 @@ test("agentBrowserExtension blocks direct and wrapped agent-browser bash unless 
 			{ toolName: "bash", input: { command } },
 			defaultHarness.ctx,
 		);
-		assert.equal(blocked?.block, true, command);
-		assert.match(blocked?.reason ?? "", /Use the native cdp_browser tool instead of bash/i);
+		assert.equal(blocked, undefined, command);
 	}
 
 	const inspectionAllowed = await runExtensionEventResults(

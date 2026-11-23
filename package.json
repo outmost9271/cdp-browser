@@ -46,6 +46,7 @@
     "scripts/platform-smoke",
     "README.md",
     "CHANGELOG.md",
+    "UPSTREAM_CHANGELOG.md",
     "LICENSE",
     "docs/ARCHITECTURE.md",
     "docs/AGENT_BROWSER_CLI.md",

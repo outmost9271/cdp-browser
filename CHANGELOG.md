@@ -2,6 +2,12 @@
 
 This file tracks only `cdp-browser` releases. See [Upstream changelog](UPSTREAM_CHANGELOG.md) for inherited `pi-agent-browser-native` release notes. Keep upstream version headings out of this file: Pi reads it to build the package's startup update notice.
 
+## 0.2.2 - 2026-11-23
+
+### Fixed
+
+- Keep inherited upstream release notes out of Pi's extension update notices while preserving the `cdp-browser` release history.
+
 ## 0.2.1 - 2026-10-27
 
 ### Fixed
